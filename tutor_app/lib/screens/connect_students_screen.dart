@@ -41,7 +41,6 @@ class ConnectStudentsScreen extends StatelessWidget {
                 onPressed: () {
                   // Acción al presionar "Send"
                 },
-                child: Text('Send'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue.shade900,
                   padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
@@ -49,6 +48,7 @@ class ConnectStudentsScreen extends StatelessWidget {
                     borderRadius: BorderRadius.circular(8.0),
                   ),
                 ),
+                child: Text('Send'),
               ),
             ),
           ],

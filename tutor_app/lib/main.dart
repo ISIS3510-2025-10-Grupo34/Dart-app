@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
+import 'screens/sign_in_screen.dart';
 
 void main() {
   runApp(TutorApp());
@@ -16,7 +17,7 @@ class TutorApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: HomeScreen(),
+      home: SignInScreen(),
     );
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class AddCourseScreen extends StatefulWidget {
+  const AddCourseScreen({super.key});
+
   @override
   _AddCourseScreenState createState() => _AddCourseScreenState();
 }
@@ -73,7 +75,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
               ),
             ),
             if (_universityController.text.isNotEmpty)
-              Container(
+              SizedBox(
                 height: 100,
                 child: ListView(
                   children: _filteredUniversities.map((uni) {
@@ -120,8 +122,8 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
               onPressed: () {
                 // Implementar funcionalidad del estimador de precios
               },
-              child: Text("Use the estimator"),
               style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.shade900),
+              child: Text("Use the estimator"),
             ),
 
             SizedBox(height: 20),
@@ -130,8 +132,8 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                 onPressed: () {
                   // Implementar acción de guardar curso
                 },
-                child: Text("Save"),
                 style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.shade900),
+                child: Text("Save"),
               ),
             ),
           ],
