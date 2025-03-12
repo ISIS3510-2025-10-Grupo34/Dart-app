@@ -84,8 +84,8 @@ class _LearningStylesScreenState extends State<StudentLearningStylesScreen> {
                       });
                     },
                     backgroundColor: Colors.white,
-                    selectedColor: Colors.purple.shade100,
-                    checkmarkColor: Colors.deepPurple,
+                    selectedColor: Color(0xFF29339b),
+                    checkmarkColor: Colors.white,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(16),
                       side: BorderSide(
@@ -97,7 +97,7 @@ class _LearningStylesScreenState extends State<StudentLearningStylesScreen> {
                     labelStyle: TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.w500,
-                      color: isSelected ? Colors.deepPurple : Colors.black,
+                      color: isSelected ? Colors.white : Colors.black,
                     ),
                   );
                 }).toList(),

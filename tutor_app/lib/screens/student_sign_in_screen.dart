@@ -16,11 +16,20 @@ class StudentSignIn extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const SizedBox(height: 20),
-              const Text(
-                "TutorApp",
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w500,
+              GestureDetector(
+                onTap: () {
+                  // Navigate to home screen when TutorApp text is tapped
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                    (route) => false,
+                  );
+                },
+                child: const Text(
+                  "TutorApp",
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w500,
+                  ),
                 ),
               ),
               const Spacer(flex: 1),
