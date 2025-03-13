@@ -17,8 +17,8 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('TutorApp', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: Text("TutorApp",style: TextStyle( fontSize: 24,fontWeight: FontWeight.w500,)),
+        backgroundColor:  Color(0xFFFFFFFF),
         elevation: 0,
       ),
       body: Padding(
@@ -28,12 +28,12 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
           children: [
             Text(
               'Write a review',
-              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blue.shade900),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color:  Color(0xFF192650)),
             ),
             SizedBox(height: 20),
             CircleAvatar(
               radius: 40,
-              backgroundColor: Colors.blue.shade900,
+              backgroundColor:  Color(0xFF192650),
               child: Text('A', style: TextStyle(fontSize: 32, color: Colors.white)),
             ),
             SizedBox(height: 10),
@@ -55,7 +55,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
               allowHalfRating: true,
               itemCount: 5,
               itemPadding: EdgeInsets.symmetric(horizontal: 4.0),
-              itemBuilder: (context, _) => Icon(Icons.star, color: Colors.blue.shade900),
+              itemBuilder: (context, _) => Icon(Icons.star, color:  Color(0xFF192650)),
               onRatingUpdate: (rating) {
                 setState(() {
                   _rating = rating;
@@ -71,9 +71,9 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
               onPressed: () {
                 // Acción al presionar "Submit"
               },
-              child: Text('Submit'),
+              child: Text('Submit',style: TextStyle(color: Colors.white)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue.shade900,
+                backgroundColor:  Color(0xFF192650),
                 padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.0),
@@ -91,7 +91,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.blue.shade900)),
+        Text(label, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF192650))),
         SizedBox(height: 5),
         TextField(
           controller: controller,

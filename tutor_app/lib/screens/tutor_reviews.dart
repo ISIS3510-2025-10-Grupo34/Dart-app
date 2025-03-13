@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:tutor_app/screens/write_review_screen.dart';
 import 'add_course_screen.dart'; 
 
 class TutorProfile extends StatelessWidget {
@@ -10,8 +11,8 @@ class TutorProfile extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('TutorApp', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: Text("TutorApp",style: TextStyle( fontSize: 24,fontWeight: FontWeight.w500,)),
+        backgroundColor:  Color(0xFFFFFFFF),
         elevation: 0,
         centerTitle: false,
       ),
@@ -25,7 +26,7 @@ class TutorProfile extends StatelessWidget {
                 children: [
                   CircleAvatar(
                     radius: 40,
-                    backgroundColor: Colors.blue.shade900,
+                    backgroundColor:  Color(0xFF192650),
                     child: Text(
                       'A',
                       style: TextStyle(fontSize: 32, color: Colors.white),
@@ -45,7 +46,7 @@ class TutorProfile extends StatelessWidget {
                     rating: 4.0,
                     itemBuilder: (context, index) => Icon(
                       Icons.star,
-                      color: Colors.amber,
+                      color:  Color(0xFF192650),
                     ),
                     itemCount: 5,
                     itemSize: 24.0,
@@ -56,7 +57,7 @@ class TutorProfile extends StatelessWidget {
             SizedBox(height: 20),
             Row(
               children: [
-                Icon(FontAwesomeIcons.whatsapp, color: Colors.blue.shade900),
+                Icon(FontAwesomeIcons.whatsapp, color:  Color(0xFF192650)),
                 SizedBox(width: 10),
                 Text('3045748603', style: TextStyle(fontSize: 16)),
               ],
@@ -67,13 +68,13 @@ class TutorProfile extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    Icon(Icons.book, color: Colors.blue.shade900),
+                    Icon(Icons.book, color:  Color(0xFF192650)),
                     SizedBox(width: 10),
                     Text('Moviles', style: TextStyle(fontSize: 16)),
                   ],
                 ),
                 IconButton(
-                  icon: Icon(Icons.add, color: Colors.blue.shade900),
+                  icon: Icon(Icons.add, color:  Color(0xFF192650)),
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -90,14 +91,14 @@ class TutorProfile extends StatelessWidget {
                 itemBuilder: (context, index) {
                   return ListTile(
                     leading: CircleAvatar(
-                      backgroundColor: Colors.blue.shade900,
+                      backgroundColor:  Color(0xFF192650),
                       child: Text('A', style: TextStyle(color: Colors.white)),
                     ),
                     title: RatingBarIndicator(
                       rating: 4.0,
                       itemBuilder: (context, index) => Icon(
                         Icons.star,
-                        color: Colors.amber,
+                        color:  Color(0xFF192650),
                       ),
                       itemCount: 5,
                       itemSize: 20.0,
@@ -108,11 +109,18 @@ class TutorProfile extends StatelessWidget {
               ),
             ),
             Center(
-              child: ElevatedButton(
-                onPressed: () {},
-                child: Text('Edit profile'),
+              child:
+              //Navegar a la página de agregar review
+               ElevatedButton(            
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => WriteReviewScreen()),
+                  );
+                },
+                child: Text('Write a review' ,style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.shade900,
+                  backgroundColor:  Color(0xFF192650),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0),
                   ),

@@ -37,8 +37,8 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('TutorApp', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: Text("TutorApp",style: TextStyle( fontSize: 24,fontWeight: FontWeight.w500,)),
+        backgroundColor:  Color(0xFFFFFFFF),
         elevation: 0,
       ),
       body: Padding(
@@ -48,7 +48,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
           children: [
             Text(
               "¡Add a new course!",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blue.shade900),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color:  Color(0xFF192650)),
             ),
             SizedBox(height: 20),
             
@@ -121,7 +121,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                 // Implementar funcionalidad del estimador de precios
               },
               child: Text("Use the estimator"),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.shade900),
+              style: ElevatedButton.styleFrom(backgroundColor:  Color(0xFF192650)),
             ),
 
             SizedBox(height: 20),
@@ -131,7 +131,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                   // Implementar acción de guardar curso
                 },
                 child: Text("Save"),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.shade900),
+                style: ElevatedButton.styleFrom(backgroundColor:  Color(0xFF192650)),
               ),
             ),
           ],
