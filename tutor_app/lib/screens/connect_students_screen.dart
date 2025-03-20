@@ -7,8 +7,11 @@ class ConnectStudentsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('TutorApp', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+      title: Text("TutorApp",
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w500,)),
+        backgroundColor:  Color(0xFFFFFFFF),
         elevation: 0,
       ),
       body: Padding(
@@ -19,7 +22,7 @@ class ConnectStudentsScreen extends StatelessWidget {
             Center(
               child: Text(
                 'Connect with nearest students',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.blue.shade900),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color:  Color(0xFF192650)),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -41,9 +44,9 @@ class ConnectStudentsScreen extends StatelessWidget {
                 onPressed: () {
                   // Acción al presionar "Send"
                 },
-                child: Text('Send'),
+                child: Text('Send',style: TextStyle(color: Colors.white)),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.shade900,
+                  backgroundColor:  Color(0xFF192650),
                   padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0),
@@ -62,7 +65,7 @@ class ConnectStudentsScreen extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.blue.shade900)),
+        Text(label, style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color:  Color(0xFF192650))),
         SizedBox(height: 5),
         TextField(
           decoration: InputDecoration(
