@@ -1,8 +1,4 @@
-import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'home_screen.dart';
-import '../utils/env_config.dart';
 import '../services/user_service.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -16,6 +12,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final UserService _userService = UserService();
+
   bool _isLoading = false;
   String? _errorMessage;
   bool _obscurePassword = true;
@@ -27,48 +24,18 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      final apiUrl = '${EnvConfig.apiUrl}/api/login/';
+      final success = await _userService.loginUser(
+          _emailController.text, _passwordController.text, context);
 
-      // Prepare login payload
-      Map<String, dynamic> payload = {
-        'email': _emailController.text.trim(),
-        'password': _passwordController.text,
-      };
-
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(payload),
-      );
-
-      if (response.statusCode == 200) {
-        // Parse response and extract token
-        final responseData = jsonDecode(response.body);
-        final token = responseData['token'];
-
-        // TODO: Store the token securely (using flutter_secure_storage or similar)
-        // For example: await _secureStorage.write(key: 'auth_token', value: token);
-
-        // Navigate to home screen after successful login
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
-      } else {
-        // Handle error
+      if (!success) {
         setState(() {
-          _errorMessage = 'Invalid email or password';
+          _isLoading = false;
         });
       }
     } catch (e) {
       setState(() {
-        _errorMessage = 'Network error: $e';
-      });
-    } finally {
-      setState(() {
         _isLoading = false;
+        _errorMessage = 'An unexpected error occurred';
       });
     }
   }
@@ -217,6 +184,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                 ),
               ),
+              const Spacer(flex: 2),
             ],
           ),
         ),

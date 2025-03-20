@@ -75,8 +75,11 @@ class UserService {
 
       if (response.statusCode == 200) {
         final responseData = jsonDecode(response.body);
+        if (responseData.containsKey('id')) {
+          _currentUser.id = responseData['id'] ?? _currentUser.id;
+          _currentUser.email = responseData['email'] ?? _currentUser.email;
+        }
         final token = responseData['token'];
-
         await _secureStorage.write(key: 'auth_token', value: token);
 
         Navigator.pushReplacement(

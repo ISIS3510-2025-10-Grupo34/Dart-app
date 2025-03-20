@@ -1,4 +1,5 @@
 class User {
+  String? id;
   String? name;
   String? email;
   String? phoneNumber;
@@ -14,6 +15,7 @@ class User {
   String? password;
 
   User({
+    this.id,
     this.name,
     this.email,
     this.phoneNumber,
@@ -43,5 +45,12 @@ class User {
       'learning_styles': learningStyles,
       'password': password,
     };
+  }
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['id'],
+      email: json['email'],
+    );
   }
 }

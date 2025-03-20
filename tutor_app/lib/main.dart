@@ -1,8 +1,5 @@
-// lib/main.dart
-
 import 'package:flutter/material.dart';
-import 'screens/sign_in_screen.dart';
-import 'screens/login_screen.dart';
+import 'screens/welcome_screen.dart';
 import 'utils/env_config.dart';
 
 void main() async {
@@ -25,7 +22,7 @@ class TutorApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const LoginScreen(),
+      home: const WelcomeScreen(),
     );
   }
 }
