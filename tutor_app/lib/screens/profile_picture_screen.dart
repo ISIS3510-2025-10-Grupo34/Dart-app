@@ -34,14 +34,6 @@ class _ProfilePictureScreenState extends State<ProfilePictureScreen> {
         setState(() {
           _pickedFile = pickedFile;
         });
-
-        // For web, we need to read the bytes
-        if (kIsWeb) {
-          final bytes = await pickedFile.readAsBytes();
-          setState(() {
-            _webImage = bytes;
-          });
-        }
       }
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
