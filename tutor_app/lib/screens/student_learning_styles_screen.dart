@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:tutor_app/screens/profile_picture_screen.dart';
+import '../services/user_service.dart';
+import 'profile_picture_screen.dart';
 import 'home_screen.dart';
 
 class StudentLearningStylesScreen extends StatefulWidget {
-  const StudentLearningStylesScreen({Key? key}) : super(key: key);
+  const StudentLearningStylesScreen({super.key});
 
   @override
   State<StudentLearningStylesScreen> createState() =>
@@ -24,6 +25,7 @@ class _LearningStylesScreenState extends State<StudentLearningStylesScreen> {
   ];
 
   final Set<String> selectedStyles = {};
+  final UserService _userService = UserService();
 
   @override
   Widget build(BuildContext context) {
@@ -107,7 +109,13 @@ class _LearningStylesScreenState extends State<StudentLearningStylesScreen> {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Save selected learning styles and navigate to next screen
+                    // Save selected learning styles
+                    final String selectedStylesString =
+                        selectedStyles.join(',');
+                    _userService.updateUserInfo(
+                      learningStyles: selectedStylesString,
+                    );
+                    // Navigate to next screen
                     Navigator.push(
                       context,
                       MaterialPageRoute(

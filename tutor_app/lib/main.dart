@@ -1,9 +1,17 @@
-import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
-import 'screens/sign_in_screen.dart';
+// lib/main.dart
 
-void main() {
-  runApp(TutorApp());
+import 'package:flutter/material.dart';
+import 'screens/sign_in_screen.dart';
+import 'screens/login_screen.dart';
+import 'utils/env_config.dart';
+
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  await EnvConfig.load();
+
+  runApp(const TutorApp());
 }
 
 class TutorApp extends StatelessWidget {
@@ -12,12 +20,12 @@ class TutorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'TutorApp',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: SignInScreen(),
+      home: const LoginScreen(),
     );
   }
 }

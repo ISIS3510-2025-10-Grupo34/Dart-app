@@ -1,9 +1,23 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'student_learning_styles_screen.dart';
+import '../services/user_service.dart';
 
-class StudentSignIn extends StatelessWidget {
-  const StudentSignIn({Key? key}) : super(key: key);
+class StudentSignIn extends StatefulWidget {
+  const StudentSignIn({super.key});
+
+  @override
+  _StudentSignInState createState() => _StudentSignInState();
+}
+
+class _StudentSignInState extends State<StudentSignIn> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _universityController = TextEditingController();
+  final TextEditingController _majorController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  final TextEditingController _phoneNumberController = TextEditingController();
+  final UserService _userService = UserService();
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +70,7 @@ class StudentSignIn extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               TextField(
+                controller: _nameController,
                 decoration: InputDecoration(
                   hintText: 'First and last name',
                   contentPadding: const EdgeInsets.symmetric(
@@ -78,6 +93,55 @@ class StudentSignIn extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               TextField(
+                controller: _emailController,
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(
+                  hintText: 'Email',
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade300,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade300,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _phoneNumberController,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  hintText: 'Phone Number',
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade300,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade300,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _universityController,
                 decoration: InputDecoration(
                   hintText: 'University',
                   contentPadding: const EdgeInsets.symmetric(
@@ -100,8 +164,33 @@ class StudentSignIn extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               TextField(
+                controller: _majorController,
                 decoration: InputDecoration(
                   hintText: 'Major',
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade300,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade300,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _passwordController,
+                obscureText: true,
+                decoration: InputDecoration(
+                  hintText: 'Password',
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 16,
@@ -125,7 +214,15 @@ class StudentSignIn extends StatelessWidget {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Navigate to HomeScreen after completing registration
+                    _userService.updateUserInfo(
+                      name: _nameController.text,
+                      email: _emailController.text,
+                      phoneNumber: _phoneNumberController.text,
+                      university: _universityController.text,
+                      major: _majorController.text,
+                      isStudent: "true",
+                      password: _passwordController.text,
+                    );
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
@@ -157,5 +254,16 @@ class StudentSignIn extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _emailController.dispose();
+    _universityController.dispose();
+    _majorController.dispose();
+    _passwordController.dispose();
+    _phoneNumberController.dispose();
+    super.dispose();
   }
 }

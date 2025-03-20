@@ -1,9 +1,22 @@
 import 'package:flutter/material.dart';
 import 'home_screen.dart';
 import 'profile_picture_screen.dart';
+import '../services/user_service.dart';
 
-class TutorSignIn extends StatelessWidget {
-  const TutorSignIn({Key? key}) : super(key: key);
+class TutorSignIn extends StatefulWidget {
+  const TutorSignIn({super.key});
+
+  @override
+  _TutorSignInState createState() => _TutorSignInState();
+}
+
+class _TutorSignInState extends State<TutorSignIn> {
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _universityController = TextEditingController();
+  final TextEditingController _areaOfExpertiseController =
+      TextEditingController();
+  final TextEditingController _phoneNumberController = TextEditingController();
+  final UserService _userService = UserService();
 
   @override
   Widget build(BuildContext context) {
@@ -56,6 +69,7 @@ class TutorSignIn extends StatelessWidget {
               ),
               const SizedBox(height: 24),
               TextField(
+                controller: _nameController,
                 decoration: InputDecoration(
                   hintText: 'First and last name',
                   contentPadding: const EdgeInsets.symmetric(
@@ -78,6 +92,31 @@ class TutorSignIn extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               TextField(
+                controller: _phoneNumberController,
+                keyboardType: TextInputType.phone,
+                decoration: InputDecoration(
+                  hintText: 'Phone Number',
+                  contentPadding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 16,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade300,
+                    ),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                    borderSide: BorderSide(
+                      color: Colors.grey.shade300,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              TextField(
+                controller: _universityController,
                 decoration: InputDecoration(
                   hintText: 'University',
                   contentPadding: const EdgeInsets.symmetric(
@@ -100,6 +139,7 @@ class TutorSignIn extends StatelessWidget {
               ),
               const SizedBox(height: 16),
               TextField(
+                controller: _areaOfExpertiseController,
                 decoration: InputDecoration(
                   hintText: 'Area of expertise',
                   contentPadding: const EdgeInsets.symmetric(
@@ -125,7 +165,16 @@ class TutorSignIn extends StatelessWidget {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Navigate to HomeScreen after completing registration
+                    // Update user info with form values before proceeding
+                    _userService.updateUserInfo(
+                      name: _nameController.text,
+                      phoneNumber: _phoneNumberController.text,
+                      university: _universityController.text,
+                      areaOfExpertise: _areaOfExpertiseController.text,
+                      isTutor: "true",
+                    );
+
+                    // Navigate to ProfilePictureScreen after completing this form
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
@@ -156,5 +205,14 @@ class TutorSignIn extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _universityController.dispose();
+    _areaOfExpertiseController.dispose();
+    _phoneNumberController.dispose();
+    super.dispose();
   }
 }
