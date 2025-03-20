@@ -71,7 +71,6 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
               onPressed: () {
                 // Acción al presionar "Submit"
               },
-              child: Text('Submit'),
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.blue.shade900,
                 padding: EdgeInsets.symmetric(horizontal: 40, vertical: 12),
@@ -79,6 +78,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                   borderRadius: BorderRadius.circular(8.0),
                 ),
               ),
+              child: Text('Submit'),
             ),
           ],
         ),

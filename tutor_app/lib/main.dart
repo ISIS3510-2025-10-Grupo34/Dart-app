@@ -1,8 +1,14 @@
 import 'package:flutter/material.dart';
-import 'screens/home_screen.dart';
+import 'screens/welcome_screen.dart';
+import 'utils/env_config.dart';
 
-void main() {
-  runApp(TutorApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Load environment variables
+  await EnvConfig.load();
+
+  runApp(const TutorApp());
 }
 
 class TutorApp extends StatelessWidget {
@@ -11,12 +17,12 @@ class TutorApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      debugShowCheckedModeBanner: false,
       title: 'TutorApp',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: HomeScreen(),
+      home: const WelcomeScreen(),
     );
   }
 }

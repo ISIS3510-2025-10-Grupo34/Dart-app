@@ -110,13 +110,13 @@ class TutorProfile extends StatelessWidget {
             Center(
               child: ElevatedButton(
                 onPressed: () {},
-                child: Text('Edit profile'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: Colors.blue.shade900,
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(8.0),
                   ),
                 ),
+                child: Text('Edit profile'),
               ),
             ),
           ],

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'tutor_reviews.dart';
-import 'tutor_reviews.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -36,7 +35,8 @@ class HomeScreen extends StatelessWidget {
             padding: const EdgeInsets.all(8.0),
             child: Card(
               color: Colors.purple.shade50,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12)),
               child: Column(
                 children: [
                   ListTile(
@@ -44,7 +44,8 @@ class HomeScreen extends StatelessWidget {
                       onTap: () {
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => TutorProfile()),
+                          MaterialPageRoute(
+                              builder: (context) => TutorProfile()),
                         );
                       },
                       child: CircleAvatar(
@@ -52,7 +53,8 @@ class HomeScreen extends StatelessWidget {
                         child: Text('A', style: TextStyle(color: Colors.white)),
                       ),
                     ),
-                    title: Text('Alejandro Hernandez', style: TextStyle(fontWeight: FontWeight.bold)),
+                    title: Text('Alejandro Hernandez',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
                   ),
                   Container(
                     height: 100,
@@ -63,8 +65,10 @@ class HomeScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text('Programming tutoring', style: TextStyle(fontWeight: FontWeight.bold)),
-                        Text('Computer Science student', style: TextStyle(color: Colors.grey)),
+                        Text('Programming tutoring',
+                            style: TextStyle(fontWeight: FontWeight.bold)),
+                        Text('Computer Science student',
+                            style: TextStyle(color: Colors.grey)),
                         SizedBox(height: 5),
                         Text('I have been tutoring since 2018.'),
                       ],
@@ -76,11 +80,12 @@ class HomeScreen extends StatelessWidget {
                       padding: const EdgeInsets.all(8.0),
                       child: ElevatedButton(
                         onPressed: () {},
-                        child: Text('Book'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.blue.shade900,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(8.0)),
                         ),
+                        child: Text('Book'),
                       ),
                     ),
                   ),
