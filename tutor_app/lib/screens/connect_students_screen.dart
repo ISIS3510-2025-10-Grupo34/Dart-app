@@ -184,7 +184,9 @@ class _ConnectStudentsScreenState extends State<ConnectStudentsScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8.0),
+
                 ),
+                child: Text('Send'),
               ),
               child: const Text("Send", style: TextStyle(color: Colors.white)),
             ),

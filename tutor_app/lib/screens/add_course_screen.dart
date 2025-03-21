@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 class AddCourseScreen extends StatefulWidget {
+  const AddCourseScreen({super.key});
+
   @override
   _AddCourseScreenState createState() => _AddCourseScreenState();
 }
@@ -73,7 +75,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
               ),
             ),
             if (_universityController.text.isNotEmpty)
-              Container(
+              SizedBox(
                 height: 100,
                 child: ListView(
                   children: _filteredUniversities.map((uni) {
@@ -132,6 +134,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                 },
                 child: Text("Save"),
                 style: ElevatedButton.styleFrom(backgroundColor:  Color(0xFF192650)),
+
               ),
             ),
           ],

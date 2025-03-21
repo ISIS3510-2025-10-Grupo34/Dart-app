@@ -186,6 +186,7 @@ class _TutorProfileScreenState extends State<TutorProfile> {
                   ),
                 ),
               ],
+
             ),
           );
         },
