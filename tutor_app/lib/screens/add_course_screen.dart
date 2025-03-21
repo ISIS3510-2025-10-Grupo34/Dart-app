@@ -87,11 +87,8 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          'TutorApp',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        backgroundColor: Colors.white,
+        title: Text("TutorApp",style: TextStyle( fontSize: 24,fontWeight: FontWeight.w500,)),
+        backgroundColor:  Color(0xFFFFFFFF),
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
@@ -103,11 +100,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
             // Título principal
             Text(
               "¡Add a new course!",
-              style: TextStyle(
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                color: Colors.blue.shade900,
-              ),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color:  Color(0xFF192650)),
             ),
             const SizedBox(height: 20),
 
@@ -182,20 +175,13 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
             ElevatedButton(
               onPressed: _navigateAndGetPrice,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.blue.shade900,
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                backgroundColor: Color(0xFF192650), // ✅ Mantener el color personalizado
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
               ),
-              child: const Text(
-                "Use the estimator",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white,
-                ),
-              ),
+              child: Text("Use the estimator"),
             ),
             const SizedBox(height: 20),
 
@@ -204,20 +190,13 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
               child: ElevatedButton(
                 onPressed: _saveCourse,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.shade900,
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                  backgroundColor: Color(0xFF192650), // ✅ Mantener el color personalizado
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),
                 ),
-                child: const Text(
-                  "Save",
-                  style: TextStyle(
-                    fontSize: 16,
-                    color: Colors.white,
-                  ),
-                ),
+                child: Text("Save"),
               ),
             ),
           ],
