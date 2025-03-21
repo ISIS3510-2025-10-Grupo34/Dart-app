@@ -26,7 +26,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
   Future<Map<String, dynamic>> fetchTutorProfile(int tutorId) async {
     try {
       final response = await http.post(
-        Uri.parse("http://192.168.1.8:8000/api/tutorprofile/"),
+        Uri.parse("http://192.168.1.8:8000/api/tutorprofile/?tutorId=$tutorId"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"tutorId": tutorId}),
       );
