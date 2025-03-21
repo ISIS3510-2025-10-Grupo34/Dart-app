@@ -186,7 +186,6 @@ class _ConnectStudentsScreenState extends State<ConnectStudentsScreen> {
                   borderRadius: BorderRadius.circular(8.0),
 
                 ),
-                child: Text('Send'),
               ),
               child: const Text("Send", style: TextStyle(color: Colors.white)),
             ),

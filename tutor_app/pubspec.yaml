@@ -35,7 +35,7 @@ dependencies:
   font_awesome_flutter: ^10.5.0
   image_picker: ^0.8.6
   flutter_dotenv: ^5.0.2
-  http: ^1.1.0
+  http: ^0.13.6
   flutter_secure_storage: ^8.0.0
 
 
