@@ -1,12 +1,11 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:http_parser/http_parser.dart';
 import '../models/user_model.dart';
 import '../utils/env_config.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-import '../screens/home_screen.dart';
+import 'package:jwt_decoder/jwt_decoder.dart';
 
 class UserService {
   static final UserService _instance = UserService._internal();
@@ -17,12 +16,13 @@ class UserService {
 
   final User _currentUser = User();
 
-  final FlutterSecureStorage _secureStorage = const FlutterSecureStorage();
+  final storage = const FlutterSecureStorage();
 
   User get currentUser => _currentUser;
 
   // Update user info based on form fields
   void updateUserInfo({
+    String? id,
     String? name,
     String? email,
     String? phoneNumber,
@@ -37,6 +37,7 @@ class UserService {
     String? idPicturePath,
     String? password,
   }) {
+    if (id != null) _currentUser.id = id;
     if (name != null) _currentUser.name = name;
     if (email != null) _currentUser.email = email;
     if (phoneNumber != null) _currentUser.phoneNumber = phoneNumber;
@@ -54,46 +55,54 @@ class UserService {
     if (password != null) _currentUser.password = password;
   }
 
+  Future<void> storeToken(String token) async {
+    try {
+      Map<String, dynamic> decodedToken = JwtDecoder.decode(token);
+
+      if (!decodedToken.containsKey('id') ||
+          !decodedToken.containsKey('email')) {
+        throw Exception('Token missing required fields');
+      }
+
+      updateUserInfo(
+          id: decodedToken["id"].toString(), email: decodedToken["email"]);
+    } catch (e) {
+      print('Error decoding token: $e');
+      rethrow;
+    }
+  }
+
+  // Login user implementation
   Future<bool> loginUser(
       String email, String password, BuildContext context) async {
     try {
-      final apiUrl = '${EnvConfig.apiUrl}/api/login/';
-
-      // Prepare login payload
-      Map<String, dynamic> payload = {
-        'email': email.trim(),
-        'password': password,
-      };
-
       final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode(payload),
+        Uri.parse('${EnvConfig.apiUrl}/api/login/'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "email": email,
+          "password": password,
+        }),
       );
 
       if (response.statusCode == 200) {
-        final responseData = jsonDecode(response.body);
-        if (responseData.containsKey('id')) {
-          _currentUser.id = responseData['id'] ?? _currentUser.id;
-          _currentUser.email = responseData['email'] ?? _currentUser.email;
-        }
-        final token = responseData['token'];
-        await _secureStorage.write(key: 'auth_token', value: token);
+        final Map<String, dynamic> data = jsonDecode(response.body);
 
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-        );
+        // Store the token
+        await storeToken(data['data']['token']);
 
         return true;
       } else {
-        // Handle login failure
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+              content: Text('Login failed. Please check your credentials.')),
+        );
         return false;
       }
     } catch (e) {
-      // Handle network or other errors
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e')),
+      );
       return false;
     }
   }
@@ -120,7 +129,7 @@ class UserService {
       request.fields['password'] = _currentUser.password ?? '';
 
       // Add profile picture if available
-      if (_currentUser.profilePicturePath != null && !kIsWeb) {
+      if (_currentUser.profilePicturePath != null) {
         final profileFile = await http.MultipartFile.fromPath(
           'profile_picture',
           _currentUser.profilePicturePath!,
@@ -130,7 +139,7 @@ class UserService {
       }
 
       // Add ID picture if available
-      if (_currentUser.idPicturePath != null && !kIsWeb) {
+      if (_currentUser.idPicturePath != null) {
         final idFile = await http.MultipartFile.fromPath(
           'id_picture',
           _currentUser.idPicturePath!,
@@ -183,6 +192,59 @@ class UserService {
         SnackBar(content: Text('Network error: $e')),
       );
       return false;
+    }
+  }
+
+  String? getId() {
+    return _currentUser.id;
+  }
+
+  Future<Map<String, dynamic>> fetchStudentProfile(String? studentId) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${EnvConfig.apiUrl}/api/studentprofile/'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({
+          "studentId": int.parse(studentId!),
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        final Map<String, dynamic> profileData = responseData["data"];
+        if (profileData.containsKey('name'))
+          updateUserInfo(name: profileData['name']);
+        if (profileData.containsKey('university'))
+          updateUserInfo(university: profileData['university']);
+        if (profileData.containsKey('major'))
+          updateUserInfo(major: profileData['major']);
+        if (profileData.containsKey('learning_styles')) {
+          var styles = profileData['learning_styles'];
+          if (styles is List) {
+            // Convert list to comma-separated string
+            String stylesString =
+                styles.map((item) => item.toString()).join(',');
+            updateUserInfo(learningStyles: stylesString);
+          } else if (styles is String) {
+            // Use the string directly
+            updateUserInfo(learningStyles: styles);
+          } else {
+            // Handle any other type by converting to string
+            updateUserInfo(learningStyles: styles.toString());
+          }
+          if (profileData.containsKey('profile_picture')) {
+            // The profile picture is already a base64 string, so we can use it directly
+            updateUserInfo(profilePicturePath: profileData['profile_picture']);
+          }
+        }
+        return profileData;
+      } else {
+        final Map<String, dynamic> errorData = jsonDecode(response.body);
+        throw Exception(errorData["error"] ?? "Failed to load profile data");
+      }
+    } catch (e) {
+      print('Error fetching student profile: $e');
+      throw Exception('Failed to load profile data: $e');
     }
   }
 }

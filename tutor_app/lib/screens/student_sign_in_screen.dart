@@ -14,8 +14,6 @@ class _StudentSignInState extends State<StudentSignIn> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _universityController = TextEditingController();
   final TextEditingController _majorController = TextEditingController();
-  final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
   final UserService _userService = UserService();
 
@@ -94,7 +92,7 @@ class _StudentSignInState extends State<StudentSignIn> {
               const SizedBox(height: 16),
               TextField(
                 controller: _phoneNumberController,
-                keyboardType: TextInputType.phone,
+                keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   hintText: 'Phone Number',
                   contentPadding: const EdgeInsets.symmetric(
@@ -168,12 +166,10 @@ class _StudentSignInState extends State<StudentSignIn> {
                   onPressed: () {
                     _userService.updateUserInfo(
                       name: _nameController.text,
-                      email: _emailController.text,
                       phoneNumber: _phoneNumberController.text,
                       university: _universityController.text,
                       major: _majorController.text,
                       isStudent: "true",
-                      password: _passwordController.text,
                     );
                     Navigator.pushAndRemoveUntil(
                       context,
@@ -211,10 +207,8 @@ class _StudentSignInState extends State<StudentSignIn> {
   @override
   void dispose() {
     _nameController.dispose();
-    _emailController.dispose();
     _universityController.dispose();
     _majorController.dispose();
-    _passwordController.dispose();
     _phoneNumberController.dispose();
     super.dispose();
   }

@@ -1,8 +1,5 @@
-// lib/screens/profile_picture_screen.dart
-
 import 'package:flutter/material.dart';
 import 'dart:io';
-import 'dart:typed_data';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:http/http.dart' as http;
@@ -21,7 +18,6 @@ class ProfilePictureScreen extends StatefulWidget {
 
 class _ProfilePictureScreenState extends State<ProfilePictureScreen> {
   XFile? _pickedFile;
-  Uint8List? _webImage;
   final ImagePicker _picker = ImagePicker();
   final UserService _userService = UserService();
   bool _isUploading = false;
