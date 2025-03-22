@@ -3,6 +3,8 @@ import 'package:geolocator/geolocator.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import '../utils/env_config.dart';
+
 class ConnectStudentsScreen extends StatefulWidget {
   const ConnectStudentsScreen({super.key});
 
@@ -93,7 +95,8 @@ class _ConnectStudentsScreenState extends State<ConnectStudentsScreen> {
   }
 
   Future<void> _sendNotification() async {
-    const String apiUrl = "http://192.168.1.8:8000/api/send-notification/";
+    String apiUrl = '${EnvConfig.apiUrl}/api/send-notification/';
+    //const String apiUrl = "http://192.168.1.8:8000/api/send-notification/";
 
     final Map<String, dynamic> notificationData = {
       "title": _titleController.text,

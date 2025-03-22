@@ -3,6 +3,8 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 
+import '../utils/env_config.dart';
+
 class WriteReviewScreen extends StatefulWidget {
   final int tutorId;
 
@@ -26,7 +28,8 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
   Future<Map<String, dynamic>> fetchTutorProfile(int tutorId) async {
     try {
       final response = await http.post(
-        Uri.parse("http://192.168.1.8:8000/api/tutorprofile/?tutorId=$tutorId"),
+        Uri.parse('${EnvConfig.apiUrl}/api/tutorprofile/?tutorId=$tutorId'),
+        //Uri.parse("http://192.168.1.8:8000/api/tutorprofile/?tutorId=$tutorId"),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"tutorId": tutorId}),
       );

@@ -2,7 +2,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:tutor_app/screens/connect_students_screen.dart';
-
+import '../utils/env_config.dart';
 import 'tutor_reviews.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -22,7 +22,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<List<dynamic>> fetchTutors() async {
-    final response = await http.get(Uri.parse("http://192.168.1.8:8000/api/tutors/"));
+    final response = await http.get(Uri.parse('${EnvConfig.apiUrl}/api/tutors/'));
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body)["tutors"];
@@ -37,7 +37,11 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         title: Text(
           "TutorApp",
-          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600, color: Color(0xFF192650)),
+          style: TextStyle(
+            fontSize: 24,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF192650),
+          ),
         ),
         backgroundColor: Colors.white,
         elevation: 0,
@@ -52,7 +56,7 @@ class _HomeScreenState extends State<HomeScreen> {
             },
           ),
           IconButton(
-            icon: Icon(Icons.filter_list, color: Color(0xFF192650)), // Ícono de filtro agregado
+            icon: Icon(Icons.filter_list, color: Color(0xFF192650)),
             onPressed: () {
               // Implementar funcionalidad de filtrado aquí
             },
@@ -74,12 +78,19 @@ class _HomeScreenState extends State<HomeScreen> {
             return Center(child: Text("No hay tutores disponibles"));
           }
 
-          final tutors = snapshot.data!;
+          // Crear una copia mutable de la lista y ordenarla por "average_rating"
+          final tutorsList = List<dynamic>.from(snapshot.data!);
+          tutorsList.sort((a, b) {
+            double ratingA = double.tryParse(a["average_rating"]?.toString() ?? "0.0") ?? 0.0;
+            double ratingB = double.tryParse(b["average_rating"]?.toString() ?? "0.0") ?? 0.0;
+            return ratingB.compareTo(ratingA); // De mayor a menor
+          });
 
           return ListView.builder(
-            itemCount: tutors.length,
+            itemCount: tutorsList.length,
             itemBuilder: (context, index) {
-              final tutor = tutors[index];
+              final tutor = tutorsList[index];
+              // Convertir el rating a double (aunque no se use en UI, es útil para debug)
               double rating = double.tryParse(tutor["average_rating"]?.toString() ?? "0.0") ?? 0.0;
 
               return Padding(
@@ -126,7 +137,6 @@ class _HomeScreenState extends State<HomeScreen> {
                             style: TextStyle(color: Colors.grey[600]),
                           ),
                         ),
-                        
                         Divider(),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
@@ -145,7 +155,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         Align(
                           alignment: Alignment.bottomRight,
                           child: ElevatedButton.icon(
-                            onPressed: () {},
+                            onPressed: () {
+                              // Lógica para reservar el tutor o curso
+                              print("Reservar tutor: ${tutor["name"]}");
+                            },
                             icon: Icon(Icons.book_online, size: 18),
                             label: Text('Book'),
                             style: ElevatedButton.styleFrom(

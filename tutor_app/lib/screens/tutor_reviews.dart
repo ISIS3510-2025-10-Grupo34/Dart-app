@@ -5,6 +5,8 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:tutor_app/screens/write_review_screen.dart';
 
+import '../utils/env_config.dart';
+
 class TutorProfile extends StatefulWidget {
   final int tutorId;
 
@@ -26,7 +28,7 @@ class _TutorProfileScreenState extends State<TutorProfile> {
   Future<Map<String, dynamic>> fetchTutorProfile(int tutorId) async {
     try {
       final response = await http.post(
-        Uri.parse("http://192.168.1.8:8000/api/tutorprofile/"),
+        Uri.parse('${EnvConfig.apiUrl}/api/tutorprofile/'),
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({"tutorId": tutorId}),
       );
