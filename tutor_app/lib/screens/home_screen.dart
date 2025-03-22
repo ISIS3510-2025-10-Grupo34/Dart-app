@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:tutor_app/screens/connect_students_screen.dart';
 
+import '../utils/env_config.dart';
 import 'tutor_reviews.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -22,7 +23,8 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Future<List<dynamic>> fetchTutors() async {
-    final response = await http.get(Uri.parse("http://192.168.1.8:8000/api/tutors/"));
+    final response = await http.get(Uri.parse('${EnvConfig.apiUrl}/api/tutors/'));
+    //final response = await http.get(Uri.parse("http://192.168.1.8:8000/api/tutors/"));
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body)["tutors"];
