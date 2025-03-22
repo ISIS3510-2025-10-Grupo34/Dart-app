@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/user_service.dart';
+import 'student_profile_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,29 +17,6 @@ class _LoginScreenState extends State<LoginScreen> {
   bool _isLoading = false;
   String? _errorMessage;
   bool _obscurePassword = true;
-
-  Future<void> _login() async {
-    setState(() {
-      _isLoading = true;
-      _errorMessage = null;
-    });
-
-    try {
-      final success = await _userService.loginUser(
-          _emailController.text, _passwordController.text, context);
-
-      if (!success) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    } catch (e) {
-      setState(() {
-        _isLoading = false;
-        _errorMessage = 'An unexpected error occurred';
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -158,10 +136,46 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
               // Login Button
+              // Login Button
               SizedBox(
+                width: double.infinity,
                 height: 56,
                 child: ElevatedButton(
-                  onPressed: _isLoading ? null : _login,
+                  onPressed: _isLoading
+                      ? null
+                      : () async {
+                          setState(() {
+                            _isLoading = true;
+                            _errorMessage = null;
+                          });
+
+                          try {
+                            // Call the login function to authenticate
+                            final success = await _userService.loginUser(
+                                _emailController.text,
+                                _passwordController.text,
+                                context);
+
+                            if (success) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) =>
+                                      const StudentProfileScreen(),
+                                ),
+                              );
+                            } else {
+                              setState(() {
+                                _isLoading = false;
+                              });
+                            }
+                          } catch (e) {
+                            setState(() {
+                              _isLoading = false;
+                              _errorMessage = 'An unexpected error occurred';
+                            });
+                          }
+                        },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF171F45),
                     foregroundColor: Colors.white,
