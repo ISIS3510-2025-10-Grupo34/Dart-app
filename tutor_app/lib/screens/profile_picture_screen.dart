@@ -21,7 +21,6 @@ class ProfilePictureScreen extends StatefulWidget {
 
 class _ProfilePictureScreenState extends State<ProfilePictureScreen> {
   XFile? _pickedFile;
-  Uint8List? _webImage;
   final ImagePicker _picker = ImagePicker();
   final UserService _userService = UserService();
   bool _isUploading = false;

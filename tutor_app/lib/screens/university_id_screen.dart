@@ -107,17 +107,9 @@ class _UniversityIDScreenState extends State<UniversityIDScreen> {
     });
 
     try {
-      // Save ID picture path
-      if (!kIsWeb) {
-        _userService.updateUserInfo(
-          idPicturePath: _idPickedFile!.path,
-        );
-      } else {
-        // For web, you might need to implement a different storage solution
-        _userService.updateUserInfo(
-          idPicturePath: _idPickedFile!.name,
-        );
-      }
+      _userService.updateUserInfo(
+        idPicturePath: _idPickedFile!.path,
+      );
 
       // Register user with API
       final success = await _userService.registerUser(context);
