@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'tutor_estimate_price_screen.dart';
 
 class AddCourseScreen extends StatefulWidget {
+  final String? initialPrice; // Recibe el valor inicial
+
+  const AddCourseScreen({super.key, this.initialPrice});
+
   @override
   _AddCourseScreenState createState() => _AddCourseScreenState();
 }
@@ -22,6 +27,12 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
   @override
   void initState() {
     super.initState();
+
+    // Si se recibe un valor inicial, lo mostramos directamente en el campo de precio
+    if (widget.initialPrice != null) {
+      _priceController.text = widget.initialPrice!;
+    }
+
     _filteredUniversities = _universities;
   }
 
@@ -33,27 +44,68 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
     });
   }
 
+  // Función para navegar a la pantalla de estimación y recibir el valor
+  Future<void> _navigateAndGetPrice() async {
+    final result = await Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const TutorEstimatePriceScreen(),
+      ),
+    );
+
+    if (result != null) {
+      setState(() {
+        _priceController.text = result; // Mostrar el valor retornado
+      });
+    }
+  }
+
+  void _saveCourse() {
+    String university = _universityController.text;
+    String course = _courseController.text;
+    String price = _priceController.text;
+
+    if (university.isEmpty || course.isEmpty || price.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("All fields are required!"),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text("Course '$course' at '$university' saved with price: $price COP"),
+        backgroundColor: Colors.green,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('TutorApp', style: TextStyle(fontWeight: FontWeight.bold)),
-        backgroundColor: Colors.white,
+        title: Text("TutorApp",style: TextStyle( fontSize: 24,fontWeight: FontWeight.w500,)),
+        backgroundColor:  Color(0xFFFFFFFF),
         elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.black),
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Título principal
             Text(
               "¡Add a new course!",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blue.shade900),
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color:  Color(0xFF192650)),
             ),
-            SizedBox(height: 20),
-            
+            const SizedBox(height: 20),
+
             // Campo de Universidad con Autocompletado
-            Text("University"),
+            const Text("University"),
             TextField(
               controller: _universityController,
               onChanged: _filterUniversities,
@@ -61,7 +113,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                 hintText: "Enter university",
                 suffixIcon: _universityController.text.isNotEmpty
                     ? IconButton(
-                        icon: Icon(Icons.clear),
+                        icon: const Icon(Icons.clear),
                         onPressed: () {
                           setState(() {
                             _universityController.clear();
@@ -73,7 +125,7 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
               ),
             ),
             if (_universityController.text.isNotEmpty)
-              Container(
+              SizedBox(
                 height: 100,
                 child: ListView(
                   children: _filteredUniversities.map((uni) {
@@ -89,49 +141,62 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
                   }).toList(),
                 ),
               ),
-            
-            SizedBox(height: 15),
+            const SizedBox(height: 15),
 
             // Campo de Curso
-            Text("Course name or code"),
+            const Text("Course name or code"),
             TextField(
               controller: _courseController,
-              decoration: InputDecoration(hintText: "Enter course name"),
+              decoration: const InputDecoration(
+                hintText: "Enter course name",
+              ),
             ),
-            
-            SizedBox(height: 15),
+            const SizedBox(height: 15),
 
             // Campo de Precio
-            Text("Price"),
+            const Text("Price"),
             TextField(
               controller: _priceController,
               keyboardType: TextInputType.number,
-              decoration: InputDecoration(hintText: "Set the price"),
+              decoration: const InputDecoration(
+                hintText: "Set the price",
+              ),
             ),
+            const SizedBox(height: 10),
 
-            SizedBox(height: 10),
-            Text(
+            // Nota sobre el estimador de precio
+            const Text(
               "Hint: Tutors that use our price estimator increased their students in 20%.",
               style: TextStyle(color: Colors.grey),
             ),
+            const SizedBox(height: 10),
 
-            SizedBox(height: 10),
+            // Botón para abrir la pantalla de estimación
             ElevatedButton(
-              onPressed: () {
-                // Implementar funcionalidad del estimador de precios
-              },
+              onPressed: _navigateAndGetPrice,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Color(0xFF192650), // ✅ Mantener el color personalizado
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(30),
+                ),
+              ),
               child: Text("Use the estimator"),
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.shade900),
             ),
+            const SizedBox(height: 20),
 
-            SizedBox(height: 20),
+            // Botón para guardar el curso
             Center(
               child: ElevatedButton(
-                onPressed: () {
-                  // Implementar acción de guardar curso
-                },
+                onPressed: _saveCourse,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Color(0xFF192650), // ✅ Mantener el color personalizado
+                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(30),
+                  ),
+                ),
                 child: Text("Save"),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.blue.shade900),
               ),
             ),
           ],
