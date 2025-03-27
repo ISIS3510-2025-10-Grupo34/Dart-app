@@ -1,21 +1,19 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
-import 'package:tutor_app/screens/add_course_screen.dart';
-import 'package:tutor_app/screens/connect_students_screen.dart';
-import '../services/user_service.dart';
 import '../utils/env_config.dart';
+import '../services/user_service.dart';
 import 'tutor_reviews.dart';
+import 'student_profile_screen.dart'; // Importar la pantalla de perfil del estudiante
 
-//Home Screen Tutor
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+class HomeScreenStudent extends StatefulWidget {
+  const HomeScreenStudent({super.key});
 
   @override
-  _HomeScreenState createState() => _HomeScreenState();
+  _HomeScreenStudentState createState() => _HomeScreenStudentState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenStudentState extends State<HomeScreenStudent> {
   late Future<List<dynamic>> _tutors;
   final UserService _userService = UserService();
 
@@ -35,18 +33,18 @@ class _HomeScreenState extends State<HomeScreen> {
     }
   }
 
-  void _navigateToTutorProfile() {
-    final tutorId = _userService.getId();
-    if (tutorId != null) {
+  void _navigateToStudentProfile() async {
+    String? studentId = _userService.getId();
+    if (studentId != null) {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => TutorProfile(tutorId: int.parse(tutorId)),
+          builder: (context) => const StudentProfileScreen(),
         ),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text("Error: No se encontró el perfil del tutor.")),
+        const SnackBar(content: Text("Error: No se encontró el perfil del estudiante.")),
       );
     }
   }
@@ -67,26 +65,14 @@ class _HomeScreenState extends State<HomeScreen> {
         elevation: 0,
         actions: [
           IconButton(
-            icon: const Icon(Icons.notifications, color: Color(0xFF192650)),
+            icon: const Icon(Icons.filter_list, color: Color(0xFF192650)),
             onPressed: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => ConnectStudentsScreen()),
-              );
-            },
-          ),
-          IconButton(
-            icon: const Icon(Icons.add, color: Color(0xFF192650)),
-            onPressed: () {
-               Navigator.push(
-                context,
-                MaterialPageRoute(builder: (context) => AddCourseScreen()),
-              );
+              // Implementar funcionalidad de filtrado aquí
             },
           ),
           IconButton(
             icon: const Icon(Icons.person, color: Color(0xFF192650)),
-            onPressed: _navigateToTutorProfile,
+            onPressed: _navigateToStudentProfile,
           ),
         ],
       ),
@@ -169,6 +155,22 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                               const SizedBox(height: 6),
                             ],
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        Align(
+                          alignment: Alignment.bottomRight,
+                          child: ElevatedButton.icon(
+                            onPressed: () {
+                              // Lógica para reservar el tutor o curso
+                              print("Reservar tutor: ${tutor["name"]}");
+                            },
+                            icon: const Icon(Icons.book_online, size: 18),
+                            label: const Text('Book'),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF192650),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                            ),
                           ),
                         ),
                       ],
