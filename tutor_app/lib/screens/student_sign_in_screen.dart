@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
+import 'home_screen_student.dart';
 import 'student_learning_styles_screen.dart';
 import '../services/user_service.dart';
 
@@ -32,7 +32,7 @@ class _StudentSignInState extends State<StudentSignIn> {
                 onTap: () {
                   // Navigate to home screen when TutorApp text is tapped
                   Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                    MaterialPageRoute(builder: (context) => const HomeScreenStudent()),
                     (route) => false,
                   );
                 },
