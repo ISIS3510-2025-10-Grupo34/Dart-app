@@ -20,6 +20,7 @@ class TutorApp extends StatelessWidget {
       title: 'TutorApp',
       theme: ThemeData(
         primarySwatch: Colors.blue,
+        scaffoldBackgroundColor: Colors.white,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
       home: const WelcomeScreen(),

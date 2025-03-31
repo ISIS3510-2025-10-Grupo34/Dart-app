@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
 import '../services/user_service.dart';
-import 'home_screen.dart';
+import 'login_screen.dart';
 
 class UniversityIDScreen extends StatefulWidget {
   const UniversityIDScreen({super.key});
@@ -115,10 +115,9 @@ class _UniversityIDScreenState extends State<UniversityIDScreen> {
       final success = await _userService.registerUser(context);
 
       if (success) {
-        // Navigate to home screen on success
         Navigator.pushAndRemoveUntil(
           context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
           (route) => false,
         );
       }
