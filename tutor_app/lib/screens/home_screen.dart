@@ -137,16 +137,10 @@ class _HomeScreenState extends State<HomeScreen> {
                             child: CircleAvatar(
                               radius: 30,
                               backgroundColor: const Color(0xFF192650),
-                              backgroundImage: tutor["profile_picture"].isNotEmpty
-                                  ? MemoryImage(base64Decode(tutor["profile_picture"]))
-                                  : null,
-                              child: tutor["profile_picture"].isEmpty
-                                  ? Text(
-                                      tutor["name"][0],
-                                      style: const TextStyle(color: Colors.white, fontSize: 20),
-                                    )
-                                  : null,
-                            ),
+                              child: Text(
+                                tutor["name"][0],
+                                style: const TextStyle(color: Colors.white, fontSize: 20),
+                            ),),
                           ),
                           title: Text(
                             tutor["name"],

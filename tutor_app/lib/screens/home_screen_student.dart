@@ -4,27 +4,36 @@ import 'package:http/http.dart' as http;
 import '../utils/env_config.dart';
 import '../services/user_service.dart';
 import 'tutor_reviews.dart';
-import 'student_profile_screen.dart'; // Importar la pantalla de perfil del estudiante
+import 'student_profile_screen.dart';
+import 'write_review_screen.dart';
 
 class HomeScreenStudent extends StatefulWidget {
   const HomeScreenStudent({super.key});
-
+  
   @override
   _HomeScreenStudentState createState() => _HomeScreenStudentState();
 }
 
 class _HomeScreenStudentState extends State<HomeScreenStudent> {
-  late Future<List<dynamic>> _tutors;
+  late final Future<List<dynamic>> _tutors;
   final UserService _userService = UserService();
+  final Stopwatch _loadTimer = Stopwatch();
+  late DateTime _homeOpenedAt;
 
   @override
   void initState() {
     super.initState();
+    _homeOpenedAt = DateTime.now();
     _tutors = fetchTutors();
   }
 
   Future<List<dynamic>> fetchTutors() async {
+    _loadTimer.start();
+
     final response = await http.get(Uri.parse('${EnvConfig.apiUrl}/api/tutors/'));
+
+    _loadTimer.stop();
+    _reportLoadTime(_loadTimer.elapsedMilliseconds);
 
     if (response.statusCode == 200) {
       return jsonDecode(response.body)["tutors"];
@@ -33,18 +42,109 @@ class _HomeScreenStudentState extends State<HomeScreenStudent> {
     }
   }
 
+  void _reportLoadTime(int ms) async {
+    final studentId = await _userService.getId();
+    if (studentId == null) return;
+
+    final log = {
+      "student_id": studentId,
+      "load_time_ms": ms,
+      "timestamp": DateTime.now().toIso8601String(),
+    };
+
+    try {
+      await http.post(
+        Uri.parse('${EnvConfig.apiUrl}/api/analytics/load-time'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(log),
+      );
+    } catch (e) {
+      debugPrint("❌ Excepción al reportar load time: $e");
+    }
+  }
+
+  void _reportBookingTime(String tutorIdStr) async {
+    final studentId = await _userService.getId();
+    if (studentId == null) return;
+
+    final tutorId = int.tryParse(tutorIdStr);
+    if (tutorId == null) return;
+
+    final duration = DateTime.now().difference(_homeOpenedAt);
+
+    final log = {
+      "student_id": studentId,
+      "tutor_id": tutorId,
+      "time_to_book_ms": duration.inMilliseconds,
+      "timestamp": DateTime.now().toIso8601String(),
+    };
+
+    try {
+      await http.post(
+        Uri.parse('${EnvConfig.apiUrl}/api/analytics/booking-time'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(log),
+      );
+    } catch (e) {
+      debugPrint("❌ Excepción al reportar booking time: $e");
+    }
+  }
+
   void _navigateToStudentProfile() async {
-    String? studentId = _userService.getId();
+    final studentId = await _userService.getId();
+
     if (studentId != null) {
       Navigator.push(
         context,
-        MaterialPageRoute(
-          builder: (context) => const StudentProfileScreen(),
-        ),
+        MaterialPageRoute(builder: (context) => const StudentProfileScreen()),
       );
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Error: No se encontró el perfil del estudiante.")),
+      );
+    }
+  }
+
+  void _bookSessionAndNavigate(String tutorIdStr) async {
+    final studentId = await _userService.getId();
+    if (studentId == null) return;
+
+    final tutorId = int.tryParse(tutorIdStr);
+    if (tutorId == null) {
+      debugPrint("❌ tutorId no es válido: $tutorIdStr");
+      return;
+    }
+
+    final now = DateTime.now().toUtc();
+
+    final body = {
+      "tutor_id": tutorId,
+      "student_id": studentId,
+      "course_id": 1,
+      "cost": 200.0,
+      "date_time": now.toIso8601String(),
+    };
+
+    try {
+      final response = await http.post(
+        Uri.parse('${EnvConfig.apiUrl}/api/create-tutoring-session/'),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(body),
+      );
+
+      if (response.statusCode == 200) {
+        final sessionId = jsonDecode(response.body)["session_id"];
+        debugPrint("✅ Sesión creada con ID: $sessionId");
+      } else {
+        debugPrint("⚠️ Error al crear sesión: ${response.body}");
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Error al reservar la sesión.")),
+        );
+      }
+    } catch (e) {
+      debugPrint("❌ Excepción al reservar: $e");
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Error al conectar con el servidor.")),
       );
     }
   }
@@ -65,12 +165,12 @@ class _HomeScreenStudentState extends State<HomeScreenStudent> {
         elevation: 0,
         actions: [
           IconButton(
+            tooltip: "Filtrar",
             icon: const Icon(Icons.filter_list, color: Color(0xFF192650)),
-            onPressed: () {
-              // Implementar funcionalidad de filtrado aquí
-            },
+            onPressed: () {},
           ),
           IconButton(
+            tooltip: "Perfil",
             icon: const Icon(Icons.person, color: Color(0xFF192650)),
             onPressed: _navigateToStudentProfile,
           ),
@@ -91,7 +191,7 @@ class _HomeScreenStudentState extends State<HomeScreenStudent> {
           tutorsList.sort((a, b) {
             double ratingA = double.tryParse(a["average_rating"]?.toString() ?? "0.0") ?? 0.0;
             double ratingB = double.tryParse(b["average_rating"]?.toString() ?? "0.0") ?? 0.0;
-            return ratingB.compareTo(ratingA); // Ordenar de mayor a menor
+            return ratingB.compareTo(ratingA);
           });
 
           return ListView.builder(
@@ -102,7 +202,6 @@ class _HomeScreenStudentState extends State<HomeScreenStudent> {
               return Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 6.0),
                 child: Card(
-                  color: Colors.white,
                   elevation: 4,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                   child: Padding(
@@ -123,15 +222,10 @@ class _HomeScreenStudentState extends State<HomeScreenStudent> {
                             child: CircleAvatar(
                               radius: 30,
                               backgroundColor: const Color(0xFF192650),
-                              backgroundImage: tutor["profile_picture"].isNotEmpty
-                                  ? MemoryImage(base64Decode(tutor["profile_picture"]))
-                                  : null,
-                              child: tutor["profile_picture"].isEmpty
-                                  ? Text(
-                                      tutor["name"][0],
-                                      style: const TextStyle(color: Colors.white, fontSize: 20),
-                                    )
-                                  : null,
+                              child: Text(
+                                tutor["name"][0],
+                                style: const TextStyle(color: Colors.white, fontSize: 20),
+                              ),
                             ),
                           ),
                           title: Text(
@@ -146,15 +240,9 @@ class _HomeScreenStudentState extends State<HomeScreenStudent> {
                         const Divider(),
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 12.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Subjects: ${tutor["subjects"].join(", ")}",
-                                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                              ),
-                              const SizedBox(height: 6),
-                            ],
+                          child: Text(
+                            "Subjects: ${tutor["subjects"].join(", ")}",
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                           ),
                         ),
                         const SizedBox(height: 10),
@@ -162,8 +250,8 @@ class _HomeScreenStudentState extends State<HomeScreenStudent> {
                           alignment: Alignment.bottomRight,
                           child: ElevatedButton.icon(
                             onPressed: () {
-                              // Lógica para reservar el tutor o curso
-                              print("Reservar tutor: ${tutor["name"]}");
+                              _reportBookingTime(tutor["id"].toString());
+                              _bookSessionAndNavigate(tutor["id"].toString());
                             },
                             icon: const Icon(Icons.book_online, size: 18),
                             label: const Text('Book'),

@@ -4,7 +4,6 @@ import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:http/http.dart' as http;
 import 'package:tutor_app/screens/write_review_screen.dart';
-
 import '../utils/env_config.dart';
 
 class TutorProfile extends StatefulWidget {
@@ -44,6 +43,25 @@ class _TutorProfileScreenState extends State<TutorProfile> {
     }
   }
 
+  Future<int?> fetchUserSessionWithTutor(int tutorId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${EnvConfig.apiUrl}/api/student-session-with-tutor/$tutorId/'),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['session_id']; // Debe venir así del backend
+      } else {
+        print("No session found: ${response.body}");
+        return null;
+      }
+    } catch (e) {
+      print("Error getting session: $e");
+      return null;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -79,9 +97,7 @@ class _TutorProfileScreenState extends State<TutorProfile> {
                     children: [
                       CircleAvatar(
                         radius: 40,
-                        backgroundImage: (profilePicture.isNotEmpty)
-                            ? NetworkImage(profilePicture)
-                            : null,
+                        backgroundImage: (profilePicture.isNotEmpty) ? NetworkImage(profilePicture) : null,
                         backgroundColor: const Color(0xFF192650),
                         child: profilePicture.isEmpty
                             ? Text(
@@ -91,14 +107,10 @@ class _TutorProfileScreenState extends State<TutorProfile> {
                             : null,
                       ),
                       const SizedBox(height: 10),
-                      Text(
-                        tutor["name"] ?? "Sin nombre",
-                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        tutor["university"] ?? "Universidad no especificada",
-                        style: const TextStyle(fontSize: 14, color: Colors.grey),
-                      ),
+                      Text(tutor["name"] ?? "Sin nombre",
+                          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                      Text(tutor["university"] ?? "Universidad no especificada",
+                          style: const TextStyle(fontSize: 14, color: Colors.grey)),
                       const SizedBox(height: 8),
                       RatingBarIndicator(
                         rating: ratings,
@@ -114,18 +126,11 @@ class _TutorProfileScreenState extends State<TutorProfile> {
                   children: [
                     const Icon(FontAwesomeIcons.whatsapp, color: Color(0xFF192650)),
                     const SizedBox(width: 10),
-                    Text(
-                      tutor["whatsapp_contact"] ?? "No disponible",
-                      style: const TextStyle(fontSize: 16),
-                    ),
+                    Text(tutor["whatsapp_contact"] ?? "No disponible", style: const TextStyle(fontSize: 16)),
                   ],
                 ),
                 const SizedBox(height: 20),
-
-                const Text(
-                "Subjects:",
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
+                const Text("Subjects:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 8),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -139,22 +144,20 @@ class _TutorProfileScreenState extends State<TutorProfile> {
                           Text(subject, style: const TextStyle(fontSize: 16)),
                         ],
                       ),
-                  );
-                }).toList(),
-              ),
+                    );
+                  }).toList(),
+                ),
                 const SizedBox(height: 20),
                 const Text("Reviews:", style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
                 Flexible(
                   child: ListView.builder(
                     shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(), // Evita que interfiera con el scroll principal
+                    physics: const NeverScrollableScrollPhysics(),
                     itemCount: reviews.length,
                     itemBuilder: (context, index) {
                       final review = reviews[index];
                       return ListTile(
-                        leading: const CircleAvatar(
-                          backgroundColor: Color(0xFF192650),
-                        ),
+                        leading: const CircleAvatar(backgroundColor: Color(0xFF192650)),
                         title: RatingBarIndicator(
                           rating: (review["rating"] as num?)?.toDouble() ?? 0.0,
                           itemBuilder: (context, index) => const Icon(Icons.star, color: Color(0xFF192650)),
@@ -169,7 +172,7 @@ class _TutorProfileScreenState extends State<TutorProfile> {
                 const SizedBox(height: 20),
                 Center(
                   child: ElevatedButton(
-                    onPressed: () {
+                    onPressed: () async {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -188,7 +191,6 @@ class _TutorProfileScreenState extends State<TutorProfile> {
                   ),
                 ),
               ],
-
             ),
           );
         },

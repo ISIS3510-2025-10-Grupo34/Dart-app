@@ -13,6 +13,7 @@ class User {
   String? profilePicturePath;
   String? idPicturePath;
   String? password;
+  String? role;
 
   User({
     this.id,
@@ -29,6 +30,7 @@ class User {
     this.profilePicturePath,
     this.idPicturePath,
     this.password,
+    this.role,
   });
 
   Map<String, dynamic> toJson() {
@@ -44,6 +46,7 @@ class User {
       'is_tutor': isTutor,
       'learning_styles': learningStyles,
       'password': password,
+      'role': role,
     };
   }
 

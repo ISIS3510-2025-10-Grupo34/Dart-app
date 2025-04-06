@@ -12,10 +12,21 @@ class StudentSignIn extends StatefulWidget {
 
 class _StudentSignInState extends State<StudentSignIn> {
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _universityController = TextEditingController();
   final TextEditingController _majorController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
   final UserService _userService = UserService();
+
+  final List<String> _universities = [
+    'Universidad de los Andes',
+    'Universidad Nacional de Colombia',
+    'Pontificia Universidad Javeriana',
+    'Universidad del Rosario',
+    'Universidad Distrital Francisco José de Caldas',
+    'Universidad de la Sabana',
+    'Universidad de Bogotá Jorge Tadeo Lozano',
+  ];
+
+  String? _selectedUniversity;
 
   @override
   Widget build(BuildContext context) {
@@ -30,7 +41,6 @@ class _StudentSignInState extends State<StudentSignIn> {
               const SizedBox(height: 20),
               GestureDetector(
                 onTap: () {
-                  // Navigate to home screen when TutorApp text is tapped
                   Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (context) => const HomeScreenStudent()),
                     (route) => false,
@@ -114,27 +124,31 @@ class _StudentSignInState extends State<StudentSignIn> {
                 ),
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: _universityController,
+              DropdownButtonFormField<String>(
+                value: _selectedUniversity,
                 decoration: InputDecoration(
                   hintText: 'University',
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: Colors.grey.shade300,
-                    ),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: Colors.grey.shade300,
-                    ),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
                 ),
+                items: _universities.map((String university) {
+                  return DropdownMenuItem<String>(
+                    value: university,
+                    child: Text(university),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedUniversity = newValue;
+                  });
+                },
               ),
               const SizedBox(height: 16),
               TextField(
@@ -167,7 +181,7 @@ class _StudentSignInState extends State<StudentSignIn> {
                     _userService.updateUserInfo(
                       name: _nameController.text,
                       phoneNumber: _phoneNumberController.text,
-                      university: _universityController.text,
+                      university: _selectedUniversity ?? '',
                       major: _majorController.text,
                       isStudent: "true",
                     );
@@ -176,7 +190,7 @@ class _StudentSignInState extends State<StudentSignIn> {
                       MaterialPageRoute(
                           builder: (context) =>
                               const StudentLearningStylesScreen()),
-                      (route) => false, // Remove all previous routes
+                      (route) => false,
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -207,7 +221,6 @@ class _StudentSignInState extends State<StudentSignIn> {
   @override
   void dispose() {
     _nameController.dispose();
-    _universityController.dispose();
     _majorController.dispose();
     _phoneNumberController.dispose();
     super.dispose();

@@ -25,13 +25,13 @@ class UserService {
     String? university,
     String? major,
     String? areaOfExpertise,
-    String? isAdmin,
     String? isStudent,
     String? isTutor,
     String? learningStyles,
     String? profilePicturePath,
     String? idPicturePath,
     String? password,
+    String? role,
   }) {
     if (id != null) _currentUser.id = id;
     if (name != null) _currentUser.name = name;
@@ -40,13 +40,12 @@ class UserService {
     if (university != null) _currentUser.university = university;
     if (major != null) _currentUser.major = major;
     if (areaOfExpertise != null) _currentUser.areaOfExpertise = areaOfExpertise;
-    if (isAdmin != null) _currentUser.isAdmin = isAdmin;
-    if (isStudent != null) _currentUser.isStudent = isStudent;
-    if (isTutor != null) _currentUser.isTutor = isTutor;
     if (learningStyles != null) _currentUser.learningStyles = learningStyles;
     if (profilePicturePath != null) _currentUser.profilePicturePath = profilePicturePath;
     if (idPicturePath != null) _currentUser.idPicturePath = idPicturePath;
     if (password != null) _currentUser.password = password;
+    if (isStudent == "true") _currentUser.role = "student";
+    if (isTutor == "true") _currentUser.role = "tutor";
   }
 
   Future<void> storeToken(String token) async {
@@ -77,7 +76,7 @@ class UserService {
         body: jsonEncode({"email": email, "password": password}),
       );
 
-      print("Login response: ${response.body}"); // Debugging
+      print("Login response: ${response.body}");
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> data = jsonDecode(response.body);
@@ -112,11 +111,9 @@ class UserService {
         'university': _currentUser.university ?? '',
         'major': _currentUser.major ?? '',
         'area_of_expertise': _currentUser.areaOfExpertise ?? '',
-        'is_admin': _currentUser.isAdmin,
-        'is_student': _currentUser.isStudent,
-        'is_tutor': _currentUser.isTutor,
         'learning_styles': _currentUser.learningStyles ?? '',
         'password': _currentUser.password ?? '',
+        'role': _currentUser.role ?? 'student', 
       });
 
       if (_currentUser.profilePicturePath != null) {
@@ -136,7 +133,7 @@ class UserService {
       final streamedResponse = await request.send();
       final response = await http.Response.fromStream(streamedResponse);
 
-      print("Register response: ${response.body}"); // Debugging
+      print("Register response: ${response.body}");
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         return true;
@@ -171,7 +168,7 @@ class UserService {
         body: jsonEncode({"studentId": int.tryParse(studentId) ?? 0}),
       );
 
-      print("Profile response: ${response.body}"); // Debugging
+      print("Profile response: ${response.body}");
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
@@ -196,4 +193,12 @@ class UserService {
       throw Exception('Failed to load profile data: $e');
     }
   }
+  Future<String?> getToken() async {
+  try {
+    return await storage.read(key: 'auth_token');
+  } catch (e) {
+    print("Error reading token: $e");
+    return null;
+  }
+}
 }

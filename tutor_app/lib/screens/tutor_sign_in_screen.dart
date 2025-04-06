@@ -12,11 +12,21 @@ class TutorSignIn extends StatefulWidget {
 
 class _TutorSignInState extends State<TutorSignIn> {
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _universityController = TextEditingController();
-  final TextEditingController _areaOfExpertiseController =
-      TextEditingController();
+  final TextEditingController _areaOfExpertiseController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
   final UserService _userService = UserService();
+
+  final List<String> _universities = [
+    'Universidad de los Andes',
+    'Universidad Nacional de Colombia',
+    'Pontificia Universidad Javeriana',
+    'Universidad del Rosario',
+    'Universidad Distrital Francisco José de Caldas',
+    'Universidad de la Sabana',
+    'Universidad de Bogotá Jorge Tadeo Lozano',
+  ];
+
+  String? _selectedUniversity;
 
   @override
   Widget build(BuildContext context) {
@@ -31,7 +41,6 @@ class _TutorSignInState extends State<TutorSignIn> {
               const SizedBox(height: 20),
               GestureDetector(
                 onTap: () {
-                  // Navigate to home screen when TutorApp text is tapped
                   Navigator.of(context).pushAndRemoveUntil(
                     MaterialPageRoute(builder: (context) => const HomeScreen()),
                     (route) => false,
@@ -78,15 +87,11 @@ class _TutorSignInState extends State<TutorSignIn> {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: Colors.grey.shade300,
-                    ),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: Colors.grey.shade300,
-                    ),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
                 ),
               ),
@@ -102,40 +107,40 @@ class _TutorSignInState extends State<TutorSignIn> {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: Colors.grey.shade300,
-                    ),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: Colors.grey.shade300,
-                    ),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
                 ),
               ),
               const SizedBox(height: 16),
-              TextField(
-                controller: _universityController,
+              DropdownButtonFormField<String>(
+                value: _selectedUniversity,
                 decoration: InputDecoration(
                   hintText: 'University',
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 16,
-                  ),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: Colors.grey.shade300,
-                    ),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: Colors.grey.shade300,
-                    ),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
                 ),
+                items: _universities.map((String university) {
+                  return DropdownMenuItem<String>(
+                    value: university,
+                    child: Text(university),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedUniversity = newValue;
+                  });
+                },
               ),
               const SizedBox(height: 16),
               TextField(
@@ -148,15 +153,11 @@ class _TutorSignInState extends State<TutorSignIn> {
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: Colors.grey.shade300,
-                    ),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
-                    borderSide: BorderSide(
-                      color: Colors.grey.shade300,
-                    ),
+                    borderSide: BorderSide(color: Colors.grey.shade300),
                   ),
                 ),
               ),
@@ -165,21 +166,18 @@ class _TutorSignInState extends State<TutorSignIn> {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Update user info with form values before proceeding
                     _userService.updateUserInfo(
                       name: _nameController.text,
                       phoneNumber: _phoneNumberController.text,
-                      university: _universityController.text,
+                      university: _selectedUniversity ?? '',
                       areaOfExpertise: _areaOfExpertiseController.text,
                       isTutor: "true",
                     );
 
-                    // Navigate to ProfilePictureScreen after completing this form
                     Navigator.pushAndRemoveUntil(
                       context,
-                      MaterialPageRoute(
-                          builder: (context) => const ProfilePictureScreen()),
-                      (route) => false, // Remove all previous routes
+                      MaterialPageRoute(builder: (context) => const ProfilePictureScreen()),
+                      (route) => false,
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -210,7 +208,6 @@ class _TutorSignInState extends State<TutorSignIn> {
   @override
   void dispose() {
     _nameController.dispose();
-    _universityController.dispose();
     _areaOfExpertiseController.dispose();
     _phoneNumberController.dispose();
     super.dispose();
