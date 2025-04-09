@@ -4,7 +4,7 @@ import 'dart:typed_data';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:image_picker/image_picker.dart';
 import '../services/user_service.dart';
-import 'login_screen.dart';
+import '../views/login_screen.dart';
 
 class UniversityIDScreen extends StatefulWidget {
   const UniversityIDScreen({super.key});

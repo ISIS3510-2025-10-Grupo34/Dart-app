@@ -77,7 +77,8 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text("Course '$course' at '$university' saved with price: $price COP"),
+        content: Text(
+            "Course '$course' at '$university' saved with price: $price COP"),
         backgroundColor: Colors.green,
       ),
     );
@@ -87,8 +88,12 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("TutorApp",style: TextStyle( fontSize: 24,fontWeight: FontWeight.w500,)),
-        backgroundColor:  Color(0xFFFFFFFF),
+        title: Text("TutorApp",
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w500,
+            )),
+        backgroundColor: Color(0xFFFFFFFF),
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
@@ -100,7 +105,10 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
             // Título principal
             Text(
               "¡Add a new course!",
-              style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color:  Color(0xFF192650)),
+              style: TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF192650)),
             ),
             const SizedBox(height: 20),
 
@@ -175,8 +183,10 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
             ElevatedButton(
               onPressed: _navigateAndGetPrice,
               style: ElevatedButton.styleFrom(
-                backgroundColor: Color(0xFF192650), // ✅ Mantener el color personalizado
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                backgroundColor:
+                    Color(0xFF192650), // ✅ Mantener el color personalizado
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(30),
                 ),
@@ -190,8 +200,10 @@ class _AddCourseScreenState extends State<AddCourseScreen> {
               child: ElevatedButton(
                 onPressed: _saveCourse,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Color(0xFF192650), // ✅ Mantener el color personalizado
-                  padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
+                  backgroundColor:
+                      Color(0xFF192650), // ✅ Mantener el color personalizado
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 40, vertical: 14),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(30),
                   ),

@@ -15,7 +15,6 @@ class WelcomeScreen extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // TutorApp logo in the top-left corner
               const Text(
                 "TutorApp",
                 style: TextStyle(
@@ -23,7 +22,6 @@ class WelcomeScreen extends StatelessWidget {
                   fontWeight: FontWeight.w500,
                 ),
               ),
-
               Expanded(
                 child: Center(
                   child: Column(

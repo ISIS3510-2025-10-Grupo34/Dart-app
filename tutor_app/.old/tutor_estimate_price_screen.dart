@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'add_course_screen.dart';
+import '../views/add_course_screen.dart';
 
 class TutorEstimatePriceScreen extends StatefulWidget {
   const TutorEstimatePriceScreen({super.key});
@@ -202,7 +202,8 @@ class _TutorEstimatePriceScreenState extends State<TutorEstimatePriceScreen> {
       context: context,
       builder: (BuildContext context) {
         return Dialog(
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+          shape:
+              RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           backgroundColor: Colors.grey[200],
           child: Padding(
             padding: const EdgeInsets.all(16.0),
@@ -233,7 +234,8 @@ class _TutorEstimatePriceScreenState extends State<TutorEstimatePriceScreen> {
                   alignment: Alignment.centerRight,
                   child: TextButton(
                     onPressed: () {
-                      Navigator.of(context).pop(totalPrice.toStringAsFixed(0)); // Retornar el precio
+                      Navigator.of(context).pop(
+                          totalPrice.toStringAsFixed(0)); // Retornar el precio
                     },
                     child: const Text(
                       "Ok",
@@ -262,5 +264,4 @@ class _TutorEstimatePriceScreenState extends State<TutorEstimatePriceScreen> {
       }
     });
   }
-
 }

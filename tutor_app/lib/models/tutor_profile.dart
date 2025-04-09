@@ -23,7 +23,8 @@ class TutorProfile {
       university: json['university'],
       profilePicture: json['profile_picture'],
       ratings: (json['ratings'] as num).toDouble(),
-      reviews: (json['reviews'] as List).map((r) => Review.fromJson(r)).toList(),
+      reviews:
+          (json['reviews'] as List).map((r) => Review.fromJson(r)).toList(),
       subjects: List<String>.from(json['subjects']),
       whatsappContact: json['whatsapp_contact'],
     );

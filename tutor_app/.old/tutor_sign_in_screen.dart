@@ -1,19 +1,20 @@
 import 'package:flutter/material.dart';
-import 'home_screen_student.dart';
-import 'student_learning_styles_screen.dart';
+import '../views/tutor_home_screen.dart';
+import 'profile_picture_screen.dart';
 import '../services/user_service.dart';
 
-class StudentSignIn extends StatefulWidget {
-  const StudentSignIn({super.key});
+class TutorSignIn extends StatefulWidget {
+  const TutorSignIn({super.key});
 
   @override
-  _StudentSignInState createState() => _StudentSignInState();
+  _TutorSignInState createState() => _TutorSignInState();
 }
 
-class _StudentSignInState extends State<StudentSignIn> {
+class _TutorSignInState extends State<TutorSignIn> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _universityController = TextEditingController();
-  final TextEditingController _majorController = TextEditingController();
+  final TextEditingController _areaOfExpertiseController =
+      TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
   final UserService _userService = UserService();
 
@@ -32,7 +33,7 @@ class _StudentSignInState extends State<StudentSignIn> {
                 onTap: () {
                   // Navigate to home screen when TutorApp text is tapped
                   Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const HomeScreenStudent()),
+                    MaterialPageRoute(builder: (context) => const HomeScreen()),
                     (route) => false,
                   );
                 },
@@ -47,7 +48,7 @@ class _StudentSignInState extends State<StudentSignIn> {
               const Spacer(flex: 1),
               const Center(
                 child: Text(
-                  "Student",
+                  "Tutor",
                   style: TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w700,
@@ -92,7 +93,7 @@ class _StudentSignInState extends State<StudentSignIn> {
               const SizedBox(height: 16),
               TextField(
                 controller: _phoneNumberController,
-                keyboardType: TextInputType.number,
+                keyboardType: TextInputType.phone,
                 decoration: InputDecoration(
                   hintText: 'Phone Number',
                   contentPadding: const EdgeInsets.symmetric(
@@ -138,9 +139,9 @@ class _StudentSignInState extends State<StudentSignIn> {
               ),
               const SizedBox(height: 16),
               TextField(
-                controller: _majorController,
+                controller: _areaOfExpertiseController,
                 decoration: InputDecoration(
-                  hintText: 'Major',
+                  hintText: 'Area of expertise',
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 16,
@@ -164,18 +165,20 @@ class _StudentSignInState extends State<StudentSignIn> {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
+                    // Update user info with form values before proceeding
                     _userService.updateUserInfo(
                       name: _nameController.text,
                       phoneNumber: _phoneNumberController.text,
                       university: _universityController.text,
-                      major: _majorController.text,
-                      isStudent: "true",
+                      areaOfExpertise: _areaOfExpertiseController.text,
+                      isTutor: "true",
                     );
+
+                    // Navigate to ProfilePictureScreen after completing this form
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
-                          builder: (context) =>
-                              const StudentLearningStylesScreen()),
+                          builder: (context) => const ProfilePictureScreen()),
                       (route) => false, // Remove all previous routes
                     );
                   },
@@ -208,7 +211,7 @@ class _StudentSignInState extends State<StudentSignIn> {
   void dispose() {
     _nameController.dispose();
     _universityController.dispose();
-    _majorController.dispose();
+    _areaOfExpertiseController.dispose();
     _phoneNumberController.dispose();
     super.dispose();
   }

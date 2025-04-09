@@ -1,20 +1,19 @@
 import 'package:flutter/material.dart';
-import 'home_screen.dart';
-import 'profile_picture_screen.dart';
-import '../services/user_service.dart';
+import '../lib/views/student_home_screen.dart';
+import '../lib/views/student_learning_styles_screen.dart';
+import '../lib/services/user_service.dart';
 
-class TutorSignIn extends StatefulWidget {
-  const TutorSignIn({super.key});
+class StudentSignIn extends StatefulWidget {
+  const StudentSignIn({super.key});
 
   @override
-  _TutorSignInState createState() => _TutorSignInState();
+  _StudentSignInState createState() => _StudentSignInState();
 }
 
-class _TutorSignInState extends State<TutorSignIn> {
+class _StudentSignInState extends State<StudentSignIn> {
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _universityController = TextEditingController();
-  final TextEditingController _areaOfExpertiseController =
-      TextEditingController();
+  final TextEditingController _majorController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
   final UserService _userService = UserService();
 
@@ -33,7 +32,8 @@ class _TutorSignInState extends State<TutorSignIn> {
                 onTap: () {
                   // Navigate to home screen when TutorApp text is tapped
                   Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const HomeScreenStudent()),
                     (route) => false,
                   );
                 },
@@ -48,7 +48,7 @@ class _TutorSignInState extends State<TutorSignIn> {
               const Spacer(flex: 1),
               const Center(
                 child: Text(
-                  "Tutor",
+                  "Student",
                   style: TextStyle(
                     fontSize: 30,
                     fontWeight: FontWeight.w700,
@@ -93,7 +93,7 @@ class _TutorSignInState extends State<TutorSignIn> {
               const SizedBox(height: 16),
               TextField(
                 controller: _phoneNumberController,
-                keyboardType: TextInputType.phone,
+                keyboardType: TextInputType.number,
                 decoration: InputDecoration(
                   hintText: 'Phone Number',
                   contentPadding: const EdgeInsets.symmetric(
@@ -139,9 +139,9 @@ class _TutorSignInState extends State<TutorSignIn> {
               ),
               const SizedBox(height: 16),
               TextField(
-                controller: _areaOfExpertiseController,
+                controller: _majorController,
                 decoration: InputDecoration(
-                  hintText: 'Area of expertise',
+                  hintText: 'Major',
                   contentPadding: const EdgeInsets.symmetric(
                     horizontal: 16,
                     vertical: 16,
@@ -165,20 +165,18 @@ class _TutorSignInState extends State<TutorSignIn> {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    // Update user info with form values before proceeding
                     _userService.updateUserInfo(
                       name: _nameController.text,
                       phoneNumber: _phoneNumberController.text,
                       university: _universityController.text,
-                      areaOfExpertise: _areaOfExpertiseController.text,
-                      isTutor: "true",
+                      major: _majorController.text,
+                      isStudent: "true",
                     );
-
-                    // Navigate to ProfilePictureScreen after completing this form
                     Navigator.pushAndRemoveUntil(
                       context,
                       MaterialPageRoute(
-                          builder: (context) => const ProfilePictureScreen()),
+                          builder: (context) =>
+                              const StudentLearningStylesScreen()),
                       (route) => false, // Remove all previous routes
                     );
                   },
@@ -211,7 +209,7 @@ class _TutorSignInState extends State<TutorSignIn> {
   void dispose() {
     _nameController.dispose();
     _universityController.dispose();
-    _areaOfExpertiseController.dispose();
+    _majorController.dispose();
     _phoneNumberController.dispose();
     super.dispose();
   }

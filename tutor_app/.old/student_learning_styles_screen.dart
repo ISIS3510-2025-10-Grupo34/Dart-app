@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../services/user_service.dart';
 import 'profile_picture_screen.dart';
-import 'home_screen.dart';
+import '../views/welcome_screen.dart';
 
 class StudentLearningStylesScreen extends StatefulWidget {
   const StudentLearningStylesScreen({super.key});
@@ -42,7 +42,8 @@ class _LearningStylesScreenState extends State<StudentLearningStylesScreen> {
                 onTap: () {
                   // Navigate to home screen when TutorApp text is tapped
                   Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const WelcomeScreen()),
                     (route) => false,
                   );
                 },
