@@ -6,8 +6,7 @@ import 'package:http/http.dart' as http;
 import 'package:path/path.dart' as path;
 import 'package:async/async.dart';
 import '../services/user_service.dart';
-import 'home_screen.dart';
-import 'university_id_screen.dart';
+import '../views/university_id_screen.dart';
 
 class ProfilePictureScreen extends StatefulWidget {
   const ProfilePictureScreen({super.key});
@@ -35,110 +34,6 @@ class _ProfilePictureScreenState extends State<ProfilePictureScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text("Error: $e")),
       );
-    }
-  }
-
-  // Upload image to API
-  Future<bool> _uploadImageToApi() async {
-    if (_pickedFile == null) {
-      return false;
-    }
-
-    setState(() {
-      _isUploading = true;
-    });
-
-    try {
-      // API endpoint URL
-      var uri = Uri.parse('https://your-api-endpoint.com/upload');
-
-      if (kIsWeb) {
-        // Web implementation - send bytes
-        final bytes = await _pickedFile!.readAsBytes();
-
-        // Create multipart request
-        var request = http.MultipartRequest('POST', uri);
-
-        // Add headers if needed
-        request.headers['Authorization'] = 'Bearer YOUR_API_TOKEN';
-
-        // Add the file as multipart
-        var multipartFile = http.MultipartFile.fromBytes(
-          'profile_picture',
-          bytes,
-          filename: _pickedFile!.name,
-        );
-
-        request.files.add(multipartFile);
-
-        // Send the request
-        var response = await request.send();
-
-        if (response.statusCode == 200) {
-          // Handle successful response
-          final respStr = await response.stream.bytesToString();
-          print('Upload success: $respStr');
-          setState(() {
-            _isUploading = false;
-          });
-          return true;
-        } else {
-          print('Upload failed: ${response.statusCode}');
-          setState(() {
-            _isUploading = false;
-          });
-          return false;
-        }
-      } else {
-        // Mobile implementation - send file
-        var file = File(_pickedFile!.path);
-        var stream = http.ByteStream(DelegatingStream.typed(file.openRead()));
-        var length = await file.length();
-
-        // Create multipart request
-        var request = http.MultipartRequest('POST', uri);
-
-        // Add headers if needed
-        request.headers['Authorization'] = 'Bearer YOUR_API_TOKEN';
-
-        // Add the file as multipart
-        var multipartFile = http.MultipartFile(
-          'profile_picture',
-          stream,
-          length,
-          filename: path.basename(file.path),
-        );
-
-        request.files.add(multipartFile);
-
-        // Send the request
-        var response = await request.send();
-
-        if (response.statusCode == 200) {
-          // Handle successful response
-          final respStr = await response.stream.bytesToString();
-          print('Upload success: $respStr');
-          setState(() {
-            _isUploading = false;
-          });
-          return true;
-        } else {
-          print('Upload failed: ${response.statusCode}');
-          setState(() {
-            _isUploading = false;
-          });
-          return false;
-        }
-      }
-    } catch (e) {
-      print('Error uploading image: $e');
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error uploading image: $e")),
-      );
-      setState(() {
-        _isUploading = false;
-      });
-      return false;
     }
   }
 
@@ -288,7 +183,6 @@ class _ProfilePictureScreenState extends State<ProfilePictureScreen> {
                             return;
                           }
 
-                          // Upload image to API
                           final uploadSuccess = await _uploadImageToApi();
 
                           if (uploadSuccess) {

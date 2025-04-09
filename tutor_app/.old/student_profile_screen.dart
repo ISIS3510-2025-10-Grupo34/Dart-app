@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import '../services/user_service.dart';
-import 'home_screen_student.dart';
+import '../views/student_home_screen.dart';
 
 class StudentProfileScreen extends StatefulWidget {
   const StudentProfileScreen({super.key});
@@ -61,7 +61,8 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
             // Navigate to home screen when app title is tapped
             Navigator.pushAndRemoveUntil(
               context,
-              MaterialPageRoute(builder: (context) => const HomeScreenStudent()),
+              MaterialPageRoute(
+                  builder: (context) => const HomeScreenStudent()),
               (route) =>
                   false, // This will remove all previous routes from the stack
             );
@@ -84,7 +85,8 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
               // Navigate to home screen
               Navigator.pushAndRemoveUntil(
                 context,
-                MaterialPageRoute(builder: (context) => const HomeScreenStudent()),
+                MaterialPageRoute(
+                    builder: (context) => const HomeScreenStudent()),
                 (route) =>
                     false, // This will remove all previous routes from the stack
               );
@@ -215,7 +217,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
 
             // Action buttons
             SizedBox(height: 24),
-            Container(
+            SizedBox(
               width: double.infinity,
               height: 56,
               child: ElevatedButton(

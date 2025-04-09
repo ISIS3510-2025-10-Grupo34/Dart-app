@@ -1,14 +1,103 @@
+// lib/main.dart (Updated)
+
 import 'package:flutter/material.dart';
-import 'screens/welcome_screen.dart';
+import 'package:provider/provider.dart';
+import 'package:tutor_app/providers/sign_in_process_provider.dart';
+import 'package:tutor_app/services/course_service.dart';
 import 'utils/env_config.dart';
+import 'views/welcome_screen.dart';
+
+// Import Services
+import 'services/auth_service.dart';
+import 'services/tutor_service.dart';
+import 'services/user_service.dart';
+
+// Import Providers/Controllers
+import 'providers/auth_provider.dart';
+import 'providers/sign_in_process_provider.dart';
+import 'controllers/login_controller.dart';
+import 'controllers/sign_in_controller.dart';
+import 'controllers/student_home_controller.dart';
+import 'controllers/learning_styles_controller.dart';
+import 'controllers/profile_picture_controller.dart';
+import 'controllers/university_id_controller.dart';
+import 'controllers/student_sign_in_controller.dart';
+import 'controllers/university_id_controller.dart';
+import 'controllers/tutor_profile_controller.dart';
+import 'controllers/tutor_sign_in_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Load environment variables
   await EnvConfig.load();
 
-  runApp(const TutorApp());
+  final authService = AuthService();
+  final tutorService = TutorService();
+  final courseService = CourseService();
+  final userService = UserService();
+
+  final authProvider = AuthProvider(userService: userService);
+  final signInProcessProvider = SignInProcessProvider(userService: userService);
+
+  runApp(
+    MultiProvider(
+      providers: [
+        Provider<AuthService>.value(value: authService),
+        Provider<TutorService>.value(value: tutorService),
+        Provider<CourseService>.value(value: courseService),
+        Provider<UserService>.value(value: userService),
+        ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
+        ChangeNotifierProvider<SignInProcessProvider>.value(
+            value: signInProcessProvider),
+        ChangeNotifierProvider(
+          create: (context) => LoginController(
+            authService: context.read<AuthService>(),
+            authProvider: context.read<AuthProvider>(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => SignInController(
+            context.read<SignInProcessProvider>(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => StudentHomeController(
+            tutorService: context.read<TutorService>(),
+            authProvider: context.read<AuthProvider>(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => LearningStylesController(
+            context.read<SignInProcessProvider>(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => ProfilePictureController(
+            context.read<SignInProcessProvider>(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => UniversityIdController(
+            context.read<SignInProcessProvider>(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => StudentSignInController(
+            context.read<SignInProcessProvider>(),
+          ),
+        ),
+        ChangeNotifierProvider(
+          create: (context) => TutorProfileController(
+              tutorService: context.read<TutorService>()),
+        ),
+        ChangeNotifierProvider(
+          create: (context) =>
+              TutorSignInController(context.read<SignInProcessProvider>()),
+        )
+      ],
+      child: const TutorApp(),
+    ),
+  );
 }
 
 class TutorApp extends StatelessWidget {
@@ -23,7 +112,24 @@ class TutorApp extends StatelessWidget {
         scaffoldBackgroundColor: Colors.white,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      home: const WelcomeScreen(),
+      home: Consumer<AuthProvider>(
+        builder: (context, authProvider, child) {
+          switch (authProvider.authState) {
+            case AuthState.authenticated:
+              final role = authProvider.currentUser?.role;
+              if (role == 'student') {
+                return const WelcomeScreen(); //studentHome
+              } else if (role == 'tutor') {
+                return const WelcomeScreen(); //tutorsHome
+              } else {
+                return const WelcomeScreen();
+              }
+            case AuthState.unauthenticated:
+            case AuthState.unknown:
+              return const WelcomeScreen();
+          }
+        },
+      ),
     );
   }
 }
