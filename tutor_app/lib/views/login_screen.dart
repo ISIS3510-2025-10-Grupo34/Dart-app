@@ -37,7 +37,7 @@ class LoginScreenState extends State<LoginScreen> {
       if (state == LoginState.successStudent) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const DummyHomeScreen()),
+          MaterialPageRoute(builder: (context) => const StudentHomeScreen()),
         );
         controller.resetStateAfterNavigation();
       } else if (state == LoginState.successTutor) {
