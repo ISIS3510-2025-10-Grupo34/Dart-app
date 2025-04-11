@@ -7,46 +7,61 @@ import '../utils/env_config.dart';
 
 class LocationService {
   Future<String> getNearestUniversity() async {
-    bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-    if (!serviceEnabled) return "Ubicación deshabilitada";
+    try {
+      final response = await http.get(Uri.parse('${EnvConfig.apiUrl}/api/coordinates/'));
 
-    LocationPermission permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-      if (permission == LocationPermission.denied) {
-        return "Permiso denegado";
+      if (response.statusCode != 200) {
+        return "Error al obtener coordenadas";
       }
-    }
-    if (permission == LocationPermission.deniedForever) {
-      return "Permiso permanentemente denegado";
-    }
 
-    Position position = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
+      final List<dynamic> universityData = jsonDecode(response.body)['universities'];
+      List<University> universities = universityData.map((u) {
+        return University(
+          name: u['name'],
+          lat: (u['lat'] as num).toDouble(),
+          lng: (u['lng'] as num).toDouble(),
+        );
+      }).toList();
 
-    List<University> universities = University.getSampleUniversities();
-    String closest = "No encontrado";
-    double minDistance = double.infinity;
+      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
+      if (!serviceEnabled) return "Ubicación deshabilitada";
 
-    for (var uni in universities) {
-      double distance = Geolocator.distanceBetween(
-        position.latitude,
-        position.longitude,
-        uni.lat,
-        uni.lng,
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return "Permiso denegado";
+      }
+      if (permission == LocationPermission.deniedForever) {
+        return "Permiso permanentemente denegado";
+      }
+
+      Position position = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
       );
 
-      if (distance < minDistance) {
-        minDistance = distance;
-        closest = uni.name;
-      }
-    }
+      String closest = "No encontrado";
+      double minDistance = double.infinity;
 
-    return closest;
+      for (var uni in universities) {
+        double distance = Geolocator.distanceBetween(
+          position.latitude,
+          position.longitude,
+          uni.lat,
+          uni.lng,
+        );
+
+        if (distance < minDistance) {
+          minDistance = distance;
+          closest = uni.name;
+        }
+      }
+
+      return closest;
+    } catch (e) {
+      return "Error: $e";
+    }
   }
 
-  /// Envía una notificación al servidor
   Future<bool> sendNotification({
     required String title,
     required String message,
