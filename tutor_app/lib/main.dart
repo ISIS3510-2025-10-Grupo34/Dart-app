@@ -11,6 +11,7 @@ import 'views/welcome_screen.dart';
 import 'services/auth_service.dart';
 import 'services/tutor_service.dart';
 import 'services/user_service.dart';
+import 'services/tutoring_session_service.dart';
 
 // Import Providers/Controllers
 import 'providers/auth_provider.dart';
@@ -25,6 +26,7 @@ import 'controllers/student_sign_in_controller.dart';
 import 'controllers/university_id_controller.dart';
 import 'controllers/tutor_profile_controller.dart';
 import 'controllers/tutor_sign_in_controller.dart';
+import 'controllers/student_home_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -35,6 +37,7 @@ void main() async {
   final tutorService = TutorService();
   final courseService = CourseService();
   final userService = UserService();
+  final tutoringSessionService = TutoringSessionService();
 
   final authProvider = AuthProvider(userService: userService);
   final signInProcessProvider = SignInProcessProvider(userService: userService);
@@ -46,6 +49,7 @@ void main() async {
         Provider<TutorService>.value(value: tutorService),
         Provider<CourseService>.value(value: courseService),
         Provider<UserService>.value(value: userService),
+        Provider<TutoringSessionService>.value(value: tutoringSessionService),
         ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
         ChangeNotifierProvider<SignInProcessProvider>.value(
             value: signInProcessProvider),
@@ -64,6 +68,7 @@ void main() async {
           create: (context) => StudentHomeController(
             tutorService: context.read<TutorService>(),
             authProvider: context.read<AuthProvider>(),
+            sessionService: context.read<TutoringSessionService>(),
           ),
         ),
         ChangeNotifierProvider(
