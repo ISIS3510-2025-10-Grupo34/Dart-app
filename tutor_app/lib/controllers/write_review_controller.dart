@@ -1,45 +1,24 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
 import '../models/review_model.dart';
-import '../utils/env_config.dart';
+import '../services/user_service.dart';
+import '../services/review_service.dart';
 
 class WriteReviewController {
-  Future<Map<String, dynamic>> fetchTutorProfile(int tutorId) async {
-    try {
-      final response = await http.post(
-        Uri.parse('${EnvConfig.apiUrl}/api/tutorprofile/?tutorId=$tutorId'),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"tutorId": tutorId}),
-      );
+  final UserService _userService;
+  final ReviewService _reviewService;
 
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = jsonDecode(response.body);
-        return responseData["data"] ?? {};
-      } else {
-        throw Exception("Error al obtener el perfil del tutor");
-      }
-    } catch (e) {
-      throw Exception("No se pudo conectar con el servidor");
-    }
+  WriteReviewController({
+    UserService? userService,
+    ReviewService? reviewService,
+  })  : _userService = userService ?? UserService(),
+        _reviewService = reviewService ?? ReviewService();
+
+  Future<Map<String, dynamic>> getTutorProfile(int tutorId) async {
+    final profile = await _userService.fetchTutorProfile(tutorId.toString());
+    return profile ?? {};
   }
 
-  /// Envía una reseña al servidor
   Future<bool> submitReview(int tutorId, double rating, String comment) async {
     final review = Review(rating, comment);
-
-    try {
-      final response = await http.post(
-        Uri.parse('${EnvConfig.apiUrl}/api/submit-review/'),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({
-          "tutorId": tutorId,
-          ...review.toJson(),
-        }),
-      );
-
-      return response.statusCode == 201;
-    } catch (e) {
-      return false;
-    }
+    return await _reviewService.submitReview(tutorId, review);
   }
 }

@@ -21,7 +21,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
   @override
   void initState() {
     super.initState();
-    _tutorProfileFuture = _controller.fetchTutorProfile(widget.tutorId);
+    _tutorProfileFuture = _controller.getTutorProfile(widget.tutorId); // 👈 Aquí el cambio
   }
 
   Future<void> _handleSubmit() async {
