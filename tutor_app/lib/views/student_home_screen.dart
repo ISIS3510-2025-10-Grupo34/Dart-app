@@ -17,7 +17,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   @override
   void initState() {
     super.initState();
-    _screenLoadTime = DateTime.now();  // Asegúrate de inicializar _screenLoadTime
+    _screenLoadTime = DateTime.now(); 
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<StudentHomeController>(context, listen: false)
           .loadAvailableTutoringSessions();
