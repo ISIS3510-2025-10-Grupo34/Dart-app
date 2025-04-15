@@ -12,9 +12,9 @@ class StudentTutoringSessionsController with ChangeNotifier {
   String? _errorMessage;
 
   StudentTutoringSessionsController({
-    required StudentTutoringSessionsService sessionService,
+    required StudentTutoringSessionsService studentTutoringSessionsService,
     required AuthProvider authProvider,
-  })  : _sessionService = sessionService,
+  })  : _sessionService = studentTutoringSessionsService,
         _authProvider = authProvider;
 
   List<TutoringSession> get sessions => _sessions;

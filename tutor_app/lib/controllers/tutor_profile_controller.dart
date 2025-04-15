@@ -1,8 +1,7 @@
-import 'dart:async'; // Required for StreamSubscription
 import 'package:flutter/foundation.dart';
-import '../providers/auth_provider.dart'; //
-import '../models/user_model.dart'; //
-import '../services/user_service.dart'; // Keep for potential future actions
+import '../providers/auth_provider.dart';
+import '../models/user_model.dart';
+import '../services/user_service.dart';
 
 class TutorProfileController with ChangeNotifier {
   final AuthProvider _authProvider;
@@ -28,18 +27,15 @@ class TutorProfileController with ChangeNotifier {
     bool needsNotify = false;
 
     if (_user != _authProvider.currentUser) {
-      //
-      _user = _authProvider.currentUser; //
+      _user = _authProvider.currentUser;
       needsNotify = true;
     }
     if (_isLoading != _authProvider.profileIsLoading) {
-      //
-      _isLoading = _authProvider.profileIsLoading; //
+      _isLoading = _authProvider.profileIsLoading;
       needsNotify = true;
     }
     if (_errorMessage != _authProvider.profileError) {
-      //
-      _errorMessage = _authProvider.profileError; //
+      _errorMessage = _authProvider.profileError;
       needsNotify = true;
     }
 

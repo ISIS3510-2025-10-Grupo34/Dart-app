@@ -130,8 +130,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                         itemBuilder: (context, index) {
                           final session = controller.sessions[index];
                           return Card(
-                            color:
-                                const Color(0xFFFDF7FF), // Fondo de la tarjeta
+                            color: Colors.white, // Fondo de la tarjeta
                             elevation: 2,
                             shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(16)),

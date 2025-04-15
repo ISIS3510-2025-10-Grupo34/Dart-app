@@ -5,6 +5,7 @@ import '../controllers/student_profile_controller.dart';
 import '../controllers/student_tutoring_sessions_controller.dart';
 import '../models/user_model.dart';
 import '../models/tutoring_session_model.dart';
+import 'write_review_screen.dart';
 import '../providers/auth_provider.dart';
 import 'student_home_screen.dart';
 
@@ -24,12 +25,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
       if (authProvider.currentUser?.id != null) {
         Provider.of<StudentTutoringSessionsController>(context, listen: false)
             .fetchStudentSessions();
-      } else {
-        print(
-            "Student Profile Screen: Cannot fetch sessions, user ID is null in initState.");
-        // Optionally, update the session controller's error state here
-        // Provider.of<StudentTutoringSessionController>(context, listen: false).setError("Login required to view sessions.");
-      }
+      } else {}
     });
   }
 
@@ -234,13 +230,35 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 itemBuilder: (context, index) {
                   final session = sessionController.sessions[index];
                   return Card(
+                    color: Colors.white,
                     margin: const EdgeInsets.symmetric(vertical: 4.0),
                     child: ListTile(
                       title:
                           Text('${session.course} with ${session.tutorName}'),
-                      subtitle:
-                          Text('${session.dateTime} - ${session.university}'),
-                      trailing: Text('\$${session.cost.toStringAsFixed(2)}'),
+                      subtitle: Text(session.dateTime),
+                      trailing: ElevatedButton(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: const Color(0xFF192650),
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Review'),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => WriteReviewScreen(
+                                  tutorId: session.tutorId), // Pass tutorId
+                            ),
+                          );
+                          // You might want to add error handling if session.tutorId could be null
+                          // Or disable the button if the session isn't reviewable yet (e.g., based on date)
+                        },
+                        // Optional: Style the button if needed
+                        // style: ElevatedButton.styleFrom(
+                        //   padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                        //   textStyle: TextStyle(fontSize: 12),
+                        // ),
+                      ),
                     ),
                   );
                 },

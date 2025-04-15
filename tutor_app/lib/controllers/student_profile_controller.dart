@@ -1,14 +1,12 @@
-import 'dart:async'; // Required for StreamSubscription
+import 'dart:async';
 import 'package:flutter/foundation.dart';
-import '../providers/auth_provider.dart'; //
-import '../models/user_model.dart'; //
-import '../services/user_service.dart'; // Keep for potential future actions
+import '../providers/auth_provider.dart';
+import '../models/user_model.dart';
+import '../services/user_service.dart';
 
 class StudentProfileController with ChangeNotifier {
   final AuthProvider _authProvider;
-  final UserService _userService; // Still available if needed later
-
-  // Internal state variables mirroring AuthProvider's relevant state
+  final UserService _userService;
   User? _user;
   bool _isLoading = false;
   String? _errorMessage;
