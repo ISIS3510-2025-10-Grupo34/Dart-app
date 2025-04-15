@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tutor_app/views/notifications_view.dart';
 import '../controllers/student_home_controller.dart';
 
 class StudentHomeScreen extends StatefulWidget {
@@ -10,9 +11,12 @@ class StudentHomeScreen extends StatefulWidget {
 }
 
 class _StudentHomeScreenState extends State<StudentHomeScreen> {
+  DateTime? _screenLoadTime;
+
   @override
   void initState() {
     super.initState();
+    _screenLoadTime = DateTime.now();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<StudentHomeController>(context, listen: false)
           .loadAvailableTutoringSessions();
@@ -29,7 +33,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ------------------------------------ Encabezado --------------------------------------------
+                // ----------------------------- Encabezado -----------------------------
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   child: Row(
@@ -41,7 +45,6 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                       ),
                       Row(
                         children: [
-                          // -------------------------------- Icono campana -------------------------------------
                           Container(
                             width: 40,
                             height: 40,
@@ -51,12 +54,16 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                             ),
                             child: IconButton(
                               icon: const Icon(Icons.notifications, color: Colors.white),
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                                );
+                              },
                               iconSize: 20,
                             ),
                           ),
                           const SizedBox(width: 12),
-                          // ----------------------------- Icono persona --------------------------------
                           Container(
                             width: 40,
                             height: 40,
@@ -75,7 +82,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     ],
                   ),
                 ),
-                // ---------------------------------- Botón "Filter results" ---------------------------------
+                // ---------------------------- Botón filtro ----------------------------
                 Padding(
                   padding: const EdgeInsets.only(left: 16),
                   child: Container(
@@ -95,7 +102,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                // ------------------------------ Lista de sesiones -------------------------------------------
+                // ---------------------------- Lista de sesiones ----------------------------
                 Expanded(
                   child: Builder(
                     builder: (_) {
@@ -115,86 +122,97 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                         itemBuilder: (context, index) {
                           final session = controller.sessions[index];
                           return Card(
-                          color: const Color(0xFFFDF7FF), // Fondo de la tarjeta
-                          elevation: 2,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                          margin: const EdgeInsets.symmetric(vertical: 8),
-                          child: Padding(
-                            padding: const EdgeInsets.all(16),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  children: [
-                                    CircleAvatar(
-                                      backgroundColor: const Color(0xFF171F45),
-                                      child: Text(
-                                        session.tutorName[0],
-                                        style: const TextStyle(color: Colors.white),
+                            color: const Color(0xFFFDF7FF),
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            margin: const EdgeInsets.symmetric(vertical: 8),
+                            child: Padding(
+                              padding: const EdgeInsets.all(16),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      CircleAvatar(
+                                        backgroundColor: const Color(0xFF171F45),
+                                        child: Text(
+                                          session.tutorName[0],
+                                          style: const TextStyle(color: Colors.white),
+                                        ),
                                       ),
-                                    ),
-                                    const SizedBox(width: 10),
-                                    Text(
-                                      session.tutorName,
+                                      const SizedBox(width: 10),
+                                      Text(
+                                        session.tutorName,
+                                        style: const TextStyle(
+                                          fontSize: 18,
+                                          fontWeight: FontWeight.bold,
+                                          color: Colors.black,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                  const SizedBox(height: 10),
+                                  GestureDetector(
+                                    onTap: () async {
+                                      final start = DateTime.now();
+                                      await Future.delayed(const Duration(milliseconds: 300));
+                                      final loadTime = DateTime.now().difference(start).inMilliseconds;
+                                      await controller.sendTutorProfileLoadTime(loadTime);
+                                    },
+                                    child: Text(
+                                      session.course,
                                       style: const TextStyle(
-                                        fontSize: 18,
+                                        fontSize: 16,
                                         fontWeight: FontWeight.bold,
                                         color: Colors.black,
                                       ),
                                     ),
-                                  ],
-                                ),
-                                const SizedBox(height: 10),
-                                Text(
-                                  session.course,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
                                   ),
-                                ),
-                                Text(
-                                  session.university,
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                Text(
-                                  "Price: \$${session.cost}",
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.grey,
-                                  ),
-                                ),
-                                Text(
-                                  "Date: ${session.dateTime}",
-                                  style: const TextStyle(
-                                    fontSize: 14,
-                                    color: Colors.black,
-                                  ),
-                                ),
-                                Align(
-                                  alignment: Alignment.centerRight,
-                                  child: ElevatedButton(
-                                    onPressed: () {},
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF171F45),
-                                      shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(20)),
-                                    ),
-                                    child: const Text(
-                                      "Book",
-                                      style: TextStyle(color: Colors.white), // color del texto del botón
+                                  Text(
+                                    session.university,
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.black,
                                     ),
                                   ),
-                                ),
-                              ],
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    "Price: \$${session.cost}",
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.grey,
+                                    ),
+                                  ),
+                                  Text(
+                                    "Date: ${session.dateTime}",
+                                    style: const TextStyle(
+                                      fontSize: 14,
+                                      color: Colors.black,
+                                    ),
+                                  ),
+                                  Align(
+                                    alignment: Alignment.centerRight,
+                                    child: ElevatedButton(
+                                      onPressed: () async {
+                                        final timeToBook = DateTime.now().difference(_screenLoadTime!).inMilliseconds;
+                                        await controller.sendTimeToBookMetric(timeToBook);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: const Color(0xFF171F45),
+                                        shape: RoundedRectangleBorder(
+                                            borderRadius: BorderRadius.circular(20)),
+                                      ),
+                                      child: const Text(
+                                        "Book",
+                                        style: TextStyle(color: Colors.white),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
                             ),
-                          ),
-                        );
+                          );
                         },
                       );
                     },
