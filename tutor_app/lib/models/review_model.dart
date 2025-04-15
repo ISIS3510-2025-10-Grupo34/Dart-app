@@ -1,6 +1,6 @@
 class Review {
   final int tutoringSessionId;
-  final int tutorId; // You can keep this in the model if needed elsewhere
+  final int tutorId; 
   final int studentId;
   final double rating;
   final String comment;

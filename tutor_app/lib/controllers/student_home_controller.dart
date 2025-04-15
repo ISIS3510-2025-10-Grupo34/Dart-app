@@ -98,7 +98,6 @@ class StudentHomeController with ChangeNotifier {
       await _metricsService.sendTimeToBook(milliseconds); 
     } catch (e) {
       if (kDebugMode) {
-        print(' Error sending time-to-book: $e');
       }
     }
   }
@@ -108,7 +107,6 @@ class StudentHomeController with ChangeNotifier {
       await _metricsService.sendTutorProfileLoadTime(milliseconds);  
     } catch (e) {
       if (kDebugMode) {
-        print(' Error sending profile load time: $e');
       }
     }
   }

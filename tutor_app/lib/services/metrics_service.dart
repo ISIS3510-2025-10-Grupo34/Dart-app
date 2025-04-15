@@ -7,18 +7,23 @@ class MetricsService {
   Future<void> sendTimeToBook(int milliseconds) async {
     try {
       final url = Uri.parse('${EnvConfig.apiUrl}/api/time-to-book/');
+      final now = DateTime.now().toIso8601String();
+
+      final body = {
+        "duration": milliseconds,
+        "time": now,
+      };
+
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({"time_to_book": milliseconds}),
+        body: jsonEncode(body),
       );
 
       if (response.statusCode != 201 && kDebugMode) {
-        print('❌ Failed to send time-to-book: ${response.body}');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('❌ Error sending time-to-book: $e');
       }
     }
   }
@@ -26,18 +31,22 @@ class MetricsService {
   Future<void> sendTutorProfileLoadTime(int milliseconds) async {
     try {
       final url = Uri.parse('${EnvConfig.apiUrl}/api/tutor-profile-load-time/');
+
+      final body = {
+        "profile_load_time": milliseconds,
+        "time": DateTime.now().toIso8601String(),
+      };
+
       final response = await http.post(
         url,
         headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({"profile_load_time": milliseconds}),
+        body: jsonEncode(body),
       );
 
       if (response.statusCode != 201 && kDebugMode) {
-        print('❌ Failed to send profile load time: ${response.body}');
       }
     } catch (e) {
       if (kDebugMode) {
-        print('❌ Error sending profile load time: $e');
       }
     }
   }

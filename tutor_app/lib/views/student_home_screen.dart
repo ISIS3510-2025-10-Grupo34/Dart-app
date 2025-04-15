@@ -17,7 +17,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   @override
   void initState() {
     super.initState();
-    _screenLoadTime = DateTime.now();
+    _screenLoadTime = DateTime.now();  // Asegúrate de inicializar _screenLoadTime
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<StudentHomeController>(context, listen: false)
           .loadAvailableTutoringSessions();
@@ -165,7 +165,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                                       final start = DateTime.now();
                                       await Future.delayed(const Duration(milliseconds: 300));
                                       final loadTime = DateTime.now().difference(start).inMilliseconds;
-                                      await controller.sendTutorProfileLoadTime(loadTime);
+                                      await controller.sendTimeToBookMetric(loadTime);
                                     },
                                     child: Text(
                                       session.course,
