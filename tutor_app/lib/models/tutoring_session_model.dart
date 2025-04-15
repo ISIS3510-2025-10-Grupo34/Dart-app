@@ -31,4 +31,16 @@ class TutoringSession {
       student: json['student'],
     );
   }
+  factory TutoringSession.fromJsonSTS(Map<String, dynamic> json) {
+    return TutoringSession(
+      id: json['id'],
+      tutorName: json['tutorName'] ?? '',
+      tutorId: json['tutorId'],
+      course: json['courseName'] ?? '',
+      university: json[''] ?? '',
+      cost: double.tryParse(json['cost']) ?? 0.0,
+      dateTime: json['dateTime'] ?? '',
+      student: '',
+    );
+  }
 }
