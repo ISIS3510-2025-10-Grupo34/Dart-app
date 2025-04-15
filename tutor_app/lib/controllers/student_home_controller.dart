@@ -1,7 +1,9 @@
 import 'package:flutter/foundation.dart';
 import 'package:tutor_app/providers/auth_provider.dart';
 import '../models/tutor_list_item_model.dart';
+import '../models/tutoring_session_model.dart';
 import '../services/tutor_service.dart';
+import '../services/tutoring_session_service.dart';
 
 enum StudentHomeState { initial, loading, loaded, error }
 
@@ -10,19 +12,24 @@ enum StudentHomeNavigationTarget { none, profile, review, booking }
 class StudentHomeController with ChangeNotifier {
   final TutorService _tutorService;
   final AuthProvider _authProvider;
+  final TutoringSessionService _sessionService;
 
   StudentHomeController({
     required TutorService tutorService,
     required AuthProvider authProvider,
+    required TutoringSessionService sessionService,
   })  : _tutorService = tutorService,
-        _authProvider = authProvider;
+        _authProvider = authProvider,
+        _sessionService = sessionService;
 
   StudentHomeState _state = StudentHomeState.initial;
   StudentHomeState get state => _state;
 
   List<TutorListItemModel> _tutors = [];
-  List<TutorListItemModel> get tutors =>
-      _tutors; // Unmodifiable view if needed: List.unmodifiable(_tutors)
+  List<TutorListItemModel> get tutors => _tutors;
+
+  List<TutoringSession> _sessions = [];
+  List<TutoringSession> get sessions => _sessions;
 
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
@@ -41,6 +48,39 @@ class StudentHomeController with ChangeNotifier {
     try {
       _tutors = await _tutorService.fetchTutors();
       _tutors.sort((a, b) => b.averageRating.compareTo(a.averageRating));
+      _state = StudentHomeState.loaded;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _state = StudentHomeState.error;
+    } finally {
+      notifyListeners();
+    }
+  }
+
+
+  Future<void> loadTutoringSessions() async {
+    _state = StudentHomeState.loading;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _sessions = await _sessionService.fetchTutoringSessions();
+      _state = StudentHomeState.loaded;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _state = StudentHomeState.error;
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadAvailableTutoringSessions() async {
+    _state = StudentHomeState.loading;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      _sessions = await _sessionService.fetchAvailableTutoringSessions();
       _state = StudentHomeState.loaded;
     } catch (e) {
       _errorMessage = e.toString();
