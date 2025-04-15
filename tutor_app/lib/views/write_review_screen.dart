@@ -21,19 +21,35 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
   @override
   void initState() {
     super.initState();
-    _tutorProfileFuture = _controller.getTutorProfile(widget.tutorId); // 👈 Aquí el cambio
+    _tutorProfileFuture = _controller.getTutorProfile(widget.tutorId);
   }
 
   Future<void> _handleSubmit() async {
+    final reviewText = _reviewController.text.trim();
+
+    if (reviewText.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Por favor escribe una reseña antes de enviar.')),
+      );
+      return;
+    }
+
+    if (_rating == 0.0) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Por favor selecciona una calificación.')),
+      );
+      return;
+    }
+
     final success = await _controller.submitReview(
       widget.tutorId,
       _rating,
-      _reviewController.text,
+      reviewText,
     );
 
     if (success) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Review submitted successfully!')),
+        SnackBar(content: Text('¡Reseña enviada exitosamente!')),
       );
       _reviewController.clear();
       setState(() {

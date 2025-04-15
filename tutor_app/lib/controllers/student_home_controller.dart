@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:tutor_app/providers/auth_provider.dart';
+import 'package:tutor_app/services/metrics_service.dart';
 import '../models/tutor_list_item_model.dart';
 import '../models/tutoring_session_model.dart';
 import '../services/tutor_service.dart';
@@ -13,14 +14,17 @@ class StudentHomeController with ChangeNotifier {
   final TutorService _tutorService;
   final AuthProvider _authProvider;
   final TutoringSessionService _sessionService;
+  final MetricsService _metricsService;  
 
   StudentHomeController({
     required TutorService tutorService,
     required AuthProvider authProvider,
     required TutoringSessionService sessionService,
+    required MetricsService metricsService,  
   })  : _tutorService = tutorService,
         _authProvider = authProvider,
-        _sessionService = sessionService;
+        _sessionService = sessionService,
+        _metricsService = metricsService;  
 
   StudentHomeState _state = StudentHomeState.initial;
   StudentHomeState get state => _state;
@@ -57,7 +61,6 @@ class StudentHomeController with ChangeNotifier {
     }
   }
 
-
   Future<void> loadTutoringSessions() async {
     _state = StudentHomeState.loading;
     _errorMessage = null;
@@ -87,6 +90,26 @@ class StudentHomeController with ChangeNotifier {
       _state = StudentHomeState.error;
     } finally {
       notifyListeners();
+    }
+  }
+
+  Future<void> sendTimeToBookMetric(int milliseconds) async {
+    try {
+      await _metricsService.sendTimeToBook(milliseconds); 
+    } catch (e) {
+      if (kDebugMode) {
+        print(' Error sending time-to-book: $e');
+      }
+    }
+  }
+
+  Future<void> sendTutorProfileLoadTime(int milliseconds) async {
+    try {
+      await _metricsService.sendTutorProfileLoadTime(milliseconds);  
+    } catch (e) {
+      if (kDebugMode) {
+        print(' Error sending profile load time: $e');
+      }
     }
   }
 

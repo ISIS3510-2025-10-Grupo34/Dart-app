@@ -30,10 +30,22 @@ class _ConnectStudentsScreenState extends State<ConnectStudentsScreen> {
   }
 
   Future<void> _handleSendNotification() async {
+    final title = _titleController.text.trim();
+    final message = _messageController.text.trim();
+    final place = _placeController.text.trim();
+
+    if (title.isEmpty || message.isEmpty || place.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(
+        "Campos incompletos. Por favor completa el título, mensaje y lugar antes de enviar."),
+      ));
+      return;
+    }
+
     final success = await _controller.sendNotification(
-      title: _titleController.text,
-      message: _messageController.text,
-      place: _placeController.text,
+      title: title,
+      message: message,
+      place: place,
       university: nearestUniversity,
     );
 
@@ -41,6 +53,12 @@ class _ConnectStudentsScreenState extends State<ConnectStudentsScreen> {
       success ? "Éxito" : "Error",
       success ? "Notificación enviada correctamente." : "Hubo un error al enviar la notificación.",
     );
+
+    if (success) {
+      _titleController.clear();
+      _messageController.clear();
+      _placeController.clear();
+    }
   }
 
   void _showDialog(String title, String message) {
