@@ -17,8 +17,20 @@ class WriteReviewController {
     return profile ?? {};
   }
 
-  Future<bool> submitReview(int tutorId, double rating, String comment) async {
-    final review = Review(rating, comment);
-    return await _reviewService.submitReview(tutorId, review);
+  Future<bool> submitReview({
+    required int tutoringSessionId,
+    required int tutorId,
+    required int studentId,
+    required double rating,
+    required String comment,
+  }) async {
+    final review = Review(
+      tutoringSessionId: tutoringSessionId,
+      tutorId: tutorId,
+      studentId: studentId,
+      rating: rating,
+      comment: comment,
+    );
+    return await _reviewService.submitReview(review);
   }
 }

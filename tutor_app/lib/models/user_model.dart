@@ -52,7 +52,13 @@ class User {
     avgRating = json['ratings'].toDouble() ?? 0.0;
     final List<Review> reviewList = [];
     for (Map<String, dynamic> review in json['reviews']) {
-      reviewList.add(Review(review['rating'].toDouble(), review['comment']));
+      reviewList.add(Review(
+        rating: review['rating'].toDouble(),
+        comment: review['comment'],
+        tutoringSessionId: review['tutoringSessionId'],
+        tutorId: review['tutorId'],
+        studentId: review['studentId'],
+      ));
     }
     reviews = reviewList;
   }
