@@ -4,15 +4,16 @@ import '../providers/auth_provider.dart'; //
 import '../models/user_model.dart'; //
 import '../services/user_service.dart'; // Keep for potential future actions
 
-class TutorProfileController with ChangeNotifier {
+class StudentProfileController with ChangeNotifier {
   final AuthProvider _authProvider;
-  final UserService _userService;
+  final UserService _userService; // Still available if needed later
 
+  // Internal state variables mirroring AuthProvider's relevant state
   User? _user;
   bool _isLoading = false;
   String? _errorMessage;
 
-  TutorProfileController(
+  StudentProfileController(
       {required AuthProvider authProvider, required UserService userService})
       : _authProvider = authProvider,
         _userService = userService {

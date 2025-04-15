@@ -22,9 +22,9 @@ import 'controllers/learning_styles_controller.dart';
 import 'controllers/profile_picture_controller.dart';
 import 'controllers/university_id_controller.dart';
 import 'controllers/student_sign_in_controller.dart';
-import 'controllers/university_id_controller.dart';
 import 'controllers/tutor_profile_controller.dart';
 import 'controllers/tutor_sign_in_controller.dart';
+import 'controllers/student_profile_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -87,13 +87,15 @@ void main() async {
           ),
         ),
         ChangeNotifierProvider(
-          create: (context) => TutorProfileController(
-              tutorService: context.read<TutorService>()),
-        ),
+            create: (context) => TutorProfileController(
+                authProvider: authProvider, userService: userService)),
         ChangeNotifierProvider(
           create: (context) =>
               TutorSignInController(context.read<SignInProcessProvider>()),
-        )
+        ),
+        ChangeNotifierProvider(
+            create: (context) => StudentProfileController(
+                authProvider: authProvider, userService: userService))
       ],
       child: const TutorApp(),
     ),

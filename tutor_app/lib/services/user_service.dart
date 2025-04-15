@@ -101,7 +101,7 @@ class UserService {
       final response = await http.post(
         Uri.parse(apiUrl),
         headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"studentId": parsedTutorId}),
+        body: jsonEncode({"tutorId": parsedTutorId}),
       );
 
       if (response.statusCode == 200) {

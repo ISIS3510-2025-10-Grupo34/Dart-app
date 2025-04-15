@@ -1,6 +1,10 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../models/user_model.dart';
 import '../services/user_service.dart';
+import 'dart:convert';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as path;
 
 enum AuthState { unknown, authenticated, unauthenticated }
 
@@ -44,19 +48,48 @@ class AuthProvider with ChangeNotifier {
 
     try {
       Map<String, dynamic>? fullUserInfo;
+      String? profilePictureBase64;
 
       if (userRole == 'student') {
         fullUserInfo = await _userService.fetchStudentProfile(userId);
         _currentUser?.fromJsonStudent(fullUserInfo!);
+        profilePictureBase64 = fullUserInfo?['profile_picture'];
       } else if (userRole == 'tutor') {
-        fullUserInfo = await _userService.fetchStudentProfile(userId);
+        fullUserInfo = await _userService.fetchTutorProfile(userId);
         _currentUser?.fromJsonTutor(fullUserInfo!);
+        profilePictureBase64 = fullUserInfo?['profile_picture'];
       } else {
         throw Exception("Unknown user role for profile fetch: $userRole");
       }
+
+      String? finalProfilePath;
+      if (profilePictureBase64 != null && profilePictureBase64.isNotEmpty) {
+        try {
+          String base64String = profilePictureBase64;
+          if (base64String.contains(',')) {
+            base64String = base64String.split(',')[1];
+          }
+          Uint8List imageBytes = base64Decode(base64String);
+
+          final directory = await getApplicationDocumentsDirectory();
+
+          final fileName = 'profile_image_$userId.png';
+          final filePath = path.join(directory.path, fileName);
+
+          final imageFile = File(filePath);
+          await imageFile.writeAsBytes(imageBytes);
+
+          finalProfilePath = filePath;
+        } catch (e) {
+          finalProfilePath = null;
+        }
+      }
+
+      _currentUser?.profilePicturePath = finalProfilePath;
+
       _profileError = null;
     } catch (e) {
-      _profileError = e.toString();
+      _profileError = "Failed to load profile details: ${e.toString()}";
     } finally {
       _profileIsLoading = false;
       notifyListeners();
