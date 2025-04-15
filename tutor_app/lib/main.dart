@@ -2,8 +2,10 @@
 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tutor_app/controllers/student_tutoring_sessions_controller.dart';
 import 'package:tutor_app/providers/sign_in_process_provider.dart';
 import 'package:tutor_app/services/course_service.dart';
+import 'package:tutor_app/services/student_tutoring_sessions_service.dart';
 import 'utils/env_config.dart';
 import 'views/welcome_screen.dart';
 
@@ -24,10 +26,11 @@ import 'controllers/learning_styles_controller.dart';
 import 'controllers/profile_picture_controller.dart';
 import 'controllers/university_id_controller.dart';
 import 'controllers/student_sign_in_controller.dart';
-import 'controllers/university_id_controller.dart';
 import 'controllers/tutor_profile_controller.dart';
 import 'controllers/tutor_sign_in_controller.dart';
 import 'controllers/student_home_controller.dart';
+import 'controllers/student_profile_controller.dart';
+import 'services/student_tutoring_sessions_service.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -40,6 +43,7 @@ void main() async {
   final userService = UserService();
   final tutoringSessionService = TutoringSessionService();
   final metricsService = MetricsService();
+  final studentTutoringSessionsService = StudentTutoringSessionsService();
 
   final authProvider = AuthProvider(userService: userService);
   final signInProcessProvider = SignInProcessProvider(userService: userService);
@@ -51,6 +55,8 @@ void main() async {
         Provider<TutorService>.value(value: tutorService),
         Provider<CourseService>.value(value: courseService),
         Provider<UserService>.value(value: userService),
+        Provider<StudentTutoringSessionsService>.value(
+            value: studentTutoringSessionsService),
         Provider<TutoringSessionService>.value(value: tutoringSessionService),
         
         // Agrega el proveedor de MetricsService
@@ -99,13 +105,19 @@ void main() async {
           ),
         ),
         ChangeNotifierProvider(
-          create: (context) => TutorProfileController(
-              tutorService: context.read<TutorService>()),
-        ),
+            create: (context) => TutorProfileController(
+                authProvider: authProvider, userService: userService)),
         ChangeNotifierProvider(
           create: (context) =>
               TutorSignInController(context.read<SignInProcessProvider>()),
-        )
+        ),
+        ChangeNotifierProvider(
+            create: (context) => StudentProfileController(
+                authProvider: authProvider, userService: userService)),
+        ChangeNotifierProvider(
+            create: (context) => StudentTutoringSessionsController(
+                studentTutoringSessionsService: studentTutoringSessionsService,
+                authProvider: authProvider))
       ],
       child: const TutorApp(),
     ),

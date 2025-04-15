@@ -4,7 +4,7 @@ import 'package:http_parser/http_parser.dart';
 import '../utils/env_config.dart';
 
 class UserService {
-  ///This method access the API to register a user >_<
+  /// Registers a user with optional profile and ID pictures.
   Future<bool> registerUser(
     Map<String, String> userData,
     String? profilePicturePath,
@@ -14,13 +14,15 @@ class UserService {
     var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
 
     try {
-      final role = userData['role'];
-      request.fields['name'] = userData['name'] ?? '';
-      request.fields['email'] = userData['email'] ?? '';
-      request.fields['phone_number'] = userData['phone_number'] ?? '';
-      request.fields['university'] = userData['university'] ?? '';
-      request.fields['password'] = userData['password'] ?? '';
-      request.fields['role'] = role ?? '';
+      final role = userData['role'] ?? '';
+      request.fields.addAll({
+        'name': userData['name'] ?? '',
+        'email': userData['email'] ?? '',
+        'phone_number': userData['phone_number'] ?? '',
+        'university': userData['university'] ?? '',
+        'password': userData['password'] ?? '',
+        'role': role,
+      });
 
       if (role == 'student') {
         request.fields['major'] = userData['major'] ?? '';
@@ -37,6 +39,7 @@ class UserService {
           contentType: MediaType('image', 'jpeg'),
         ));
       }
+
       if (idPicturePath != null && idPicturePath.isNotEmpty) {
         request.files.add(await http.MultipartFile.fromPath(
           'id_picture',
@@ -64,7 +67,7 @@ class UserService {
     }
   }
 
-  /// This methods is linked with the
+  /// Fetches student profile by ID.
   Future<Map<String, dynamic>?> fetchStudentProfile(String studentId) async {
     final int parsedStudentId = int.tryParse(studentId) ?? 0;
     final apiUrl = '${EnvConfig.apiUrl}/api/studentprofile/';
@@ -77,9 +80,7 @@ class UserService {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-        final Map<String, dynamic>? userData = responseData["data"];
-
-        return userData;
+        return responseData["data"];
       } else {
         String errorMessage =
             'Failed to load student profile (Status code: ${response.statusCode})';
@@ -93,32 +94,32 @@ class UserService {
       throw Exception('Failed to load student profile data: ${e.toString()}');
     }
   }
-Future<Map<String, dynamic>?> fetchTutorProfile(String tutorId) async {
-  final int parsedTutorId = int.tryParse(tutorId) ?? 0;
-  final apiUrl = '${EnvConfig.apiUrl}/api/tutorprofile/';
-  try {
-    final response = await http.post(
-      Uri.parse(apiUrl),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode({"tutorId": parsedTutorId}), 
-    );
 
-    if (response.statusCode == 200) {
-      final Map<String, dynamic> responseData = jsonDecode(response.body);
-      final Map<String, dynamic>? userData = responseData["data"];
-      return userData;
-    } else {
-      String errorMessage =
-          'Failed to load tutor profile (Status code: ${response.statusCode})';
-      try {
-        final errorData = jsonDecode(response.body);
-        errorMessage = errorData['message'] ?? errorMessage;
-      } catch (_) {}
-      throw Exception(errorMessage);
+  /// Fetches tutor profile by ID.
+  Future<Map<String, dynamic>?> fetchTutorProfile(String tutorId) async {
+    final int parsedTutorId = int.tryParse(tutorId) ?? 0;
+    final apiUrl = '${EnvConfig.apiUrl}/api/tutorprofile/';
+    try {
+      final response = await http.post(
+        Uri.parse(apiUrl),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode({"tutorId": parsedTutorId}),
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> responseData = jsonDecode(response.body);
+        return responseData["data"];
+      } else {
+        String errorMessage =
+            'Failed to load tutor profile (Status code: ${response.statusCode})';
+        try {
+          final errorData = jsonDecode(response.body);
+          errorMessage = errorData['message'] ?? errorMessage;
+        } catch (_) {}
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      throw Exception('Failed to load tutor profile data: ${e.toString()}');
     }
-  } catch (e) {
-    throw Exception('Failed to load tutor profile data: ${e.toString()}');
   }
-}
-
 }

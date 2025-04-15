@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; // Import Provider
-import 'package:tutor_app/views/dummy_home_screen.dart';
 import '../controllers/login_controller.dart'; // Your refactored controller
-import 'tutor_home_screen.dart';
+import 'tutor_profile_screen.dart';
 import 'student_home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -43,7 +42,7 @@ class LoginScreenState extends State<LoginScreen> {
       } else if (state == LoginState.successTutor) {
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (context) => const DummyHomeScreen()),
+          MaterialPageRoute(builder: (context) => const TutorProfileScreen()),
         );
         controller.resetStateAfterNavigation();
       }
@@ -139,13 +138,11 @@ class LoginScreenState extends State<LoginScreen> {
                                 _obscurePassword
                                     ? Icons.visibility_off
                                     : Icons.visibility,
-                                color: Colors.grey), //
-                            // Only allow toggling if not loading
+                                color: Colors.grey),
                             onPressed: isLoading
                                 ? null
                                 : () {
                                     setState(() {
-                                      // Local UI state update is fine
                                       _obscurePassword = !_obscurePassword;
                                     });
                                   },
@@ -182,12 +179,11 @@ class LoginScreenState extends State<LoginScreen> {
                                 },
                           style: ElevatedButton.styleFrom(
                             //
-                            backgroundColor: const Color(0xFF171F45), //
-                            foregroundColor: Colors.white, //
+                            backgroundColor: const Color(0xFF171F45),
+                            foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(28)), //
+                                borderRadius: BorderRadius.circular(28)),
                           ),
-                          // Show loading indicator based on controller state
                           child: isLoading
                               ? const CircularProgressIndicator(
                                   color: Colors.white, strokeWidth: 3) //

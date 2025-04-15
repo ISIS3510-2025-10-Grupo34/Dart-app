@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tutor_app/views/notifications_view.dart';
+import 'student_profile_screen.dart';
 import '../controllers/student_home_controller.dart';
 
 class StudentHomeScreen extends StatefulWidget {
@@ -33,7 +34,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             return Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // ----------------------------- Encabezado -----------------------------
+                // ----------------------------- Header -----------------------------
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   child: Row(
@@ -45,6 +46,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                       ),
                       Row(
                         children: [
+                          // Notifications Icon
                           Container(
                             width: 40,
                             height: 40,
@@ -64,6 +66,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                             ),
                           ),
                           const SizedBox(width: 12),
+                          // Profile Icon
                           Container(
                             width: 40,
                             height: 40,
@@ -73,7 +76,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                             ),
                             child: IconButton(
                               icon: const Icon(Icons.person, color: Colors.white),
-                              onPressed: () {},
+                              onPressed: () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const StudentProfileScreen()),
+                                );
+                              },
                               iconSize: 20,
                             ),
                           ),
@@ -82,7 +90,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     ],
                   ),
                 ),
-                // ---------------------------- Botón filtro ----------------------------
+                // ---------------------------- Filter Button ----------------------------
                 Padding(
                   padding: const EdgeInsets.only(left: 16),
                   child: Container(
@@ -102,7 +110,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                // ---------------------------- Lista de sesiones ----------------------------
+                // ---------------------------- Session List ----------------------------
                 Expanded(
                   child: Builder(
                     builder: (_) {
@@ -110,7 +118,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                         return const Center(child: CircularProgressIndicator());
                       } else if (controller.state == StudentHomeState.error) {
                         return Center(
-                          child: Text(controller.errorMessage ?? "Error desconocido"),
+                          child: Text(controller.errorMessage ?? "Unknown error"),
                         );
                       } else if (controller.sessions.isEmpty) {
                         return const Center(child: Text("No available sessions."));
@@ -201,7 +209,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                                       style: ElevatedButton.styleFrom(
                                         backgroundColor: const Color(0xFF171F45),
                                         shape: RoundedRectangleBorder(
-                                            borderRadius: BorderRadius.circular(20)),
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
                                       ),
                                       child: const Text(
                                         "Book",

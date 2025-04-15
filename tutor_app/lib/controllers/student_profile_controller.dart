@@ -1,17 +1,17 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../providers/auth_provider.dart';
 import '../models/user_model.dart';
 import '../services/user_service.dart';
 
-class TutorProfileController with ChangeNotifier {
+class StudentProfileController with ChangeNotifier {
   final AuthProvider _authProvider;
   final UserService _userService;
-
   User? _user;
   bool _isLoading = false;
   String? _errorMessage;
 
-  TutorProfileController(
+  StudentProfileController(
       {required AuthProvider authProvider, required UserService userService})
       : _authProvider = authProvider,
         _userService = userService {
@@ -27,15 +27,18 @@ class TutorProfileController with ChangeNotifier {
     bool needsNotify = false;
 
     if (_user != _authProvider.currentUser) {
-      _user = _authProvider.currentUser;
+      //
+      _user = _authProvider.currentUser; //
       needsNotify = true;
     }
     if (_isLoading != _authProvider.profileIsLoading) {
-      _isLoading = _authProvider.profileIsLoading;
+      //
+      _isLoading = _authProvider.profileIsLoading; //
       needsNotify = true;
     }
     if (_errorMessage != _authProvider.profileError) {
-      _errorMessage = _authProvider.profileError;
+      //
+      _errorMessage = _authProvider.profileError; //
       needsNotify = true;
     }
 
