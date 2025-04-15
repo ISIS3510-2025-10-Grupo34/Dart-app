@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart'; // Import Provider
 import '../controllers/login_controller.dart'; // Your refactored controller
 import 'tutor_profile_screen.dart';
-import 'student_profile_screen.dart';
+import 'student_home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
