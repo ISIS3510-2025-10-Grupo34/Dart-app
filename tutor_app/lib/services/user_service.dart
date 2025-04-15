@@ -93,33 +93,32 @@ class UserService {
       throw Exception('Failed to load student profile data: ${e.toString()}');
     }
   }
+Future<Map<String, dynamic>?> fetchTutorProfile(String tutorId) async {
+  final int parsedTutorId = int.tryParse(tutorId) ?? 0;
+  final apiUrl = '${EnvConfig.apiUrl}/api/tutorprofile/';
+  try {
+    final response = await http.post(
+      Uri.parse(apiUrl),
+      headers: {"Content-Type": "application/json"},
+      body: jsonEncode({"tutorId": parsedTutorId}), 
+    );
 
-  Future<Map<String, dynamic>?> fetchTutorProfile(String tutorId) async {
-    final int parsedTutorId = int.tryParse(tutorId) ?? 0;
-    final apiUrl = '${EnvConfig.apiUrl}/api/tutorprofile/';
-    try {
-      final response = await http.post(
-        Uri.parse(apiUrl),
-        headers: {"Content-Type": "application/json"},
-        body: jsonEncode({"studentId": parsedTutorId}),
-      );
-
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> responseData = jsonDecode(response.body);
-        final Map<String, dynamic>? userData = responseData["data"];
-
-        return userData;
-      } else {
-        String errorMessage =
-            'Failed to load student profile (Status code: ${response.statusCode})';
-        try {
-          final errorData = jsonDecode(response.body);
-          errorMessage = errorData['message'] ?? errorMessage;
-        } catch (_) {}
-        throw Exception(errorMessage);
-      }
-    } catch (e) {
-      throw Exception('Failed to load student profile data: ${e.toString()}');
+    if (response.statusCode == 200) {
+      final Map<String, dynamic> responseData = jsonDecode(response.body);
+      final Map<String, dynamic>? userData = responseData["data"];
+      return userData;
+    } else {
+      String errorMessage =
+          'Failed to load tutor profile (Status code: ${response.statusCode})';
+      try {
+        final errorData = jsonDecode(response.body);
+        errorMessage = errorData['message'] ?? errorMessage;
+      } catch (_) {}
+      throw Exception(errorMessage);
     }
+  } catch (e) {
+    throw Exception('Failed to load tutor profile data: ${e.toString()}');
   }
+}
+
 }
