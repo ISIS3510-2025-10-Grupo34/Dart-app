@@ -72,35 +72,40 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("TutorApp",
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: FutureBuilder<Map<String, dynamic>>(
-          future: _tutorProfileFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError ||
-                !snapshot.hasData ||
-                snapshot.data!.isEmpty) {
-              return const Center(
-                  child: Text("Error al cargar los datos del tutor"));
-            }
+Widget build(BuildContext context) {
+  return Scaffold(
+    resizeToAvoidBottomInset: true,
+    appBar: AppBar(
+      title: const Text("TutorApp",
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500)),
+      backgroundColor: Colors.white,
+      elevation: 0,
+    ),
+    body: Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: FutureBuilder<Map<String, dynamic>>(
+        future: _tutorProfileFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError ||
+              !snapshot.hasData ||
+              snapshot.data!.isEmpty) {
+            return const Center(
+                child: Text("Error al cargar los datos del tutor"));
+          }
 
-            final tutorData = snapshot.data!;
-            final String name = tutorData['name'] ?? 'Sin nombre';
-            final String university =
-                tutorData['university'] ?? 'Universidad no disponible';
-            final String profilePicture = tutorData['profile_picture'] ?? "";
+          final tutorData = snapshot.data!;
+          final String name = tutorData['name'] ?? 'Sin nombre';
+          final String university =
+              tutorData['university'] ?? 'Universidad no disponible';
+          final String profilePicture = tutorData['profile_picture'] ?? "";
 
-            return Column(
+          return SingleChildScrollView(
+            padding: EdgeInsets.only(
+              bottom: MediaQuery.of(context).viewInsets.bottom + 16,
+            ),
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const Text('Write a review',
@@ -159,12 +164,14 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                       style: TextStyle(color: Colors.white)),
                 ),
               ],
-            );
-          },
-        ),
+            ),
+          );
+        },
       ),
-    );
-  }
+    ),
+  );
+}
+
 
   Widget _buildInputField(
       String label, String hint, TextEditingController controller,
