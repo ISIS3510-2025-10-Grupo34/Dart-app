@@ -35,7 +35,8 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
 
     if (reviewText.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor escribe una reseña antes de enviar.')),
+        const SnackBar(
+            content: Text('Por favor escribe una reseña antes de enviar.')),
       );
       return;
     }
@@ -74,7 +75,8 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("TutorApp", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500)),
+        title: const Text("TutorApp",
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500)),
         backgroundColor: Colors.white,
         elevation: 0,
       ),
@@ -85,33 +87,46 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return const Center(child: CircularProgressIndicator());
-            } else if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(child: Text("Error al cargar los datos del tutor"));
+            } else if (snapshot.hasError ||
+                !snapshot.hasData ||
+                snapshot.data!.isEmpty) {
+              return const Center(
+                  child: Text("Error al cargar los datos del tutor"));
             }
 
             final tutorData = snapshot.data!;
             final String name = tutorData['name'] ?? 'Sin nombre';
-            final String university = tutorData['university'] ?? 'Universidad no disponible';
+            final String university =
+                tutorData['university'] ?? 'Universidad no disponible';
             final String profilePicture = tutorData['profile_picture'] ?? "";
 
             return Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 const Text('Write a review',
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Color(0xFF192650))),
+                    style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF192650))),
                 const SizedBox(height: 20),
                 CircleAvatar(
                   radius: 40,
                   backgroundColor: const Color(0xFF192650),
-                  backgroundImage: profilePicture.isNotEmpty ? NetworkImage(profilePicture) : null,
+                  backgroundImage: profilePicture.isNotEmpty
+                      ? NetworkImage(profilePicture)
+                      : null,
                   child: profilePicture.isEmpty
                       ? Text(name.isNotEmpty ? name[0] : '?',
-                          style: const TextStyle(fontSize: 32, color: Colors.white))
+                          style: const TextStyle(
+                              fontSize: 32, color: Colors.white))
                       : null,
                 ),
                 const SizedBox(height: 10),
-                Text(name, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                Text(university, style: const TextStyle(fontSize: 14, color: Colors.grey)),
+                Text(name,
+                    style: const TextStyle(
+                        fontSize: 18, fontWeight: FontWeight.bold)),
+                Text(university,
+                    style: const TextStyle(fontSize: 14, color: Colors.grey)),
                 const SizedBox(height: 15),
                 const Text('Tap to Rate:', style: TextStyle(fontSize: 14)),
                 const SizedBox(height: 5),
@@ -122,20 +137,26 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
                   allowHalfRating: true,
                   itemCount: 5,
                   itemPadding: const EdgeInsets.symmetric(horizontal: 4.0),
-                  itemBuilder: (context, _) => const Icon(Icons.star, color: Color(0xFF192650)),
+                  itemBuilder: (context, _) =>
+                      const Icon(Icons.star, color: Color(0xFF192650)),
                   onRatingUpdate: (rating) => setState(() => _rating = rating),
                 ),
                 const SizedBox(height: 20),
-                _buildInputField('Review', 'Write your review here...', _reviewController, maxLines: 3),
+                _buildInputField(
+                    'Review', 'Write your review here...', _reviewController,
+                    maxLines: 3),
                 const SizedBox(height: 20),
                 ElevatedButton(
                   onPressed: _handleSubmit,
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF192650),
-                    padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8.0)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 40, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(8.0)),
                   ),
-                  child: const Text('Submit', style: TextStyle(color: Colors.white)),
+                  child: const Text('Submit',
+                      style: TextStyle(color: Colors.white)),
                 ),
               ],
             );
@@ -145,11 +166,17 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
     );
   }
 
-  Widget _buildInputField(String label, String hint, TextEditingController controller, {int maxLines = 1}) {
+  Widget _buildInputField(
+      String label, String hint, TextEditingController controller,
+      {int maxLines = 1}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Color(0xFF192650))),
+        Text(label,
+            style: const TextStyle(
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+                color: Color(0xFF192650))),
         const SizedBox(height: 5),
         TextField(
           controller: controller,
@@ -157,7 +184,7 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
-            fillColor: Colors.purple.shade50,
+            fillColor: Colors.white,
             border: OutlineInputBorder(
               borderRadius: BorderRadius.circular(8),
               borderSide: BorderSide.none,
