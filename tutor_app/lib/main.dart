@@ -14,7 +14,9 @@ import 'services/auth_service.dart';
 import 'services/tutor_service.dart';
 import 'services/user_service.dart';
 import 'services/tutoring_session_service.dart';
-import 'services/metrics_service.dart';  // Importa el servicio MetricsService
+import 'services/metrics_service.dart';
+import 'services/universities_service.dart';
+import 'services/majors_service.dart';
 
 // Import Providers/Controllers
 import 'providers/auth_provider.dart';
@@ -44,6 +46,8 @@ void main() async {
   final tutoringSessionService = TutoringSessionService();
   final metricsService = MetricsService();
   final studentTutoringSessionsService = StudentTutoringSessionsService();
+  final universitiesService = UniversitiesService();
+  final majorsService = MajorsService();
 
   final authProvider = AuthProvider(userService: userService);
   final signInProcessProvider = SignInProcessProvider(userService: userService);
@@ -55,15 +59,19 @@ void main() async {
         Provider<TutorService>.value(value: tutorService),
         Provider<CourseService>.value(value: courseService),
         Provider<UserService>.value(value: userService),
+        Provider<UniversitiesService>.value(value: universitiesService),
+        Provider<MajorsService>.value(value: majorsService),
+
         Provider<StudentTutoringSessionsService>.value(
             value: studentTutoringSessionsService),
         Provider<TutoringSessionService>.value(value: tutoringSessionService),
-        
+
         // Agrega el proveedor de MetricsService
         Provider<MetricsService>.value(value: metricsService),
 
         ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
-        ChangeNotifierProvider<SignInProcessProvider>.value(value: signInProcessProvider),
+        ChangeNotifierProvider<SignInProcessProvider>.value(
+            value: signInProcessProvider),
 
         ChangeNotifierProvider(
           create: (context) => LoginController(
@@ -81,7 +89,8 @@ void main() async {
             tutorService: context.read<TutorService>(),
             authProvider: context.read<AuthProvider>(),
             sessionService: context.read<TutoringSessionService>(),
-            metricsService: context.read<MetricsService>(),  // Proporciona MetricsService
+            metricsService:
+                context.read<MetricsService>(), // Proporciona MetricsService
           ),
         ),
         ChangeNotifierProvider(
@@ -102,14 +111,18 @@ void main() async {
         ChangeNotifierProvider(
           create: (context) => StudentSignInController(
             context.read<SignInProcessProvider>(),
+            context.read<UniversitiesService>(),
+            context.read<MajorsService>(),
           ),
         ),
         ChangeNotifierProvider(
             create: (context) => TutorProfileController(
                 authProvider: authProvider, userService: userService)),
         ChangeNotifierProvider(
-          create: (context) =>
-              TutorSignInController(context.read<SignInProcessProvider>()),
+          create: (context) => TutorSignInController(
+            context.read<SignInProcessProvider>(),
+            context.read<UniversitiesService>(),
+          ),
         ),
         ChangeNotifierProvider(
             create: (context) => StudentProfileController(
@@ -141,9 +154,9 @@ class TutorApp extends StatelessWidget {
           case AuthState.authenticated:
             final role = authProvider.currentUser?.role;
             if (role == 'student') {
-              return const WelcomeScreen(); 
+              return const WelcomeScreen();
             } else if (role == 'tutor') {
-              return const WelcomeScreen(); 
+              return const WelcomeScreen();
             } else {
               return const WelcomeScreen();
             }

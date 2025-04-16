@@ -12,10 +12,11 @@ class StudentSignInScreen extends StatefulWidget {
 
 class _StudentSignInState extends State<StudentSignInScreen> {
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _universityController = TextEditingController();
   final TextEditingController _majorController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
-  // Removed UserService instance
+  final TextEditingController _universityMenuController =
+      TextEditingController();
+  final TextEditingController _majorMenuController = TextEditingController();
 
   @override
   void initState() {
@@ -37,9 +38,8 @@ class _StudentSignInState extends State<StudentSignInScreen> {
           context,
           MaterialPageRoute(
               builder: (context) => const StudentLearningStylesScreen()),
-          (route) => false, // Remove all previous routes
+          (route) => false,
         );
-        // Reset controller state after navigation is initiated
         controller.resetStateAfterNavigation();
       }
     });
@@ -47,7 +47,6 @@ class _StudentSignInState extends State<StudentSignInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Use Consumer to get controller state and rebuild on changes
     return Consumer<StudentSignInController>(
       builder: (context, controller, child) {
         final isLoading = controller.state == StudentSignInState.loading;
@@ -56,12 +55,6 @@ class _StudentSignInState extends State<StudentSignInScreen> {
             : null;
         final phoneError = (controller.state == StudentSignInState.error)
             ? controller.phoneError
-            : null;
-        final universityError = (controller.state == StudentSignInState.error)
-            ? controller.universityError
-            : null;
-        final majorError = (controller.state == StudentSignInState.error)
-            ? controller.majorError
             : null;
         final generalError = (controller.state == StudentSignInState.error)
             ? controller.generalError
@@ -187,65 +180,9 @@ class _StudentSignInState extends State<StudentSignInScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        TextField(
-                          controller: _universityController,
-                          enabled: !isLoading,
-                          onChanged: (_) => controller.clearInputErrors(),
-                          decoration: InputDecoration(
-                            hintText: 'University',
-                            errorText: universityError, // Read from controller
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
-                            ),
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide:
-                                    BorderSide(color: Colors.grey.shade300)),
-                            enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide:
-                                    BorderSide(color: Colors.grey.shade300)),
-                            errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide:
-                                    const BorderSide(color: Colors.red)),
-                            focusedErrorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide:
-                                    const BorderSide(color: Colors.red)),
-                          ),
-                        ),
+                        _buildUniversityDropdown(controller),
                         const SizedBox(height: 16),
-                        TextField(
-                          controller: _majorController,
-                          enabled: !isLoading,
-                          onChanged: (_) => controller.clearInputErrors(),
-                          decoration: InputDecoration(
-                            hintText: 'Major',
-                            errorText: majorError, // Read from controller
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
-                            ),
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide:
-                                    BorderSide(color: Colors.grey.shade300)),
-                            enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide:
-                                    BorderSide(color: Colors.grey.shade300)),
-                            errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide:
-                                    const BorderSide(color: Colors.red)),
-                            focusedErrorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide:
-                                    const BorderSide(color: Colors.red)),
-                          ),
-                        ),
+                        _buildMajorDropdown(controller),
                         const SizedBox(height: 16), // Spacing before error
                         // Display general error message if any
                         if (generalError != null)
@@ -262,7 +199,6 @@ class _StudentSignInState extends State<StudentSignInScreen> {
                         SizedBox(
                           height: 56,
                           child: ElevatedButton(
-                            // Disable button when loading, call controller on press
                             onPressed: isLoading
                                 ? null
                                 : () {
@@ -272,9 +208,6 @@ class _StudentSignInState extends State<StudentSignInScreen> {
                                           name: _nameController.text,
                                           phoneNumber:
                                               _phoneNumberController.text,
-                                          university:
-                                              _universityController.text,
-                                          major: _majorController.text,
                                         );
                                   },
                             style: ElevatedButton.styleFrom(
@@ -314,10 +247,84 @@ class _StudentSignInState extends State<StudentSignInScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _universityController.dispose();
     _majorController.dispose();
     _phoneNumberController.dispose();
-    // Note: The controller itself is managed by Provider
+    _universityMenuController.dispose();
+    _majorMenuController.dispose();
     super.dispose();
+  }
+
+  Widget _buildUniversityDropdown(dynamic controller) {
+    final List<String> universities = controller.universities;
+    final String? selectedValue = controller.selectedUniversity;
+    final Function(String?) onSelectedUpdate = controller.selectUniversity;
+
+    return DropdownMenu<String>(
+      controller: _universityMenuController,
+      initialSelection: selectedValue,
+      dropdownMenuEntries:
+          universities.map<DropdownMenuEntry<String>>((String value) {
+        return DropdownMenuEntry<String>(
+          value: value,
+          label: value,
+        );
+      }).toList(),
+      onSelected: (String? value) {
+        onSelectedUpdate(value);
+      },
+      expandedInsets: EdgeInsets.zero,
+      menuHeight: 300,
+      hintText: 'Select University',
+      inputDecorationTheme: InputDecorationTheme(
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey.shade300)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey.shade300)),
+      ),
+      menuStyle: MenuStyle(
+        backgroundColor: WidgetStateProperty.all<Color>(Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildMajorDropdown(dynamic controller) {
+    final List<String> majors = controller.majors;
+    final String? selectedValue = controller.selectedMajor;
+    final Function(String?) onSelectedUpdate = controller.selectMajor;
+
+    return DropdownMenu<String>(
+      controller: _majorMenuController,
+      initialSelection: selectedValue,
+      dropdownMenuEntries:
+          majors.map<DropdownMenuEntry<String>>((String value) {
+        return DropdownMenuEntry<String>(
+          value: value,
+          label: value,
+        );
+      }).toList(),
+      onSelected: (String? value) {
+        onSelectedUpdate(value);
+      },
+      expandedInsets: EdgeInsets.zero,
+      menuHeight: 300,
+      hintText: 'Select Major',
+      inputDecorationTheme: InputDecorationTheme(
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey.shade300)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey.shade300)),
+      ),
+      menuStyle: MenuStyle(
+        backgroundColor: WidgetStateProperty.all<Color>(Colors.white),
+      ),
+    );
   }
 }

@@ -47,6 +47,15 @@ class StudentProfileController with ChangeNotifier {
     }
   }
 
+  Future<void> logout() async {
+    try {
+      await _authProvider.logout();
+    } catch (e) {
+      debugPrint("Error during logout via controller: $e");
+      rethrow;
+    } finally {}
+  }
+
   @override
   void dispose() {
     _authProvider.removeListener(_updateStateFromAuthProvider);

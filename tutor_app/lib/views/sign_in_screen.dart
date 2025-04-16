@@ -13,7 +13,6 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
-  // Keep local controllers and UI state
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController =
@@ -21,13 +20,9 @@ class _SignInScreenState extends State<SignInScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
 
-  // Removed local error variables and _validateAndContinue method
-  // Removed UserService instance
-
   @override
   void initState() {
     super.initState();
-    // Setup listener for navigation after validation
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _setupNavigationListener();
     });
@@ -45,7 +40,7 @@ class _SignInScreenState extends State<SignInScreen> {
           context,
           MaterialPageRoute(builder: (context) => const StudentSignInScreen()),
         );
-        controller.resetStateAfterNavigation(); // Reset controller state
+        controller.resetStateAfterNavigation();
       } else if (state == SignInState.validationSuccessTutor) {
         Navigator.push(
           context,

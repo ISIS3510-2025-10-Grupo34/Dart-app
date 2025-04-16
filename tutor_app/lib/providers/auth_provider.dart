@@ -56,8 +56,7 @@ class AuthProvider with ChangeNotifier {
         profilePictureBase64 = fullUserInfo?['profile_picture'];
       } else if (userRole == 'tutor') {
         fullUserInfo = await _userService.fetchTutorProfile(userId);
-        _currentUser?.fromJsonTutor(fullUserInfo!);
-        profilePictureBase64 = fullUserInfo?['profile_picture'];
+        _currentUser?.fromJsonTutorProfile(fullUserInfo!);
       } else {
         throw Exception("Unknown user role for profile fetch: $userRole");
       }
@@ -102,5 +101,30 @@ class AuthProvider with ChangeNotifier {
     } else {
       return;
     }
+  }
+
+  Future<void> clearLocalProfilePicture() async {
+    if (_currentUser?.profilePicturePath != null &&
+        _currentUser!.profilePicturePath!.isNotEmpty) {
+      try {
+        final file = File(_currentUser!.profilePicturePath!);
+        if (await file.exists()) {
+          await file.delete();
+          debugPrint(
+              "Deleted local profile picture: ${_currentUser!.profilePicturePath}");
+        }
+      } catch (e) {
+        debugPrint("Error deleting local profile picture: $e");
+      }
+      _currentUser!.profilePicturePath = null;
+    }
+  }
+
+  Future<void> logout() async {
+    await clearLocalProfilePicture();
+    _currentUser = null;
+
+    _authState = AuthState.unauthenticated;
+    notifyListeners();
   }
 }

@@ -7,6 +7,7 @@ import '../models/user_model.dart';
 import 'write_review_screen.dart';
 import '../providers/auth_provider.dart';
 import 'student_home_screen.dart';
+import 'welcome_screen.dart';
 
 class StudentProfileScreen extends StatefulWidget {
   const StudentProfileScreen({super.key});
@@ -49,24 +50,62 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
         .toList();
   }
 
+  Future<void> _logout(BuildContext context) async {
+    final profileController =
+        Provider.of<StudentProfileController>(context, listen: false);
+    try {
+      await profileController.logout();
+      if (mounted) {
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+          (Route<dynamic> route) => false,
+        );
+      }
+    } catch (e) {
+      debugPrint("Error during logout triggered from screen: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text("Logout failed: ${e.toString()}")),
+        );
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final profileController = context.watch<StudentProfileController>();
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text("TutorApp", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500)),
+        title: const Text("TutorApp",
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500)),
         backgroundColor: Colors.white,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.black), 
+          icon: const Icon(Icons.arrow_back, color: Colors.black),
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(builder: (context) => const StudentHomeScreen()),
+              MaterialPageRoute(
+                  builder: (context) => const StudentHomeScreen()),
             );
           },
         ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8.0),
+            child: Material(
+              color: const Color(0xFF192650),
+              shape: const CircleBorder(),
+              clipBehavior: Clip.antiAlias,
+              child: IconButton(
+                icon: Icon(Icons.logout, color: Colors.white),
+                tooltip: 'Logout',
+                onPressed: () => _logout(context),
+              ),
+            ),
+          ),
+        ],
       ),
       backgroundColor: Colors.white,
       body: SafeArea(
@@ -220,8 +259,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 );
               }
               if (sessionController.sessions.isEmpty) {
-                return const Center(
-                    child: Text('No tutoring sessions found.'));
+                return const Center(child: Text('No tutoring sessions found.'));
               }
 
               return ListView.builder(
