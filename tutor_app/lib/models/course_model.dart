@@ -17,7 +17,6 @@ class Course {
     required this.price,
   });
 
-  // Convertir JSON a objeto Course
   factory Course.fromJson(Map<String, dynamic> json) {
     return Course(
       id: json['id'],

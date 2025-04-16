@@ -36,13 +36,15 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               children: [
                 // ----------------------------- Header -----------------------------
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       const Text(
                         "TutorApp",
-                        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
+                        style: TextStyle(
+                            fontSize: 24, fontWeight: FontWeight.w500),
                       ),
                       Row(
                         children: [
@@ -55,11 +57,14 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
-                              icon: const Icon(Icons.notifications, color: Colors.white),
+                              icon: const Icon(Icons.notifications,
+                                  color: Colors.white),
                               onPressed: () {
                                 Navigator.push(
                                   context,
-                                  MaterialPageRoute(builder: (context) => const NotificationsScreen()),
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const NotificationsScreen()),
                                 );
                               },
                               iconSize: 20,
@@ -75,11 +80,14 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                               shape: BoxShape.circle,
                             ),
                             child: IconButton(
-                              icon: const Icon(Icons.person, color: Colors.white),
+                              icon:
+                                  const Icon(Icons.person, color: Colors.white),
                               onPressed: () {
                                 Navigator.pushReplacement(
                                   context,
-                                  MaterialPageRoute(builder: (context) => const StudentProfileScreen()),
+                                  MaterialPageRoute(
+                                      builder: (context) =>
+                                          const StudentProfileScreen()),
                                 );
                               },
                               iconSize: 20,
@@ -98,7 +106,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                       color: const Color(0xFF171F45),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 10),
                     child: const Text(
                       "Filter results",
                       style: TextStyle(
@@ -118,21 +127,25 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                         return const Center(child: CircularProgressIndicator());
                       } else if (controller.state == StudentHomeState.error) {
                         return Center(
-                          child: Text(controller.errorMessage ?? "Unknown error"),
+                          child:
+                              Text(controller.errorMessage ?? "Unknown error"),
                         );
                       } else if (controller.sessions.isEmpty) {
-                        return const Center(child: Text("No available sessions."));
+                        return const Center(
+                            child: Text("No available sessions."));
                       }
 
                       return ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 10),
                         itemCount: controller.sessions.length,
                         itemBuilder: (context, index) {
                           final session = controller.sessions[index];
                           return Card(
-                            color: const Color(0xFFFDF7FF),
+                            color: const Color(0xFFFFFFFF),
                             elevation: 2,
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(16)),
                             margin: const EdgeInsets.symmetric(vertical: 8),
                             child: Padding(
                               padding: const EdgeInsets.all(16),
@@ -142,10 +155,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                                   Row(
                                     children: [
                                       CircleAvatar(
-                                        backgroundColor: const Color(0xFF171F45),
+                                        backgroundColor:
+                                            const Color(0xFF171F45),
                                         child: Text(
                                           session.tutorName[0],
-                                          style: const TextStyle(color: Colors.white),
+                                          style: const TextStyle(
+                                              color: Colors.white),
                                         ),
                                       ),
                                       const SizedBox(width: 10),
@@ -163,9 +178,13 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                                   GestureDetector(
                                     onTap: () async {
                                       final start = DateTime.now();
-                                      await Future.delayed(const Duration(milliseconds: 300));
-                                      final loadTime = DateTime.now().difference(start).inMilliseconds;
-                                      await controller.sendTutorProfileLoadTime(loadTime);
+                                      await Future.delayed(
+                                          const Duration(milliseconds: 300));
+                                      final loadTime = DateTime.now()
+                                          .difference(start)
+                                          .inMilliseconds;
+                                      await controller
+                                          .sendTimeToBookMetric(loadTime);
                                     },
                                     child: Text(
                                       session.course,
@@ -203,13 +222,18 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                                     alignment: Alignment.centerRight,
                                     child: ElevatedButton(
                                       onPressed: () async {
-                                        final timeToBook = DateTime.now().difference(_screenLoadTime!).inMilliseconds;
-                                        await controller.sendTimeToBookMetric(timeToBook);
+                                        final timeToBook = DateTime.now()
+                                            .difference(_screenLoadTime!)
+                                            .inMilliseconds;
+                                        await controller
+                                            .sendTimeToBookMetric(timeToBook);
                                       },
                                       style: ElevatedButton.styleFrom(
-                                        backgroundColor: const Color(0xFF171F45),
+                                        backgroundColor:
+                                            const Color(0xFF171F45),
                                         shape: RoundedRectangleBorder(
-                                          borderRadius: BorderRadius.circular(20),
+                                          borderRadius:
+                                              BorderRadius.circular(20),
                                         ),
                                       ),
                                       child: const Text(

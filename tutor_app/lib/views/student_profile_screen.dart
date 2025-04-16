@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../controllers/student_profile_controller.dart';
 import '../controllers/student_tutoring_sessions_controller.dart';
 import '../models/user_model.dart';
-import '../models/tutoring_session_model.dart';
 import 'write_review_screen.dart';
 import '../providers/auth_provider.dart';
 import 'student_home_screen.dart';
@@ -25,7 +24,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
       if (authProvider.currentUser?.id != null) {
         Provider.of<StudentTutoringSessionsController>(context, listen: false)
             .fetchStudentSessions();
-      } else {}
+      }
     });
   }
 
@@ -41,7 +40,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     return styles
         .map((style) => Chip(
               label: Text(style),
-              backgroundColor: const Color(0xFF29339b),
+              backgroundColor: const Color(0xFF171F45),
               labelStyle: const TextStyle(
                 color: Colors.white,
                 fontWeight: FontWeight.w500,
@@ -55,6 +54,20 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
     final profileController = context.watch<StudentProfileController>();
 
     return Scaffold(
+      appBar: AppBar(
+        title: const Text("TutorApp", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500)),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Colors.black), 
+          onPressed: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (context) => const StudentHomeScreen()),
+            );
+          },
+        ),
+      ),
       backgroundColor: Colors.white,
       body: SafeArea(
         child: Padding(
@@ -62,24 +75,6 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              InkWell(
-                onTap: () {
-                  Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const StudentHomeScreen()));
-                },
-                child: const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 8.0),
-                  child: Text(
-                    "TutorApp",
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-              ),
               const SizedBox(height: 20),
               Expanded(
                 child: buildProfileContent(context, profileController),
@@ -110,8 +105,10 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
 
     if (user == null) {
       return const Center(
-          child: Text('Profile data not available. Please try refreshing.'));
+        child: Text('Profile data not available. Please try refreshing.'),
+      );
     }
+
     ImageProvider? profileImageProvider;
     if (user.profilePicturePath != null &&
         user.profilePicturePath!.isNotEmpty) {
@@ -219,16 +216,23 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
               }
               if (sessionController.errorMessage != null) {
                 return Center(
-                    child: Text('Error: ${sessionController.errorMessage}'));
+                  child: Text('Error: ${sessionController.errorMessage}'),
+                );
               }
               if (sessionController.sessions.isEmpty) {
-                return const Center(child: Text('No tutoring sessions found.'));
+                return const Center(
+                    child: Text('No tutoring sessions found.'));
               }
 
               return ListView.builder(
                 itemCount: sessionController.sessions.length,
                 itemBuilder: (context, index) {
                   final session = sessionController.sessions[index];
+                  final studentId =
+                      Provider.of<AuthProvider>(context, listen: false)
+                          .currentUser
+                          ?.id;
+
                   return Card(
                     color: Colors.white,
                     margin: const EdgeInsets.symmetric(vertical: 4.0),
@@ -238,26 +242,30 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                       subtitle: Text(session.dateTime),
                       trailing: ElevatedButton(
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF192650),
+                          backgroundColor: const Color(0xFF171F45),
                           foregroundColor: Colors.white,
                         ),
                         child: const Text('Review'),
                         onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => WriteReviewScreen(
-                                  tutorId: session.tutorId), // Pass tutorId
-                            ),
-                          );
-                          // You might want to add error handling if session.tutorId could be null
-                          // Or disable the button if the session isn't reviewable yet (e.g., based on date)
+                          if (studentId != null) {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => WriteReviewScreen(
+                                  tutorId: session.tutorId,
+                                  studentId: int.parse(studentId),
+                                  sessionId: session.id,
+                                ),
+                              ),
+                            );
+                          } else {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                  content:
+                                      Text("Unable to find your student ID")),
+                            );
+                          }
                         },
-                        // Optional: Style the button if needed
-                        // style: ElevatedButton.styleFrom(
-                        //   padding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                        //   textStyle: TextStyle(fontSize: 12),
-                        // ),
                       ),
                     ),
                   );
