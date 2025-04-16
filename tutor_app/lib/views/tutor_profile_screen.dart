@@ -282,12 +282,6 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
   }
 
   Widget _buildReviewsList(List<Review>? reviews) {
-    // Accept List<Review>?
-    // Remove loading/error checks specific to reviews
-    // if (controller.reviewsAreLoading) { ... }
-    // if (controller.reviewsError != null) { ... }
-
-    // Check if the list is null or empty
     if (reviews == null || reviews.isEmpty) {
       return const Center(
           child: Padding(
@@ -299,11 +293,11 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
     return ListView.separated(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      itemCount: reviews.length, // Use the passed list's length
+      itemCount: reviews.length,
       separatorBuilder: (context, index) =>
           const Divider(height: 1, thickness: 1),
       itemBuilder: (context, index) {
-        final review = reviews[index]; // Get review from the list
+        final review = reviews[index];
         return _buildReviewCard(review);
       },
     );
@@ -320,7 +314,7 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
           ],
         ),
         subtitle: Padding(
-          padding: const EdgeInsets.only(top: 6.0), // Add space below title row
+          padding: const EdgeInsets.only(top: 6.0),
           child: Text(review.comment),
         ),
       ),

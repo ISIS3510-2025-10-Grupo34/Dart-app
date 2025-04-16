@@ -30,7 +30,6 @@ import 'controllers/university_id_controller.dart';
 import 'controllers/student_sign_in_controller.dart';
 import 'controllers/tutor_profile_controller.dart';
 import 'controllers/tutor_sign_in_controller.dart';
-import 'controllers/student_home_controller.dart';
 import 'controllers/student_profile_controller.dart';
 import 'services/student_tutoring_sessions_service.dart';
 
