@@ -13,10 +13,11 @@ class TutorSignInScreen extends StatefulWidget {
 
 class _TutorSignInState extends State<TutorSignInScreen> {
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _universityController = TextEditingController();
   final TextEditingController _areaOfExpertiseController =
       TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
+  final TextEditingController _universityMenuController =
+      TextEditingController();
 
   @override
   void initState() {
@@ -47,7 +48,6 @@ class _TutorSignInState extends State<TutorSignInScreen> {
 
   @override
   Widget build(BuildContext context) {
-    // Use Consumer to get controller state and rebuild on changes
     return Consumer<TutorSignInController>(
       builder: (context, controller, child) {
         final isLoading = controller.state == TutorSignInState.loading;
@@ -56,9 +56,6 @@ class _TutorSignInState extends State<TutorSignInScreen> {
             : null;
         final phoneError = (controller.state == TutorSignInState.error)
             ? controller.phoneError
-            : null;
-        final universityError = (controller.state == TutorSignInState.error)
-            ? controller.universityError
             : null;
         final expertiseError = (controller.state == TutorSignInState.error)
             ? controller.expertiseError
@@ -184,35 +181,7 @@ class _TutorSignInState extends State<TutorSignInScreen> {
                           ),
                         ),
                         const SizedBox(height: 16),
-                        TextField(
-                          controller: _universityController,
-                          enabled: !isLoading,
-                          onChanged: (_) => controller.clearInputErrors(),
-                          decoration: InputDecoration(
-                            hintText: 'University',
-                            errorText: universityError,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
-                            ),
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide:
-                                    BorderSide(color: Colors.grey.shade300)),
-                            enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide:
-                                    BorderSide(color: Colors.grey.shade300)),
-                            errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide:
-                                    const BorderSide(color: Colors.red)),
-                            focusedErrorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide:
-                                    const BorderSide(color: Colors.red)),
-                          ),
-                        ),
+                        _buildUniversityDropdown(controller),
                         const SizedBox(height: 16),
                         TextField(
                           controller: _areaOfExpertiseController,
@@ -268,8 +237,6 @@ class _TutorSignInState extends State<TutorSignInScreen> {
                                           name: _nameController.text,
                                           phoneNumber:
                                               _phoneNumberController.text,
-                                          university:
-                                              _universityController.text,
                                           areaOfExpertise:
                                               _areaOfExpertiseController.text,
                                         );
@@ -310,9 +277,46 @@ class _TutorSignInState extends State<TutorSignInScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _universityController.dispose();
     _areaOfExpertiseController.dispose();
     _phoneNumberController.dispose();
+    _universityMenuController.dispose();
     super.dispose();
+  }
+
+  Widget _buildUniversityDropdown(dynamic controller) {
+    final List<String> universities = controller.universities;
+    final String? selectedValue = controller.selectedUniversity;
+    final Function(String?) onSelectedUpdate = controller.selectUniversity;
+
+    return DropdownMenu<String>(
+      controller: _universityMenuController,
+      initialSelection: selectedValue,
+      dropdownMenuEntries:
+          universities.map<DropdownMenuEntry<String>>((String value) {
+        return DropdownMenuEntry<String>(
+          value: value,
+          label: value,
+        );
+      }).toList(),
+      onSelected: (String? value) {
+        onSelectedUpdate(value);
+      },
+      expandedInsets: EdgeInsets.zero,
+      menuHeight: 300,
+      hintText: 'Select University',
+      inputDecorationTheme: InputDecorationTheme(
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey.shade300)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey.shade300)),
+      ),
+      menuStyle: MenuStyle(
+        backgroundColor: WidgetStateProperty.all<Color>(Colors.white),
+      ),
+    );
   }
 }

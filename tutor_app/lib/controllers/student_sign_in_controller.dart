@@ -1,5 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../providers/sign_in_process_provider.dart';
+import '../services/universities_service.dart';
+import '../services/majors_service.dart';
 
 enum StudentSignInState {
   initial,
@@ -10,8 +12,37 @@ enum StudentSignInState {
 
 class StudentSignInController with ChangeNotifier {
   final SignInProcessProvider _signInProcessProvider;
+  final UniversitiesService _universitiesService;
+  final MajorsService _majorsService;
 
-  StudentSignInController(this._signInProcessProvider);
+  StudentSignInController(this._signInProcessProvider,
+      this._universitiesService, this._majorsService) {
+    _loadUniversities();
+    _loadMajors();
+  }
+  List<String> _universities = [];
+  List<String> get universities => _universities;
+
+  String? _selectedUniversity;
+  String? get selectedUniversity => _selectedUniversity;
+
+  bool _isLoadingUniversities = false;
+  bool get isLoadingUniversities => _isLoadingUniversities;
+
+  String? _universityApiError;
+  String? get universityApiError => _universityApiError;
+
+  List<String> _majors = [];
+  List<String> get majors => _majors;
+
+  String? _selectedMajor;
+  String? get selectedMajor => _selectedMajor;
+
+  bool _isLoadingMajors = false;
+  bool get isLoadingMajors => _isLoadingMajors;
+
+  String? _majorApiError;
+  String? get majorApiError => _majorApiError;
 
   StudentSignInState _state = StudentSignInState.initial;
   StudentSignInState get state => _state;
@@ -31,11 +62,55 @@ class StudentSignInController with ChangeNotifier {
   String? _generalError;
   String? get generalError => _generalError;
 
+  Future<void> _loadUniversities() async {
+    _isLoadingUniversities = true;
+    _universityApiError = null;
+    notifyListeners();
+    try {
+      _universities = await _universitiesService.fetchUniversities();
+    } catch (e) {
+      _universityApiError = "Could not load universities: ${e.toString()}";
+      debugPrint(_universityApiError);
+    } finally {
+      _isLoadingUniversities = false;
+      notifyListeners();
+    }
+  }
+
+  void selectUniversity(String? value) {
+    if (_selectedUniversity != value) {
+      _selectedUniversity = value;
+      _universityError = null; // Clear validation error on change
+      notifyListeners();
+    }
+  }
+
+  Future<void> _loadMajors() async {
+    _isLoadingMajors = true;
+    _majorApiError = null;
+    notifyListeners();
+    try {
+      _majors = await _majorsService.fetchMajors();
+    } catch (e) {
+      _majorApiError = "Could not load majors: ${e.toString()}";
+      debugPrint(_majorApiError);
+    } finally {
+      _isLoadingMajors = false;
+      notifyListeners();
+    }
+  }
+
+  void selectMajor(String? value) {
+    if (_selectedMajor != value) {
+      _selectedMajor = value;
+      _majorError = null;
+      notifyListeners();
+    }
+  }
+
   Future<void> submitStudentDetails({
     required String name,
     required String phoneNumber,
-    required String university,
-    required String major,
   }) async {
     _state = StudentSignInState.loading;
     _clearErrors();
@@ -53,14 +128,6 @@ class StudentSignInController with ChangeNotifier {
       _phoneError = 'Enter a valid phone number';
       isValid = false;
     }
-    if (university.trim().isEmpty) {
-      _universityError = 'University is required';
-      isValid = false;
-    }
-    if (major.trim().isEmpty) {
-      _majorError = 'Major is required';
-      isValid = false;
-    }
 
     if (!isValid) {
       _state = StudentSignInState.error;
@@ -72,8 +139,8 @@ class StudentSignInController with ChangeNotifier {
       final Map<String, String> studentData = {
         'name': name.trim(),
         'phone_number': phoneNumber.trim(),
-        'university': university.trim(),
-        'major': major.trim(),
+        'university': _selectedUniversity!,
+        'major': _selectedMajor!,
       };
       _signInProcessProvider.setStudentDetails(studentData);
 

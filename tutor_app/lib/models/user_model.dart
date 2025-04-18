@@ -48,7 +48,6 @@ class User {
     phoneNumber = json['whatsappContact'];
     university = json['university'];
     areaOfExpertise = json['subjects'];
-    profilePicturePath = json['profile_picture'] ?? "";
     avgRating = json['ratings'].toDouble() ?? 0.0;
     final List<Review> reviewList = [];
     for (Map<String, dynamic> review in json['reviews']) {
@@ -58,6 +57,22 @@ class User {
         tutoringSessionId: review['tutoringSessionId'],
         tutorId: review['tutorId'],
         studentId: review['studentId'],
+      ));
+    }
+    reviews = reviewList;
+  }
+
+  void fromJsonTutorProfile(Map<String, dynamic> json) {
+    name = json['name'];
+    phoneNumber = json['whatsappContact'];
+    university = json['university'];
+    areaOfExpertise = json['subjects'];
+    avgRating = json['ratings'].toDouble() ?? 0.0;
+    final List<Review> reviewList = [];
+    for (Map<String, dynamic> review in json['reviews']) {
+      reviewList.add(Review(
+        rating: review['rating'].toDouble(),
+        comment: review['comment'],
       ));
     }
     reviews = reviewList;

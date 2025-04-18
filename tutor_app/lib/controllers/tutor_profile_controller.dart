@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../providers/auth_provider.dart';
 import '../models/user_model.dart';
+import '../models/review_model.dart';
 import '../services/user_service.dart';
 
 class TutorProfileController with ChangeNotifier {
@@ -42,6 +43,14 @@ class TutorProfileController with ChangeNotifier {
     if (needsNotify) {
       notifyListeners();
     }
+  }
+
+  Future<void> logout() async {
+    try {
+      await _authProvider.logout();
+    } catch (e) {
+      rethrow;
+    } finally {}
   }
 
   @override

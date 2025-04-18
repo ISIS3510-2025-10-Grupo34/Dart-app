@@ -1,14 +1,14 @@
 class Review {
-  final int tutoringSessionId;
-  final int tutorId; 
-  final int studentId;
+  final int? tutoringSessionId;
+  final int? tutorId;
+  final int? studentId;
   final double rating;
   final String comment;
 
   Review({
-    required this.tutoringSessionId,
-    required this.tutorId,
-    required this.studentId,
+    this.tutoringSessionId,
+    this.tutorId,
+    this.studentId,
     required this.rating,
     required this.comment,
   });

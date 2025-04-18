@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import '../providers/sign_in_process_provider.dart';
+import '../services/universities_service.dart';
 
 enum TutorSignInState {
   initial,
@@ -10,11 +11,27 @@ enum TutorSignInState {
 
 class TutorSignInController with ChangeNotifier {
   final SignInProcessProvider _signInProcessProvider;
+  final UniversitiesService _universitiesService;
 
-  TutorSignInController(this._signInProcessProvider);
+  TutorSignInController(
+      this._signInProcessProvider, this._universitiesService) {
+    _loadUniversities();
+  }
 
   TutorSignInState _state = TutorSignInState.initial;
   TutorSignInState get state => _state;
+
+  List<String> _universities = [];
+  List<String> get universities => _universities;
+
+  String? _selectedUniversity;
+  String? get selectedUniversity => _selectedUniversity;
+
+  bool _isLoadingUniversities = false;
+  bool get isLoadingUniversities => _isLoadingUniversities;
+
+  String? _universityApiError;
+  String? get universityApiError => _universityApiError;
 
   String? _nameError;
   String? get nameError => _nameError;
@@ -31,10 +48,32 @@ class TutorSignInController with ChangeNotifier {
   String? _generalError;
   String? get generalError => _generalError;
 
+  Future<void> _loadUniversities() async {
+    _isLoadingUniversities = true;
+    _universityApiError = null;
+    notifyListeners();
+    try {
+      _universities = await _universitiesService.fetchUniversities();
+    } catch (e) {
+      _universityApiError = "Could not load universities: ${e.toString()}";
+      debugPrint(_universityApiError);
+    } finally {
+      _isLoadingUniversities = false;
+      notifyListeners();
+    }
+  }
+
+  void selectUniversity(String? value) {
+    if (_selectedUniversity != value) {
+      _selectedUniversity = value;
+      _universityError = null;
+      notifyListeners();
+    }
+  }
+
   Future<void> submitTutorDetails({
     required String name,
     required String phoneNumber,
-    required String university,
     required String areaOfExpertise,
   }) async {
     _state = TutorSignInState.loading;
@@ -53,10 +92,6 @@ class TutorSignInController with ChangeNotifier {
       _phoneError = 'Enter a valid phone number';
       isValid = false;
     }
-    if (university.trim().isEmpty) {
-      _universityError = 'University is required';
-      isValid = false;
-    }
     if (areaOfExpertise.trim().isEmpty) {
       _expertiseError = 'Area of expertise is required';
       isValid = false;
@@ -72,7 +107,7 @@ class TutorSignInController with ChangeNotifier {
       final Map<String, String> tutorData = {
         'name': name.trim(),
         'phone_number': phoneNumber.trim(),
-        'university': university.trim(),
+        'university': _selectedUniversity!,
         'area_of_expertise': areaOfExpertise.trim(),
       };
       _signInProcessProvider.setTutorDetails(tutorData);
