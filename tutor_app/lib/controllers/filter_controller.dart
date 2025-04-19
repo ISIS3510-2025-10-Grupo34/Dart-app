@@ -11,6 +11,10 @@ class FilterController with ChangeNotifier {
   List<String> courses = [];
   List<String> professors = [];
 
+  String universityInput = '';
+  String courseInput = '';
+  String professorInput = '';
+
   bool _isLoading = false;
   bool get isLoading => _isLoading;
 
@@ -39,6 +43,13 @@ class FilterController with ChangeNotifier {
     }
 
     _isLoading = false;
+    notifyListeners();
+  }
+
+  void clearInputs() {
+    universityInput = '';
+    courseInput = '';
+    professorInput = '';
     notifyListeners();
   }
 
