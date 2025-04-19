@@ -129,4 +129,19 @@ class StudentHomeController with ChangeNotifier {
   void resetNavigationState() {
     _navigationTarget = StudentHomeNavigationTarget.none;
   }
+
+  Future<void> filterSessions(String university, String course, String professor) async {
+  final allSessions = await _sessionService.fetchAvailableTutoringSessions();
+
+  final filtered = allSessions.where((session) {
+    final matchesUniversity = university.isEmpty || session.university.toLowerCase().contains(university.toLowerCase());
+    final matchesCourse = course.isEmpty || session.course.toLowerCase().contains(course.toLowerCase());
+    final matchesProfessor = professor.isEmpty || session.tutorName.toLowerCase().contains(professor.toLowerCase());
+    return matchesUniversity && matchesCourse && matchesProfessor;
+  }).toList();
+
+  _sessions = filtered;
+  notifyListeners();
+}
+
 }
