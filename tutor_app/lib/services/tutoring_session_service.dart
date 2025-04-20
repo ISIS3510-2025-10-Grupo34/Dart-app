@@ -19,4 +19,29 @@ class TutoringSessionService {
     final allSessions = await fetchTutoringSessions();
     return allSessions.where((session) => session.student == null).toList();
   }
+
+  Future<void> createTutoringSession({
+    required int cost,
+    required String dateTime,
+    required int courseId,
+    required int tutorId,
+  }) async {
+    final url = Uri.parse('${EnvConfig.apiUrl}/api/tutoring-sessions/');
+
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({
+        'cost': cost,
+        'dateTime': dateTime,
+        'courseId': courseId,
+        'tutorId': tutorId,
+      }),
+    );
+
+    if (response.statusCode != 201) {
+      throw Exception("Error creating tutoring session: ${response.body}");
+    }
+  }
+
 }

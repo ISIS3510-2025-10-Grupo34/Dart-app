@@ -8,6 +8,7 @@ import 'dart:math';
 import 'welcome_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Import FontAwesome
 import 'package:url_launcher/url_launcher.dart';
+import 'create_tutoring_session_screen.dart'; 
 
 class TutorProfileScreen extends StatefulWidget {
   const TutorProfileScreen({super.key});
@@ -276,6 +277,34 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
           _buildReviewsList(controller.user?.reviews),
 
           const SizedBox(height: 16), // Bottom padding
+
+          Center(
+            child: ElevatedButton(
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CreateTutoringSessionScreen()),
+                );
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF192650),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(32),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+              ),
+              child: const Text(
+                "Announce tutoring session",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24), // Bottom padding
+
         ],
       ),
     );
