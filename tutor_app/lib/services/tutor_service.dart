@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:tutor_app/models/time_insight.dart';
 import '../utils/env_config.dart';
 import '../models/tutor_list_item_model.dart';
-import '../models/tutor_profile.dart'; // Import TutorProfile model
+import '../models/tutor_profile.dart';
 
 class TutorService {
   Future<List<TutorListItemModel>> fetchTutors() async {
@@ -12,7 +13,6 @@ class TutorService {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> decodedBody = jsonDecode(response.body);
-
         final List<dynamic> tutorDataList = decodedBody['tutors'] ?? [];
 
         List<TutorListItemModel> tutors = tutorDataList
@@ -25,6 +25,7 @@ class TutorService {
             })
             .whereType<TutorListItemModel>()
             .toList();
+
         return tutors;
       } else {
         throw Exception(
@@ -58,6 +59,28 @@ class TutorService {
     } catch (e) {
       print("Error fetching tutor profile: $e");
       throw Exception('Failed to fetch profile: ${e.toString()}');
+    }
+  }
+
+  Future<TimeToBookInsight?> fetchTimeToBookInsight() async {
+    try {
+      final response = await http.get(
+        Uri.parse('${EnvConfig.apiUrl}/api/time-to-book-insight/'),
+        headers: {
+          "Content-Type": "application/json",
+        },
+      );
+
+      if (response.statusCode == 201) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        return TimeToBookInsight.fromJson(data);
+      } else {
+        print("Error fetching insight: ${response.statusCode} - ${response.body}");
+        return null;
+      }
+    } catch (e) {
+      print("Exception fetching insight: $e");
+      return null;
     }
   }
 }
