@@ -117,8 +117,12 @@ void main() async {
           ),
         ),
         ChangeNotifierProvider(
-            create: (context) => TutorProfileController(
-                authProvider: authProvider, userService: userService)),
+          create: (context) => TutorProfileController(
+            authProvider: context.read<AuthProvider>(),
+            userService: context.read<UserService>(),
+            sessionService: context.read<TutoringSessionService>(), // Agregado aquí
+          ),
+        ),
         ChangeNotifierProvider(
           create: (context) => TutorSignInController(
             context.read<SignInProcessProvider>(),

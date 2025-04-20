@@ -8,6 +8,7 @@ import 'dart:math';
 import 'welcome_screen.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart'; // Import FontAwesome
 import 'package:url_launcher/url_launcher.dart';
+import 'create_tutoring_session_screen.dart'; 
 
 class TutorProfileScreen extends StatefulWidget {
   const TutorProfileScreen({super.key});
@@ -280,8 +281,10 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
           Center(
             child: ElevatedButton(
               onPressed: () {
-                // Aquí puedes navegar a la vista de crear sesión, por ejemplo:
-                // Navigator.push(context, MaterialPageRoute(builder: (_) => AnnounceSessionScreen()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const CreateTutoringSessionScreen()),
+                );
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: const Color(0xFF192650),
