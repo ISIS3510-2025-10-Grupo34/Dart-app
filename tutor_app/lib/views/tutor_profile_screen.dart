@@ -276,6 +276,32 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
           _buildReviewsList(controller.user?.reviews),
 
           const SizedBox(height: 16), // Bottom padding
+
+          Center(
+            child: ElevatedButton(
+              onPressed: () {
+                // Aquí puedes navegar a la vista de crear sesión, por ejemplo:
+                // Navigator.push(context, MaterialPageRoute(builder: (_) => AnnounceSessionScreen()));
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF192650),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(32),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+              ),
+              child: const Text(
+                "Announce tutoring session",
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24), // Bottom padding
+
         ],
       ),
     );
