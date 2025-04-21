@@ -123,8 +123,8 @@ void main() async {
           create: (context) => TutorProfileController(
             authProvider: context.read<AuthProvider>(),
             userService: context.read<UserService>(),
-            sessionService:
-                context.read<TutoringSessionService>(), // Agregado aquí
+            sessionService: context.read<TutoringSessionService>(),
+            tutorService: context.read<TutorService>(),
           ),
         ),
         ChangeNotifierProvider(

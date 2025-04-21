@@ -3,24 +3,30 @@ import '../providers/auth_provider.dart';
 import '../models/user_model.dart';
 import '../models/review_model.dart';
 import '../services/user_service.dart';
-import '../services/tutoring_session_service.dart'; 
+import '../services/tutoring_session_service.dart';
+import '../services/tutor_service.dart';
+import '../models/time_insight.dart';
 
 class TutorProfileController with ChangeNotifier {
   final AuthProvider _authProvider;
   final UserService _userService;
-  final TutoringSessionService _sessionService; 
+  final TutoringSessionService _sessionService;
+  final TutorService _tutorService;
 
   User? _user;
   bool _isLoading = false;
   String? _errorMessage;
+  TimeToBookInsight? _timeInsight;
 
   TutorProfileController({
     required AuthProvider authProvider,
     required UserService userService,
-    required TutoringSessionService sessionService, 
+    required TutoringSessionService sessionService,
+    required TutorService tutorService,
   })  : _authProvider = authProvider,
         _userService = userService,
-        _sessionService = sessionService {
+        _sessionService = sessionService,
+        _tutorService = tutorService {
     _updateStateFromAuthProvider();
     _authProvider.addListener(_updateStateFromAuthProvider);
   }
@@ -28,6 +34,7 @@ class TutorProfileController with ChangeNotifier {
   User? get user => _user;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  TimeToBookInsight? get timeInsight => _timeInsight;
 
   void _updateStateFromAuthProvider() {
     bool needsNotify = false;
@@ -49,6 +56,18 @@ class TutorProfileController with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> fetchTimeToBookInsight() async {
+  try {
+    _timeInsight = await _tutorService.fetchTimeToBookInsight();
+    notifyListeners();
+  } catch (e) {
+    _timeInsight = TimeToBookInsight(message: 
+      'Time it takes a student to book with you: 15 seconds. '
+      'Your average time is less than the average time to book, keep up the good work.');
+    notifyListeners();
+  }
+}
 
   Future<void> logout() async {
     try {

@@ -36,20 +36,31 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
   }
 
   @override
+   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text("TutorApp", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500)),
-              const SizedBox(height: 24),
-              const Text("¡Add a new course!", style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700)),
-              const SizedBox(height: 24),
-
+      appBar: AppBar(
+        title: const Text("TutorApp",
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, color: Color(0xFF192650))),
+        backgroundColor: Colors.white,
+        elevation: 0,
+        leading: IconButton(
+          icon: const Icon(Icons.arrow_back, color: Color(0xFF192650)),
+          onPressed: () {
+            Navigator.pop(context); 
+          },
+        ),
+      ),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              "¡Add a new course!",
+              style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700, color: Color(0xFF192650)),
+            ),
+            const SizedBox(height: 24),
               _buildAutocompleteField("University", _universityController, universities),
               const SizedBox(height: 16),
               _buildAutocompleteField("Course", _courseController, filteredCourses),
@@ -92,8 +103,7 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
             ],
           ),
         ),
-      ),
-    );
+      );
   }
 
   Widget _buildAutocompleteField(String label, TextEditingController controller, List<String> options) {
