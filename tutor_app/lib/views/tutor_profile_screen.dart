@@ -276,7 +276,9 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
           ),
           const SizedBox(height: 12),
           _buildReviewsList(controller.user?.reviews),
-          const SizedBox(height: 16),
+
+          const SizedBox(height: 16), // Bottom padding
+
           Center(
             child: ElevatedButton(
               onPressed: () {
@@ -302,7 +304,8 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 24), // Bottom padding
+
         ],
       ),
     );
