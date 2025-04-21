@@ -18,7 +18,6 @@ class StudentSignInController with ChangeNotifier {
   StudentSignInController(this._signInProcessProvider,
       this._universitiesService, this._majorsService) {
     _loadUniversities();
-    _loadMajors();
   }
   List<String> _universities = [];
   List<String> get universities => _universities;
@@ -80,17 +79,25 @@ class StudentSignInController with ChangeNotifier {
   void selectUniversity(String? value) {
     if (_selectedUniversity != value) {
       _selectedUniversity = value;
-      _universityError = null; // Clear validation error on change
+      _universityError = null;
+      _selectedMajor = null;
+      _majors = [];
+      _majorError = null;
+      _majorApiError = null;
+      _isLoadingMajors = false;
       notifyListeners();
+      if (value != null && value.isNotEmpty) {
+        _loadMajors(value);
+      }
     }
   }
 
-  Future<void> _loadMajors() async {
+  Future<void> _loadMajors(String university) async {
     _isLoadingMajors = true;
     _majorApiError = null;
     notifyListeners();
     try {
-      _majors = await _majorsService.fetchMajors();
+      _majors = await _majorsService.fetchMajors(university);
     } catch (e) {
       _majorApiError = "Could not load majors: ${e.toString()}";
       debugPrint(_majorApiError);

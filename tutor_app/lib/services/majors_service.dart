@@ -3,12 +3,12 @@ import 'package:http/http.dart' as http;
 import '../utils/env_config.dart';
 
 class MajorsService {
-  Future<List<String>> fetchMajors() async {
-    final apiUrl = '${EnvConfig.apiUrl}/api/majors/';
+  Future<List<String>> fetchMajors(String university) async {
+    final apiUrl =
+        '${EnvConfig.apiUrl}/api/majors-by-university/?university=$university';
     try {
       final response = await http.get(
         Uri.parse(apiUrl),
-        headers: {"Content-Type": "application/json"},
       );
       if (response.statusCode == 200) {
         Map<String, dynamic> data = jsonDecode(response.body);
