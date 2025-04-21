@@ -21,12 +21,57 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      if (authProvider.currentUser?.id != null) {
-        Provider.of<StudentTutoringSessionsController>(context, listen: false)
-            .fetchStudentSessions();
-      }
+      _fetchInitialData();
+      _triggerPopupCheck();
     });
+  }
+
+  void _fetchInitialData() {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    if (authProvider.currentUser?.id != null) {
+      Provider.of<StudentTutoringSessionsController>(context, listen: false)
+          .fetchStudentSessions();
+    } else {
+      debugPrint("StudentProfileScreen initState: No current user ID found.");
+    }
+  }
+
+  Future<void> _triggerPopupCheck() async {
+    // Ensure widget is still mounted before proceeding
+    if (!mounted) return;
+    final controller =
+        Provider.of<StudentProfileController>(context, listen: false);
+    try {
+      bool shouldShow = await controller.checkReviewPercentage();
+      // Ensure widget is still mounted after the async call
+      if (shouldShow && mounted) {
+        _showReviewPopup(context);
+      }
+    } catch (e) {
+      // Handle potential errors from the check itself if needed
+      debugPrint("Error occurred during popup check trigger: $e");
+    }
+  }
+
+  void _showReviewPopup(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: const Text("Review Reminder"),
+          content: const Text(
+              "You have tutoring sessions pending review. Please consider writing a review!"),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("OK"),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   List<Widget> _buildLearningStyleChips(String? learningStylesString) {
