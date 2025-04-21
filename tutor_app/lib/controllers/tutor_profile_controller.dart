@@ -149,6 +149,24 @@ class TutorProfileController with ChangeNotifier {
     }
   }
 
+  Future<int> getEstimatedPrice(String universityName) async {
+    if (_user == null || _user!.id == null) {
+      throw Exception("No tutor ID available for price estimation");
+    }
+
+    try {
+      final tutorId = int.parse(_user!.id!);
+      final estimatedPrice = await _sessionService.getEstimatedPrice(
+        tutorId: tutorId,
+        courseUniversityName: universityName,
+      );
+      return estimatedPrice;
+    } catch (e) {
+      throw Exception("Failed to fetch estimated price: $e");
+    }
+  }
+
+
   @override
   void dispose() {
     _authProvider.removeListener(_updateStateFromAuthProvider);

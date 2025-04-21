@@ -60,13 +60,36 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
               ),
               const SizedBox(height: 16),
               ElevatedButton(
-                onPressed: () {},
+                onPressed: (_universityController.text.trim().isNotEmpty && _selectedCourse != null)
+                    ? () async {
+                        try {
+                          final controller = Provider.of<TutorProfileController>(context, listen: false);
+                          final university = _universityController.text.trim();
+
+                          final estimatedPrice = await controller.getEstimatedPrice(university);
+
+                          setState(() {
+                            _priceController.text = estimatedPrice.toString();
+                            _priceError = null;
+                          });
+
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text("Estimated price set: $estimatedPrice COP")),
+                          );
+                        } catch (e) {
+                          _showError("Failed to estimate price: $e");
+                        }
+                      }
+                    : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF171F45),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                  foregroundColor: Colors.white, // ✅ Texto blanco cuando está activo
+                  disabledForegroundColor: Colors.black45, // ✅ Texto gris claro cuando está desactivado
                 ),
                 child: const Text("Use the estimator"),
               ),
+
               const SizedBox(height: 24),
               _buildDateTimeField(),
               const SizedBox(height: 24),
