@@ -18,6 +18,7 @@ import 'services/tutoring_session_service.dart';
 import 'services/metrics_service.dart';
 import 'services/universities_service.dart';
 import 'services/majors_service.dart';
+import 'services/filter_service.dart';
 import 'services/review_service.dart';
 
 // Import Providers/Controllers
@@ -34,6 +35,7 @@ import 'controllers/tutor_profile_controller.dart';
 import 'controllers/tutor_sign_in_controller.dart';
 import 'controllers/student_profile_controller.dart';
 import 'services/student_tutoring_sessions_service.dart';
+import 'controllers/filter_controller.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -118,13 +120,21 @@ void main() async {
           ),
         ),
         ChangeNotifierProvider(
-            create: (context) => TutorProfileController(
-                authProvider: authProvider, userService: userService)),
+          create: (context) => TutorProfileController(
+            authProvider: context.read<AuthProvider>(),
+            userService: context.read<UserService>(),
+            sessionService:
+                context.read<TutoringSessionService>(), // Agregado aquí
+          ),
+        ),
         ChangeNotifierProvider(
           create: (context) => TutorSignInController(
             context.read<SignInProcessProvider>(),
             context.read<UniversitiesService>(),
           ),
+        ),
+        ChangeNotifierProvider(
+          create: (_) => FilterController(filterService: FilterService()),
         ),
         ChangeNotifierProvider(
             create: (context) => StudentProfileController(

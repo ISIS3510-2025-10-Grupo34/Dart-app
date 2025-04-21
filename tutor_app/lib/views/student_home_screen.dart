@@ -3,6 +3,9 @@ import 'package:provider/provider.dart';
 import 'package:tutor_app/views/notifications_view.dart';
 import 'student_profile_screen.dart';
 import '../controllers/student_home_controller.dart';
+import '../controllers/filter_controller.dart';
+import '../views/filter_modal.dart';
+
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -101,19 +104,48 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                 // ---------------------------- Filter Button ----------------------------
                 Padding(
                   padding: const EdgeInsets.only(left: 16),
-                  child: Container(
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF171F45),
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 20, vertical: 10),
-                    child: const Text(
-                      "Filter results",
-                      style: TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white,
+                  child: GestureDetector(
+                    onTap: () async {
+                      final filterController = Provider.of<FilterController>(context, listen: false);
+                      await filterController.loadFilterOptions();
+
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: Colors.transparent,
+                        builder: (_) {
+                          return FilterModal(
+                            onFilter: (university, course, professor) async {
+                              if (university.isNotEmpty) {
+                                await filterController.registerFilterUsed(university);
+                              }
+                              if (course.isNotEmpty) {
+                                await filterController.registerFilterUsed(course);
+                              }
+                              if (professor.isNotEmpty) {
+                                await filterController.registerFilterUsed(professor);
+                              }
+
+                              await Provider.of<StudentHomeController>(context, listen: false)
+                                  .filterSessions(university, course, professor);
+                            },
+                          );
+                        },
+                      );
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF171F45),
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      child: const Text(
+                        "Filter results",
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white,
+                        ),
                       ),
                     ),
                   ),
