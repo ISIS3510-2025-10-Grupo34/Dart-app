@@ -84,8 +84,8 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF171F45),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                  foregroundColor: Colors.white, // ✅ Texto blanco cuando está activo
-                  disabledForegroundColor: Colors.black45, // ✅ Texto gris claro cuando está desactivado
+                  foregroundColor: Colors.white, 
+                  disabledForegroundColor: Colors.black45, 
                 ),
                 child: const Text("Use the estimator"),
               ),
