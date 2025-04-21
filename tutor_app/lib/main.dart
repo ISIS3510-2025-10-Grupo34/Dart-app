@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:tutor_app/controllers/student_tutoring_sessions_controller.dart';
 import 'package:tutor_app/providers/sign_in_process_provider.dart';
 import 'package:tutor_app/services/course_service.dart';
+import 'package:tutor_app/services/review_service.dart';
 import 'package:tutor_app/services/student_tutoring_sessions_service.dart';
 import 'utils/env_config.dart';
 import 'views/welcome_screen.dart';
@@ -18,6 +19,7 @@ import 'services/metrics_service.dart';
 import 'services/universities_service.dart';
 import 'services/majors_service.dart';
 import 'services/filter_service.dart';
+import 'services/review_service.dart';
 
 // Import Providers/Controllers
 import 'providers/auth_provider.dart';
@@ -44,6 +46,7 @@ void main() async {
   final tutorService = TutorService();
   final courseService = CourseService();
   final userService = UserService();
+  final reviewService = ReviewService();
   final tutoringSessionService = TutoringSessionService();
   final metricsService = MetricsService();
   final studentTutoringSessionsService = StudentTutoringSessionsService();
@@ -62,7 +65,7 @@ void main() async {
         Provider<UserService>.value(value: userService),
         Provider<UniversitiesService>.value(value: universitiesService),
         Provider<MajorsService>.value(value: majorsService),
-
+        Provider<ReviewService>.value(value: reviewService),
         Provider<StudentTutoringSessionsService>.value(
             value: studentTutoringSessionsService),
         Provider<TutoringSessionService>.value(value: tutoringSessionService),
@@ -120,7 +123,8 @@ void main() async {
           create: (context) => TutorProfileController(
             authProvider: context.read<AuthProvider>(),
             userService: context.read<UserService>(),
-            sessionService: context.read<TutoringSessionService>(), // Agregado aquí
+            sessionService:
+                context.read<TutoringSessionService>(), // Agregado aquí
           ),
         ),
         ChangeNotifierProvider(
@@ -134,7 +138,7 @@ void main() async {
         ),
         ChangeNotifierProvider(
             create: (context) => StudentProfileController(
-                authProvider: authProvider, userService: userService)),
+                authProvider: authProvider, reviewService: reviewService)),
         ChangeNotifierProvider(
             create: (context) => StudentTutoringSessionsController(
                 studentTutoringSessionsService: studentTutoringSessionsService,
