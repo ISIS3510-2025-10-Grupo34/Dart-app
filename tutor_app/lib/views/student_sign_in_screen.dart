@@ -294,8 +294,28 @@ class _StudentSignInState extends State<StudentSignInScreen> {
   Widget _buildMajorDropdown(dynamic controller) {
     final List<String> majors = controller.majors;
     final String? selectedValue = controller.selectedMajor;
+    final bool isLoading = controller.isLoadingMajors;
     final Function(String?) onSelectedUpdate = controller.selectMajor;
-
+    final String? apiError = controller.majorApiError;
+    final bool isEnabled =
+        controller.selectedUniversity != null && !isLoading && apiError == null;
+    if (apiError != null && controller.selectedUniversity != null) {
+      return Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8.0),
+        child: Text(
+          "Could not load majors: $apiError", // Show specific error
+          style: const TextStyle(color: Colors.red, fontSize: 14),
+          textAlign: TextAlign.center,
+        ),
+      );
+    }
+    if (isLoading && controller.selectedUniversity != null) {
+      return const Center(
+          child: Padding(
+        padding: EdgeInsets.symmetric(vertical: 20.0),
+        child: CircularProgressIndicator(strokeWidth: 2),
+      ));
+    }
     return DropdownMenu<String>(
       controller: _majorMenuController,
       initialSelection: selectedValue,
