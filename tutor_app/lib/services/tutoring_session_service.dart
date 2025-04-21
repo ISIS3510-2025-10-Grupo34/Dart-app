@@ -44,4 +44,25 @@ class TutoringSessionService {
     }
   }
 
+  Future<int> getEstimatedPrice({
+    required int tutorId,
+    required String courseUniversityName,
+  }) async {
+    final url = Uri.parse(
+      '${EnvConfig.apiUrl}/api/course-estimate-price/?tutorId=$tutorId&courseUniversityName=$courseUniversityName',
+    );
+
+    final response = await http.get(url, headers: {
+      'Content-Type': 'application/json',
+    });
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      return decoded['data'] as int;
+    } else {
+      throw Exception("Failed to fetch estimated price: ${response.body}");
+    }
+  }
+
+
 }
