@@ -84,16 +84,13 @@ class TutorProfileController with ChangeNotifier {
   }
 
   Future<void> fetchTimeToBookInsight() async {
-  try {
-    _timeInsight = await _tutorService.fetchTimeToBookInsight();
-    notifyListeners();
-  } catch (e) {
-    _timeInsight = TimeToBookInsight(message: 
-      'Time it takes a student to book with you: 15 seconds. '
-      'Your average time is less than the average time to book, keep up the good work.');
-    notifyListeners();
-  }
-}
+    try {
+      _timeInsight = await _tutorService.fetchTimeToBookInsight();
+      notifyListeners();
+    } catch (e) {
+      _timeInsight = TimeToBookInsight(message: 
+        'Time it takes a student to book with you: 15 seconds. '
+        'Your average time is less than the average time to book, keep up the good work.');
       notifyListeners();
     }
   }
