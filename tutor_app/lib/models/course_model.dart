@@ -1,7 +1,7 @@
 class Course {
   final int id;
   final String course_name;
-  final double? university_id;
+  final double university_id;
 
   Course({
     required this.id,
@@ -13,7 +13,7 @@ class Course {
     return Course(
       id: json['id'],
       course_name: json['course_name'],
-      university_id: json['university_id']?.toDouble(),
+      university_id: json['university_id'].toDouble(),
     );
   }
 

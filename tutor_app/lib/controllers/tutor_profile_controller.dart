@@ -3,26 +3,52 @@ import '../providers/auth_provider.dart';
 import '../models/user_model.dart';
 import '../models/review_model.dart';
 import '../services/user_service.dart';
-import '../services/tutoring_session_service.dart'; 
+import '../services/tutoring_session_service.dart';
+import '../services/universities_service.dart';
+import '../services/course_service.dart';
+import '../models/course_model.dart';
+
 
 class TutorProfileController with ChangeNotifier {
   final AuthProvider _authProvider;
   final UserService _userService;
-  final TutoringSessionService _sessionService; 
+  final TutoringSessionService _sessionService;
+  final UniversitiesService _universitiesService;
+  final CourseService _courseService;
+
+  List<Course> _courses = [];
+  List<Course> get courses => _courses;
+
+  String? _courseError;
+  String? get courseError => _courseError;
 
   User? _user;
   bool _isLoading = false;
   String? _errorMessage;
 
+  List<String> _universities = [];
+  List<String> get universities => _universities;
+
+  bool _isLoadingUniversities = false;
+  bool get isLoadingUniversities => _isLoadingUniversities;
+
+  String? _universityError;
+  String? get universityError => _universityError;
+
   TutorProfileController({
     required AuthProvider authProvider,
     required UserService userService,
-    required TutoringSessionService sessionService, 
+    required TutoringSessionService sessionService,
+    required UniversitiesService universitiesService,
+    required CourseService courseService,
   })  : _authProvider = authProvider,
         _userService = userService,
-        _sessionService = sessionService {
+        _sessionService = sessionService,
+        _universitiesService = universitiesService,
+        _courseService = courseService {
     _updateStateFromAuthProvider();
     _authProvider.addListener(_updateStateFromAuthProvider);
+    _loadUniversities();
   }
 
   User? get user => _user;
@@ -49,6 +75,49 @@ class TutorProfileController with ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> _loadUniversities() async {
+    _isLoadingUniversities = true;
+    notifyListeners();
+
+    try {
+      _universities = await _universitiesService.fetchUniversities();
+    } catch (e) {
+      _universityError = "Failed to load universities: ${e.toString()}";
+    } finally {
+      _isLoadingUniversities = false;
+      notifyListeners();
+    }
+  }
+
+  Future<void> fetchCoursesForUniversity(String university) async {
+    try {
+      _courses = await _courseService.fetchCoursesByUniversity(university);
+      _courseError = null;
+    } catch (e) {
+      _courseError = "Error fetching courses: $e";
+      _courses = [];
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  void clearCourses() {
+    _courses = [];
+    notifyListeners();
+  }
+
+  List<String> get courseNames => _courses.map((c) => c.course_name).toList();
+
+  int? getCourseIdByName(String courseName) {
+    try {
+      return _courses.firstWhere((course) => course.course_name == courseName).id;
+    } catch (e) {
+      return null;
+    }
+  }
+
+
 
   Future<void> logout() async {
     try {

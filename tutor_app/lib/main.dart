@@ -18,6 +18,7 @@ import 'services/metrics_service.dart';
 import 'services/universities_service.dart';
 import 'services/majors_service.dart';
 import 'services/filter_service.dart';
+import 'services/course_service.dart';
 
 // Import Providers/Controllers
 import 'providers/auth_provider.dart';
@@ -120,7 +121,9 @@ void main() async {
           create: (context) => TutorProfileController(
             authProvider: context.read<AuthProvider>(),
             userService: context.read<UserService>(),
-            sessionService: context.read<TutoringSessionService>(), // Agregado aquí
+            sessionService: context.read<TutoringSessionService>(), 
+            universitiesService: context.read<UniversitiesService>(),
+            courseService: context.read<CourseService>(),
           ),
         ),
         ChangeNotifierProvider(
