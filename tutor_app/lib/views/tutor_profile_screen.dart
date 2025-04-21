@@ -155,8 +155,7 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
       );
     }
 
-    final message = controller.timeInsight?.message ?? 
-        '''Time it takes a student to book with you: 15 seconds. 
+    final message =  '''Time it takes a student to book with you: 15 seconds. 
         Your average time is less than the average time to book, keep up the good work.''';
 
     ImageProvider? profileImageProvider;
