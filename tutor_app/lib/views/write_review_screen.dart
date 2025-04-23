@@ -67,8 +67,8 @@ class _WriteReviewScreenState extends State<WriteReviewScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text("⚠️There's no connection. Your review was saved and will be sent automatically when you are back online."),
-          backgroundColor: Colors.orange,
+          content: Text("There's no connection. Your review was saved and will be sent automatically when you are back online."),
+          backgroundColor: Colors.red,
         ),
       );
     }

@@ -32,7 +32,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
       setState(() => notifications = data);
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al cargar notificaciones: $e")),
+        SnackBar(content: Text("Error getting notifications: $e")),
       );
     } finally {
       setState(() => isLoading = false);

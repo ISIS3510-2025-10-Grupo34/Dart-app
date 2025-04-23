@@ -8,13 +8,19 @@ class ConnectStudentsController {
   final LocalCacheService _cacheService = LocalCacheService();
 
   Future<String> getNearestUniversity() async {
-    try {
-      final result = await _locationService.getNearestUniversity();
-      return result;
-    } catch (e) {
-      return "Ubicación no disponible";
-    }
+  final connectivity = await Connectivity().checkConnectivity();
+
+  if (connectivity == ConnectivityResult.none) {
+    return "Sin conexión a internet";
   }
+
+  try {
+    return await _locationService.getNearestUniversity();
+  } catch (_) {
+    return "Ubicación no disponible";
+  }
+}
+
 
   Future<bool> sendNotification({
     required String title,

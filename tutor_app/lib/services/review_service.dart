@@ -13,11 +13,6 @@ class ReviewService {
       body: jsonEncode(review.toJson()),
     );
 
-    // Debug logs para rastrear respuesta del servidor
-    debugPrint('📤 Enviando review: ${review.toJson()}');
-    debugPrint('📥 Status: ${response.statusCode}');
-    debugPrint('📥 Body: ${response.body}');
-
     // Aceptar múltiples códigos de éxito
     if (response.statusCode == 201 || response.statusCode == 200 || response.statusCode == 202) {
       return true;
@@ -28,13 +23,8 @@ class ReviewService {
       debugPrint("⚠️ La reseña ya existe en el servidor (409 - conflicto).");
       return true; // Considerar como enviada
     }
-
-    // Otros códigos: fallo
-    debugPrint("❌ Error al enviar la reseña: código inesperado ${response.statusCode}");
     return false;
   } catch (e) {
-    // Error en red, conexión o parsing
-    debugPrint('❌ Error al enviar reseña: $e');
     return false;
   }
 }

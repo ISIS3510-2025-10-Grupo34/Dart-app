@@ -23,7 +23,6 @@ class WriteReviewController extends ChangeNotifier {
       final profile = await _userService.fetchTutorProfile(tutorId.toString());
       return profile ?? {};
     } catch (e) {
-      debugPrint('Error fetching tutor profile: $e');
       return {};
     }
   }
@@ -47,12 +46,10 @@ class WriteReviewController extends ChangeNotifier {
     try {
       final success = await _reviewService.submitReview(review);
       if (!success) {
-        debugPrint('❗ Envío fallido sin excepción. Guardando en caché.');
         await _cacheService.cachePendingReview(review);
       }
       return success;
     } catch (e) {
-      debugPrint('❌ Excepción al enviar reseña: $e. Guardando en caché.');
       await _cacheService.cachePendingReview(review);
       return false;
     }

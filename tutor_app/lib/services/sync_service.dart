@@ -1,11 +1,13 @@
+// lib/services/sync_service.dart
+
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 
-import '../services/review_service.dart';
-import '../services/location_service.dart';
-import '../services/local_cache_service.dart';
+import 'review_service.dart';
+import 'location_service.dart';
+import 'local_cache_service.dart';
 import '../models/review_model.dart';
 
 class SyncService {
@@ -13,99 +15,46 @@ class SyncService {
   final LocationService _locationService;
   final LocalCacheService _cacheService;
   final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey;
-
   StreamSubscription<ConnectivityResult>? _connectivitySubscription;
+  bool _isSyncing = false;  
 
   SyncService({
     required this.scaffoldMessengerKey,
     ReviewService? reviewService,
     LocationService? locationService,
     LocalCacheService? cacheService,
-  })  : _reviewService = reviewService ?? ReviewService(),
-        _locationService = locationService ?? LocationService(),
-        _cacheService = cacheService ?? LocalCacheService() {
+  })  : _reviewService    = reviewService    ?? ReviewService(),
+        _locationService  = locationService  ?? LocationService(),
+        _cacheService     = cacheService     ?? LocalCacheService() {
     _listenToConnectivity();
   }
 
   void _listenToConnectivity() {
-  debugPrint("🛰️ Subscribing to connectivity changes...");
-
-  _connectivitySubscription =
-      Connectivity().onConnectivityChanged.listen((ConnectivityResult result) async {
-    debugPrint("🔌 Connectivity changed: $result");
-
-    if (result != ConnectivityResult.none) {
-      await syncPendingData();
-    }
-  });
-}
-
-
+    _connectivitySubscription =
+      Connectivity().onConnectivityChanged.listen((result) async {
+        if (result != ConnectivityResult.none && !_isSyncing) {
+          await syncPendingData();
+        }
+      });
+  }
 
   Future<void> syncPendingData() async {
-  debugPrint("📡 Intentando sincronizar datos...");
+    if (_isSyncing) return; 
+    _isSyncing = true;
 
-  final hasInternet = await _hasInternetConnection();
-  debugPrint("🌐 Internet activo: $hasInternet");
-
-  if (!hasInternet) {
-    debugPrint("🚫 Sin internet. Reintentando...");
-    await _retryConnection();
-    return;
-  }
-
-  final sentReviews = await _syncReviews();
-  final sentNotifs = await _syncNotifications();
-
-  debugPrint("✅ Reseñas enviadas: $sentReviews");
-  debugPrint("✅ Notificaciones enviadas: $sentNotifs");
-
-  if (sentReviews > 0) {
-    scaffoldMessengerKey.currentState?.showSnackBar(
-      SnackBar(
-        content: Text('✅ $sentReviews reseña(s) pendiente(s) enviada(s) al recuperar conexión.'),
-        backgroundColor: Colors.green,
-      ),
-    );
-  }
-
-  if (sentNotifs > 0) {
-    scaffoldMessengerKey.currentState?.showSnackBar(
-      SnackBar(
-        content: Text('🔔 $sentNotifs notificación(es) enviada(s) al recuperar conexión.'),
-        backgroundColor: Colors.blue,
-      ),
-    );
-  }
-}
-
-
-  Future<void> _retryConnection() async {
-    const interval = Duration(seconds: 10);
-      await Future.delayed(interval);
-      final isConnected = await _hasInternetConnection();
-
-      if (isConnected) {
-        await syncPendingData();
+    try {
+      if (!await _hasInternetConnection()) {
+        await _retryConnection();
         return;
       }
 
-     
+      final sentReviews = await _syncReviews();
+      final sentNotifs  = await _cacheService.syncNotificationsWithService(_locationService);
 
-    scaffoldMessengerKey.currentState?.showSnackBar(
-      const SnackBar(
-        content: Text('⚠️ No se pudo establecer conexión después de 6 intentos. Intenta enviar tu reseña más tarde.'),
-        backgroundColor: Colors.red,
-      ),
-    );
-  }
-
-  Future<bool> _hasInternetConnection() async {
-    try {
-      final result = await InternetAddress.lookup('google.com');
-      return result.isNotEmpty && result[0].rawAddress.isNotEmpty;
-    } catch (_) {
-      return false;
+      if (sentReviews > 0) _showSnack('🔔 $sentReviews Review sent.', Colors.blue);
+      if (sentNotifs  > 0) _showSnack('🔔 $sentNotifs Notification sent.', Colors.blue);
+    } finally {
+      _isSyncing = false;  
     }
   }
 
@@ -132,34 +81,32 @@ class SyncService {
   return sentCount;
 }
 
-
-  Future<int> _syncNotifications() async {
-    final pendingNotifications = await _cacheService.getPendingNotifications();
-    int sentCount = 0;
-
-    for (final notif in pendingNotifications) {
-      try {
-        final success = await _locationService.sendNotification(
-          title: notif['title'],
-          message: notif['message'],
-          place: notif['place'],
-          university: notif['university'],
-        );
-        if (success) sentCount++;
-      } catch (_) {
-        break;
+  Future<void> _retryConnection({int maxAttempts = 6}) async {
+    for (int i = 1; i <= maxAttempts; i++) {
+      if (await _hasInternetConnection()) {
+        await syncPendingData();
+        return;
       }
+      await Future.delayed(Duration(seconds: 5 * i));
     }
+    _showSnack('⚠️Couldn´t stablish connection.', Colors.red);
+  }
 
-    if (sentCount == pendingNotifications.length) {
-      await _cacheService.clearPendingNotifications();
+  Future<bool> _hasInternetConnection() async {
+    try {
+      final res = await InternetAddress.lookup('google.com');
+      return res.isNotEmpty && res[0].rawAddress.isNotEmpty;
+    } catch (_) {
+      return false;
     }
+  }
 
-    return sentCount;
+  void _showSnack(String msg, Color color) {
+    scaffoldMessengerKey.currentState
+      ?.showSnackBar(SnackBar(content: Text(msg), backgroundColor: color));
   }
 
   void dispose() {
     _connectivitySubscription?.cancel();
   }
-  
 }
