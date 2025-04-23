@@ -44,7 +44,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     notifications.sort((a, b) => b.date.compareTo(a.date));
 
     return Scaffold(
-      backgroundColor: Colors.white, 
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(
           "Notifications",
@@ -53,11 +53,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 fontWeight: FontWeight.bold,
               ),
         ),
-        backgroundColor: Colors.white, 
-        elevation: 0, 
+        backgroundColor: Colors.white,
+        elevation: 0,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Color(0xFF171F45)),
-        surfaceTintColor: Colors.white, 
+        surfaceTintColor: Colors.white,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -65,7 +65,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           children: [
             DropdownButtonFormField<String>(
               decoration: InputDecoration(
-                labelText: "Select an university",
+                labelText: "Selecciona una universidad",
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(

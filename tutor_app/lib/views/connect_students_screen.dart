@@ -36,9 +36,10 @@ class _ConnectStudentsScreenState extends State<ConnectStudentsScreen> {
 
     if (title.isEmpty || message.isEmpty || place.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(
-        "Campos incompletos. Por favor completa el título, mensaje y lugar antes de enviar."),
-      ));
+        SnackBar(content: Text(
+          "Campos incompletos. Por favor completa el título, mensaje y lugar antes de enviar."),
+        ),
+      );
       return;
     }
 
@@ -51,7 +52,7 @@ class _ConnectStudentsScreenState extends State<ConnectStudentsScreen> {
 
     _showDialog(
       success ? "Éxito" : "Error",
-      success ? "Notificación enviada correctamente." : "Hubo un error al enviar la notificación.",
+      success ? "Notificación enviada correctamente." : "Hubo un error al enviar la notificación. Se guardó localmente para enviar más tarde.",
     );
 
     if (success) {
@@ -100,8 +101,7 @@ class _ConnectStudentsScreenState extends State<ConnectStudentsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text("TutorApp",
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500)),
+        title: const Text("TutorApp", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500)),
         backgroundColor: Colors.white,
         elevation: 0,
       ),

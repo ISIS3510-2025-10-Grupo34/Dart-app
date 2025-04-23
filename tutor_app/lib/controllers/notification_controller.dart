@@ -2,11 +2,17 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:tutor_app/utils/env_config.dart';
 import '../models/notification_model.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class NotificationController {
   final String baseUrl = "${EnvConfig.apiUrl}/api/get-notifications/";
 
   Future<List<NotificationModel>> fetchNotificationsByUniversity(String universityName) async {
+    final connectivity = await Connectivity().checkConnectivity();
+    if (connectivity == ConnectivityResult.none) {
+      throw Exception("Sin conexión. Intenta más tarde.");
+    }
+
     final response = await http.post(
       Uri.parse(baseUrl),
       headers: {
