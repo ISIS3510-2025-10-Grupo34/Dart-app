@@ -1,5 +1,8 @@
+<<<<<<< HEAD
 import 'review_model.dart';
 
+=======
+>>>>>>> main
 class User {
   String? id;
   String? name;
@@ -8,6 +11,7 @@ class User {
   String? university;
   String? major;
   String? areaOfExpertise;
+<<<<<<< HEAD
   String? learningStyles;
   String? profilePicturePath;
   String? role;
@@ -76,5 +80,53 @@ class User {
       ));
     }
     reviews = reviewList;
+=======
+  String isAdmin = "false";
+  String isStudent = "false";
+  String isTutor = "false";
+  String? learningStyles;
+  String? profilePicturePath;
+  String? idPicturePath;
+  String? password;
+
+  User({
+    this.id,
+    this.name,
+    this.email,
+    this.phoneNumber,
+    this.university,
+    this.major,
+    this.areaOfExpertise,
+    this.isAdmin = "false",
+    this.isStudent = "false",
+    this.isTutor = "false",
+    this.learningStyles,
+    this.profilePicturePath,
+    this.idPicturePath,
+    this.password,
+  });
+
+  Map<String, dynamic> toJson() {
+    return {
+      'name': name,
+      'email': email,
+      'phone_number': phoneNumber,
+      'university': university,
+      'major': major,
+      'area_of_expertise': areaOfExpertise,
+      'is_admin': isAdmin,
+      'is_student': isStudent,
+      'is_tutor': isTutor,
+      'learning_styles': learningStyles,
+      'password': password,
+    };
+  }
+
+  factory User.fromJson(Map<String, dynamic> json) {
+    return User(
+      id: json['id'],
+      email: json['email'],
+    );
+>>>>>>> main
   }
 }
