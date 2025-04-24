@@ -50,8 +50,14 @@ class LocalCacheService {
     // Normalize all values to String
     final sanitized = <String, String>{};
     notification.forEach((k, v) {
-      sanitized[k] = (k == 'isSent') ? (v == true).toString() : v.toString();
+      sanitized[k] = v.toString();
     });
+
+    if (!sanitized.containsKey('deadline')) {
+      final deadline = DateTime.now().add(Duration(hours: 1)); // ⏰ por defecto
+      sanitized['deadline'] = deadline.toIso8601String();
+    }
+
 
     // Avoid duplicates by key
     final exists = raw.any((s) {
@@ -105,42 +111,47 @@ class LocalCacheService {
   }
 
   /// Sends all pending notifications, dedupes and cleans up
-  Future<int> syncNotificationsWithService(LocationService service) async {
-    // Dedupe initial
-    final raw = await getPendingNotificationsRaw();
-    final uniques = <String, Map<String, String>>{};
-    for (var n in raw) {
-      final key = _notifKey(n);
-      uniques.putIfAbsent(key, () => n);
-    }
-    await overwriteNotifications(uniques.values.toList());
+  Future<int> syncNotificationsWithService(
+  LocationService service, {
+  List<Map<String, String>>? notificationsToSend,
+}) async {
+  // Dedupe
+  final raw = await getPendingNotificationsRaw();
+  final uniques = <String, Map<String, String>>{};
+  for (var n in raw) {
+    final key = _notifKey(n);
+    uniques.putIfAbsent(key, () => n);
+  }
+  await overwriteNotifications(uniques.values.toList());
 
-    // Send
-    int sentCount = 0;
-    final pending = (await getPendingNotificationsRaw())
-        .where((n) => n['isSent'] != 'true')
-        .toList();
+  int sentCount = 0;
+  final pending = notificationsToSend ??
+      (await getPendingNotificationsRaw())
+          .where((n) => n['isSent'] != 'true')
+          .toList();
 
-    for (var notif in pending) {
-      bool sent = false;
-      for (int attempt = 1; attempt <= 6 && !sent; attempt++) {
-        final success = await service.sendNotification(
-          title:      notif['title']!,
-          message:    notif['message']!,
-          place:      notif['place']!,
-          university: notif['university']!,
-        );
-        if (success) {
-          sent = true;
-          sentCount++;
-          await markNotificationAsSent(notif);
-          await removeSingleNotification(notif);
-        } else {
-          await Future.delayed(Duration(seconds: 3 * attempt));
-        }
+  for (var notif in pending) {
+    bool sent = false;
+    for (int attempt = 1; attempt <= 6 && !sent; attempt++) {
+      final success = await service.sendNotification(
+        title: notif['title']!,
+        message: notif['message']!,
+        place: notif['place']!,
+        university: notif['university']!,
+      );
+      if (success) {
+        sent = true;
+        sentCount++;
+        await markNotificationAsSent(notif);
+        await removeSingleNotification(notif);
+      } else {
+        await Future.delayed(Duration(seconds: 3 * attempt));
       }
     }
-    await clearSentNotifications();
-    return sentCount;
   }
+
+  await clearSentNotifications();
+  return sentCount;
+}
+
 }

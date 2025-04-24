@@ -27,6 +27,7 @@ class ConnectStudentsController {
     required String message,
     required String place,
     required String university,
+    required String deadline,
   }) async {
     final connectivity = await Connectivity().checkConnectivity();
 
