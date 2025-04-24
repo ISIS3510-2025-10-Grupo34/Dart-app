@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../controllers/notification_controller.dart';
@@ -22,22 +23,34 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     "Pontificia Universidad Javeriana",
     "Universidad del Rosario",
     "Universidad de la Sabana",
+    "General",
   ];
 
   Future<void> loadNotifications(String universityName) async {
-    setState(() => isLoading = true);
+  setState(() => isLoading = true);
 
-    try {
-      final data = await controller.fetchNotificationsByUniversity(universityName);
-      setState(() => notifications = data);
-    } catch (e) {
+  try {
+    final data = await controller.fetchNotificationsByUniversity(universityName);
+    setState(() {
+      notifications = data;
+    });
+
+    final connectivity = await Connectivity().checkConnectivity();
+    if (connectivity == ConnectivityResult.none) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error getting notifications: $e")),
+        const SnackBar(
+          content: Text("No connection. Showing saved notifications"),
+        ),
       );
-    } finally {
-      setState(() => isLoading = false);
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error obteniendo notificaciones: $e")),
+    );
+  } finally {
+    setState(() => isLoading = false);
   }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -65,7 +78,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           children: [
             DropdownButtonFormField<String>(
               decoration: InputDecoration(
-                labelText: "Selecciona una universidad",
+                labelText: "Select an university",
                 filled: true,
                 fillColor: Colors.white,
                 border: OutlineInputBorder(
@@ -95,7 +108,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               Expanded(
                 child: Center(
                   child: Text(
-                    "No hay notificaciones para esta universidad.",
+                    "There are no notifications for this university.",
                     style: Theme.of(context).textTheme.bodyMedium,
                     textAlign: TextAlign.center,
                   ),

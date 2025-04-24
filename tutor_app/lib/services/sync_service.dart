@@ -67,7 +67,6 @@ final validNotifs = pendingNotifs.where((notif) {
 }).toList();
 
 debugPrint("📦 Notificaciones válidas encontradas: ${validNotifs.length}");
-
 final sentNotifs = await _cacheService.syncNotificationsWithService(
   _locationService,
   notificationsToSend: validNotifs,

@@ -11,7 +11,7 @@ class ConnectStudentsController {
   final connectivity = await Connectivity().checkConnectivity();
 
   if (connectivity == ConnectivityResult.none) {
-    return "Sin conexión a internet";
+    return "Location not available";
   }
 
   try {
@@ -30,12 +30,13 @@ class ConnectStudentsController {
     required String deadline,
   }) async {
     final connectivity = await Connectivity().checkConnectivity();
+    final normalizedUniversity = university == "Location not available" ? "General" : university;
 
     final data = {
       "title": title,
       "message": message,
       "place": place,
-      "university": university,
+      "university": normalizedUniversity,
     };
 
     if (connectivity == ConnectivityResult.none) {

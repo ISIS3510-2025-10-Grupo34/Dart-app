@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tutor_app/controllers/notification_controller.dart';
 import 'package:tutor_app/views/notifications_view.dart';
 import 'student_profile_screen.dart';
 import '../controllers/student_home_controller.dart';
@@ -20,12 +21,25 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
   @override
   void initState() {
     super.initState();
+    preloadNotifications();
     _screenLoadTime = DateTime.now();
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<StudentHomeController>(context, listen: false)
           .loadAvailableTutoringSessions();
     });
   }
+  void preloadNotifications() {
+  final controller = NotificationController();
+  final universityList = [
+    "Universidad Nacional",
+    "Universidad de los Andes",
+    "Pontificia Universidad Javeriana",
+    "Universidad del Rosario",
+    "Universidad de la Sabana",
+    "General",
+  ];
+  controller.preloadAllNotifications(universityList);
+}
 
   @override
   Widget build(BuildContext context) {

@@ -52,10 +52,12 @@ class LocalCacheService {
     notification.forEach((k, v) {
       sanitized[k] = v.toString();
     });
-
+    sanitized.putIfAbsent('university', () => 'General');
     if (!sanitized.containsKey('deadline')) {
       final deadline = DateTime.now().add(Duration(hours: 1)); // ⏰ por defecto
       sanitized['deadline'] = deadline.toIso8601String();
+    
+
     }
 
 
@@ -123,7 +125,6 @@ class LocalCacheService {
     uniques.putIfAbsent(key, () => n);
   }
   await overwriteNotifications(uniques.values.toList());
-
   int sentCount = 0;
   final pending = notificationsToSend ??
       (await getPendingNotificationsRaw())
@@ -149,7 +150,7 @@ class LocalCacheService {
       }
     }
   }
-
+  
   await clearSentNotifications();
   return sentCount;
 }
