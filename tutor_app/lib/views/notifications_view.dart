@@ -1,3 +1,4 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../controllers/notification_controller.dart';
@@ -22,29 +23,41 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     "Pontificia Universidad Javeriana",
     "Universidad del Rosario",
     "Universidad de la Sabana",
+    "General",
   ];
 
   Future<void> loadNotifications(String universityName) async {
-    setState(() => isLoading = true);
+  setState(() => isLoading = true);
 
-    try {
-      final data = await controller.fetchNotificationsByUniversity(universityName);
-      setState(() => notifications = data);
-    } catch (e) {
+  try {
+    final data = await controller.fetchNotificationsByUniversity(universityName);
+    setState(() {
+      notifications = data;
+    });
+
+    final connectivity = await Connectivity().checkConnectivity();
+    if (connectivity == ConnectivityResult.none) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error al cargar notificaciones: $e")),
+        const SnackBar(
+          content: Text("No connection. Showing saved notifications"),
+        ),
       );
-    } finally {
-      setState(() => isLoading = false);
     }
+  } catch (e) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text("Error obteniendo notificaciones: $e")),
+    );
+  } finally {
+    setState(() => isLoading = false);
   }
+}
 
   @override
   Widget build(BuildContext context) {
     notifications.sort((a, b) => b.date.compareTo(a.date));
 
     return Scaffold(
-      backgroundColor: Colors.white, 
+      backgroundColor: Colors.white,
       appBar: AppBar(
         title: Text(
           "Notifications",
@@ -53,11 +66,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                 fontWeight: FontWeight.bold,
               ),
         ),
-        backgroundColor: Colors.white, 
-        elevation: 0, 
+        backgroundColor: Colors.white,
+        elevation: 0,
         centerTitle: true,
         iconTheme: const IconThemeData(color: Color(0xFF171F45)),
-        surfaceTintColor: Colors.white, 
+        surfaceTintColor: Colors.white,
       ),
       body: Padding(
         padding: const EdgeInsets.all(16),
@@ -95,7 +108,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               Expanded(
                 child: Center(
                   child: Text(
-                    "No hay notificaciones para esta universidad.",
+                    "There are no notifications for this university.",
                     style: Theme.of(context).textTheme.bodyMedium,
                     textAlign: TextAlign.center,
                   ),

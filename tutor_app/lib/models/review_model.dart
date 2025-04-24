@@ -26,6 +26,7 @@ class Review {
   Map<String, dynamic> toJson() {
     return {
       'tutoringSessionId': tutoringSessionId,
+      'tutorId': tutorId,
       'studentId': studentId,
       'rating': rating,
       'comment': comment,
