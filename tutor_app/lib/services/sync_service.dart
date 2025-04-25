@@ -1,5 +1,3 @@
-// lib/services/sync_service.dart
-
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
@@ -66,7 +64,6 @@ final validNotifs = pendingNotifs.where((notif) {
   }
 }).toList();
 
-debugPrint("📦 Notificaciones válidas encontradas: ${validNotifs.length}");
 final sentNotifs = await _cacheService.syncNotificationsWithService(
   _locationService,
   notificationsToSend: validNotifs,
@@ -75,7 +72,6 @@ final sentNotifs = await _cacheService.syncNotificationsWithService(
       if (sentReviews > 0) _showSnack('🔔 $sentReviews Review sent.', Colors.blue);
       if (sentNotifs > 0) _showSnack('🔔 $sentNotifs Notification sent.', Colors.blue);
     } catch (e) {
-      debugPrint("❌ Error durante sync: $e");
     } finally {
       _isSyncing = false;
     }
@@ -83,14 +79,13 @@ final sentNotifs = await _cacheService.syncNotificationsWithService(
 
   Future<int> _syncReviews() async {
   final pendingReviews = await _cacheService.getPendingReviews();
-  debugPrint("📦 Reseñas pendientes encontradas: ${pendingReviews.length}");
   int sentCount = 0;
 
   for (final review in pendingReviews) {
     debugPrint("🚀 Intentando enviar reseña para sessionId ${review.tutoringSessionId}...");
     bool sent = false;
 
-    for (int attempt = 1; attempt <= 6 && !sent; attempt++) {
+    for (int attempt = 1; attempt <= 48 && !sent; attempt++) {
       try {
         final success = await _reviewService.submitReview(review);
         debugPrint("🔁 Intento $attempt - Resultado: $success");
