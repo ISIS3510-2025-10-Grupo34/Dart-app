@@ -59,8 +59,9 @@ class UserService {
         try {
           final errorData = jsonDecode(response.body);
           errorMessage = errorData['message'] ?? errorMessage;
+          return false;
         } catch (_) {}
-        throw Exception(errorMessage);
+        return false;
       }
     } catch (e) {
       throw Exception('Registration process failed: ${e.toString()}');

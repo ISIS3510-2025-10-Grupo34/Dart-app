@@ -34,19 +34,44 @@ class LoginScreenState extends State<LoginScreen> {
       if (!mounted) return;
 
       if (state == LoginState.successStudent) {
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const StudentHomeScreen()),
+          (Route<dynamic> route) => false, // Remove all routes below
         );
         controller.resetStateAfterNavigation();
       } else if (state == LoginState.successTutor) {
-        Navigator.pushReplacement(
+        Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const TutorProfileScreen()),
+          (Route<dynamic> route) => false, // Remove all routes below
         );
         controller.resetStateAfterNavigation();
+      } else if (state == LoginState.error &&
+          controller.errorMessage.isNotEmpty) {
+        _showErrorDialog(context, "Login Failed", controller.errorMessage);
       }
     });
+  }
+
+  void _showErrorDialog(BuildContext context, String title, String message) {
+    showDialog(
+      context: context,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(message),
+          actions: <Widget>[
+            TextButton(
+              child: const Text("OK"),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -61,10 +86,6 @@ class LoginScreenState extends State<LoginScreen> {
     return Consumer<LoginController>(
       builder: (context, controller, child) {
         final isLoading = controller.state == LoginState.loading;
-        final errorMessage = (controller.state == LoginState.error)
-            ? controller.errorMessage
-            : null;
-
         return Scaffold(
           backgroundColor: Colors.white,
           body: SafeArea(
@@ -148,30 +169,16 @@ class LoginScreenState extends State<LoginScreen> {
                                   },
                           ),
                         ),
-                        enabled: !isLoading, // Disable field when loading
+                        enabled: !isLoading,
                       ),
                       const SizedBox(height: 24), //
-                      // Error Message (read from controller state)
-                      if (errorMessage != null)
-                        Padding(
-                          padding: const EdgeInsets.only(bottom: 16.0), //
-                          child: Text(
-                            errorMessage, // Display error from controller
-                            style: const TextStyle(
-                                color: Colors.red, fontSize: 14), //
-                            textAlign: TextAlign.center, //
-                          ),
-                        ),
-                      // Login Button
                       SizedBox(
                         width: double.infinity, //
                         height: 56, //
                         child: ElevatedButton(
-                          // Disable button when loading, call controller's login on press
                           onPressed: isLoading
                               ? null
                               : () {
-                                  // Call controller via Provider, no context needed here
                                   context.read<LoginController>().login(
                                         _emailController.text, // Pass values
                                         _passwordController.text,

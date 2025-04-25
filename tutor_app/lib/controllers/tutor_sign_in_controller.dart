@@ -1,6 +1,8 @@
 import 'package:flutter/foundation.dart';
+import 'package:tutor_app/services/area_of_expertise_service.dart';
 import '../providers/sign_in_process_provider.dart';
 import '../services/universities_service.dart';
+import '../services/area_of_expertise_service.dart';
 
 enum TutorSignInState {
   initial,
@@ -12,10 +14,12 @@ enum TutorSignInState {
 class TutorSignInController with ChangeNotifier {
   final SignInProcessProvider _signInProcessProvider;
   final UniversitiesService _universitiesService;
+  final AreaOfExpertiseService _areaOfExpertiseService;
 
-  TutorSignInController(
-      this._signInProcessProvider, this._universitiesService) {
+  TutorSignInController(this._signInProcessProvider, this._universitiesService,
+      this._areaOfExpertiseService) {
     _loadUniversities();
+    _loadAreaOfExpertise();
   }
 
   TutorSignInState _state = TutorSignInState.initial;
@@ -32,6 +36,18 @@ class TutorSignInController with ChangeNotifier {
 
   String? _universityApiError;
   String? get universityApiError => _universityApiError;
+
+  List<String> _aoe = [];
+  List<String> get aoe => _aoe;
+
+  String? _selectedAOE;
+  String? get selectedAOE => _selectedAOE;
+
+  bool _isLoadingAOE = false;
+  bool get isLoadingAOE => _isLoadingAOE;
+
+  String? _expertiseApiError;
+  String? get expertiseApiError => _expertiseApiError;
 
   String? _nameError;
   String? get nameError => _nameError;
@@ -71,10 +87,32 @@ class TutorSignInController with ChangeNotifier {
     }
   }
 
+  Future<void> _loadAreaOfExpertise() async {
+    _isLoadingAOE = true;
+    _universityApiError = null;
+    notifyListeners();
+    try {
+      _aoe = await _areaOfExpertiseService.fetchAreaOfExpertise();
+    } catch (e) {
+      _universityApiError = "Could not load area_of_expertise: ${e.toString()}";
+      debugPrint(_universityApiError);
+    } finally {
+      _isLoadingAOE = false;
+      notifyListeners();
+    }
+  }
+
+  void selectAOE(String? value) {
+    if (_selectedAOE != value) {
+      _selectedAOE = value;
+      _expertiseError = null;
+      notifyListeners();
+    }
+  }
+
   Future<void> submitTutorDetails({
     required String name,
     required String phoneNumber,
-    required String areaOfExpertise,
   }) async {
     _state = TutorSignInState.loading;
     _clearErrors();
@@ -92,8 +130,13 @@ class TutorSignInController with ChangeNotifier {
       _phoneError = 'Enter a valid phone number';
       isValid = false;
     }
-    if (areaOfExpertise.trim().isEmpty) {
-      _expertiseError = 'Area of expertise is required';
+
+    if (_selectedUniversity == null || _selectedUniversity!.isEmpty) {
+      _universityError = 'Please select a university';
+      isValid = false;
+    }
+    if (_selectedAOE == null || _selectedAOE!.isEmpty) {
+      _expertiseError = 'Please select a area of expertise';
       isValid = false;
     }
 
@@ -108,7 +151,7 @@ class TutorSignInController with ChangeNotifier {
         'name': name.trim(),
         'phone_number': phoneNumber.trim(),
         'university': _selectedUniversity!,
-        'area_of_expertise': areaOfExpertise.trim(),
+        'area_of_expertise': _selectedAOE!,
       };
       _signInProcessProvider.setTutorDetails(tutorData);
 

@@ -69,7 +69,7 @@ class _ProfilePictureScreenState extends State<ProfilePictureScreen> {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           image: DecorationImage(
-            image: NetworkImage(controller.pickedFile!.path),
+            image: FileImage(imageFile),
             fit: BoxFit.cover,
           ),
         ),

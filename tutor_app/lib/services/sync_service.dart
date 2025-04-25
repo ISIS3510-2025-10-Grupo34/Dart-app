@@ -52,28 +52,31 @@ class SyncService {
 
       final sentReviews = await _syncReviews();
       final now = DateTime.now();
-final pendingNotifs = await _cacheService.getPendingNotificationsRaw();
+      final pendingNotifs = await _cacheService.getPendingNotificationsRaw();
 
-final validNotifs = pendingNotifs.where((notif) {
-  final deadlineStr = notif['deadline'];
-  if (deadlineStr == null) return false;
+      final validNotifs = pendingNotifs.where((notif) {
+        final deadlineStr = notif['deadline'];
+        if (deadlineStr == null) return false;
 
-  try {
-    final deadline = DateTime.parse(deadlineStr);
-    return deadline.isAfter(now);
-  } catch (_) {
-    return false;
-  }
-}).toList();
+        try {
+          final deadline = DateTime.parse(deadlineStr);
+          return deadline.isAfter(now);
+        } catch (_) {
+          return false;
+        }
+      }).toList();
 
-debugPrint("📦 Notificaciones válidas encontradas: ${validNotifs.length}");
-final sentNotifs = await _cacheService.syncNotificationsWithService(
-  _locationService,
-  notificationsToSend: validNotifs,
-);
+      debugPrint(
+          "📦 Notificaciones válidas encontradas: ${validNotifs.length}");
+      final sentNotifs = await _cacheService.syncNotificationsWithService(
+        _locationService,
+        notificationsToSend: validNotifs,
+      );
 
-      if (sentReviews > 0) _showSnack('🔔 $sentReviews Review sent.', Colors.blue);
-      if (sentNotifs > 0) _showSnack('🔔 $sentNotifs Notification sent.', Colors.blue);
+      if (sentReviews > 0)
+        _showSnack('🔔 $sentReviews Review sent.', Colors.blue);
+      if (sentNotifs > 0)
+        _showSnack('🔔 $sentNotifs Notification sent.', Colors.blue);
     } catch (e) {
       debugPrint("❌ Error durante sync: $e");
     } finally {
@@ -82,40 +85,41 @@ final sentNotifs = await _cacheService.syncNotificationsWithService(
   }
 
   Future<int> _syncReviews() async {
-  final pendingReviews = await _cacheService.getPendingReviews();
-  debugPrint("📦 Reseñas pendientes encontradas: ${pendingReviews.length}");
-  int sentCount = 0;
+    final pendingReviews = await _cacheService.getPendingReviews();
+    debugPrint("📦 Reseñas pendientes encontradas: ${pendingReviews.length}");
+    int sentCount = 0;
 
-  for (final review in pendingReviews) {
-    debugPrint("🚀 Intentando enviar reseña para sessionId ${review.tutoringSessionId}...");
-    bool sent = false;
+    for (final review in pendingReviews) {
+      debugPrint(
+          "🚀 Intentando enviar reseña para sessionId ${review.tutoringSessionId}...");
+      bool sent = false;
 
-    for (int attempt = 1; attempt <= 6 && !sent; attempt++) {
-      try {
-        final success = await _reviewService.submitReview(review);
-        debugPrint("🔁 Intento $attempt - Resultado: $success");
+      for (int attempt = 1; attempt <= 6 && !sent; attempt++) {
+        try {
+          final success = await _reviewService.submitReview(review);
+          debugPrint("🔁 Intento $attempt - Resultado: $success");
 
-        if (success) {
-          await _cacheService.removePendingReview(review);
-          sentCount++;
-          sent = true;
-        } else {
+          if (success) {
+            await _cacheService.removePendingReview(review);
+            sentCount++;
+            sent = true;
+          } else {
+            await Future.delayed(Duration(seconds: 3 * attempt));
+          }
+        } catch (e) {
+          debugPrint("❌ Error en intento $attempt: $e");
           await Future.delayed(Duration(seconds: 3 * attempt));
         }
-      } catch (e) {
-        debugPrint("❌ Error en intento $attempt: $e");
-        await Future.delayed(Duration(seconds: 3 * attempt));
+      }
+
+      if (!sent) {
+        debugPrint(
+            "⚠️ Fallaron todos los intentos para sessionId ${review.tutoringSessionId}");
       }
     }
 
-    if (!sent) {
-      debugPrint("⚠️ Fallaron todos los intentos para sessionId ${review.tutoringSessionId}");
-    }
+    return sentCount;
   }
-
-  return sentCount;
-}
-
 
   Future<void> _retryConnection({int maxAttempts = 6}) async {
     for (int i = 1; i <= maxAttempts; i++) {

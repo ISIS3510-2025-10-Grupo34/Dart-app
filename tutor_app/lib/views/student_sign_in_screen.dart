@@ -77,16 +77,9 @@ class _StudentSignInState extends State<StudentSignInScreen> {
                         const SizedBox(height: 20),
                         GestureDetector(
                           onTap: () {
-                            // Consider navigation behavior - maybe pop or go to welcome?
-                            // For now, just pop if possible
                             if (Navigator.canPop(context)) {
                               Navigator.pop(context);
                             }
-                            // Or navigate specifically:
-                            // Navigator.of(context).pushAndRemoveUntil(
-                            //   MaterialPageRoute(builder: (context) => const WelcomeScreen()), // Assuming WelcomeScreen exists
-                            //   (route) => false,
-                            // );
                           },
                           child: const Text(
                             "TutorApp",
@@ -181,8 +174,30 @@ class _StudentSignInState extends State<StudentSignInScreen> {
                         ),
                         const SizedBox(height: 16),
                         _buildUniversityDropdown(controller),
+                        if (controller.universityError != null)
+                          Padding(
+                            padding:
+                                const EdgeInsets.only(top: 8.0, left: 12.0),
+                            child: Text(
+                              controller.universityError!,
+                              style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                  fontSize: 12),
+                            ),
+                          ),
                         const SizedBox(height: 16),
                         _buildMajorDropdown(controller),
+                        if (controller.majorError != null)
+                          Padding(
+                            padding:
+                                const EdgeInsets.only(top: 8.0, left: 12.0),
+                            child: Text(
+                              controller.majorError!,
+                              style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                  fontSize: 12),
+                            ),
+                          ),
                         const SizedBox(height: 16), // Spacing before error
                         // Display general error message if any
                         if (generalError != null)

@@ -1,6 +1,9 @@
 // main.dart
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tutor_app/services/area_of_expertise_service.dart';
 
 // Services
 import 'package:tutor_app/services/auth_service.dart';
@@ -39,7 +42,8 @@ import 'package:tutor_app/controllers/write_review_controller.dart';
 import 'package:tutor_app/views/welcome_screen.dart';
 import 'utils/env_config.dart';
 
-final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey = GlobalKey<ScaffoldMessengerState>();
+final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
+    GlobalKey<ScaffoldMessengerState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,6 +54,7 @@ void main() async {
   final courseService = CourseService();
   final userService = UserService();
   final reviewService = ReviewService();
+  final aoeService = AreaOfExpertiseService();
   final tutoringSessionService = TutoringSessionService();
   final metricsService = MetricsService();
   final studentTutoringSessionsService = StudentTutoringSessionsService();
@@ -72,7 +77,9 @@ void main() async {
         Provider<UniversitiesService>.value(value: universitiesService),
         Provider<MajorsService>.value(value: majorsService),
         Provider<ReviewService>.value(value: reviewService),
-        Provider<StudentTutoringSessionsService>.value(value: studentTutoringSessionsService),
+        Provider<AreaOfExpertiseService>.value(value: aoeService),
+        Provider<StudentTutoringSessionsService>.value(
+            value: studentTutoringSessionsService),
         Provider<TutoringSessionService>.value(value: tutoringSessionService),
         Provider<MetricsService>.value(value: metricsService),
         Provider<LocalCacheService>.value(value: localCacheService),
@@ -90,7 +97,8 @@ void main() async {
 
         // Auth & Sign-In Flow
         ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
-        ChangeNotifierProvider<SignInProcessProvider>.value(value: signInProcessProvider),
+        ChangeNotifierProvider<SignInProcessProvider>.value(
+            value: signInProcessProvider),
 
         ChangeNotifierProvider(
           create: (context) => LoginController(
@@ -99,7 +107,10 @@ void main() async {
           ),
         ),
         ChangeNotifierProvider(
-          create: (context) => SignInController(context.read<SignInProcessProvider>()),
+          create: (context) => SignInController(
+            context.read<SignInProcessProvider>(),
+            context.read<AuthService>(),
+          ),
         ),
         ChangeNotifierProvider(
           create: (context) => StudentHomeController(
@@ -110,13 +121,16 @@ void main() async {
           ),
         ),
         ChangeNotifierProvider(
-          create: (context) => LearningStylesController(context.read<SignInProcessProvider>()),
+          create: (context) =>
+              LearningStylesController(context.read<SignInProcessProvider>()),
         ),
         ChangeNotifierProvider(
-          create: (context) => ProfilePictureController(context.read<SignInProcessProvider>()),
+          create: (context) =>
+              ProfilePictureController(context.read<SignInProcessProvider>()),
         ),
         ChangeNotifierProvider(
-          create: (context) => UniversityIdController(context.read<SignInProcessProvider>()),
+          create: (context) =>
+              UniversityIdController(context.read<SignInProcessProvider>()),
         ),
         ChangeNotifierProvider(
           create: (context) => StudentSignInController(
@@ -139,6 +153,7 @@ void main() async {
           create: (context) => TutorSignInController(
             context.read<SignInProcessProvider>(),
             context.read<UniversitiesService>(),
+            context.read<AreaOfExpertiseService>(),
           ),
         ),
         ChangeNotifierProvider(
@@ -174,7 +189,8 @@ class TutorApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final syncService = context.read<SyncService>(); // 👈 Garantiza construcción
+    final syncService =
+        context.read<SyncService>(); // 👈 Garantiza construcción
     debugPrint("🧠 SyncService initialized in main");
     Future.microtask(() {
       context.read<SyncService>().syncPendingData();
@@ -200,6 +216,5 @@ class TutorApp extends StatelessWidget {
         },
       ),
     );
-}
-
+  }
 }

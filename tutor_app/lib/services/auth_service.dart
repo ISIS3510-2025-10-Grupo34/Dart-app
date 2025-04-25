@@ -16,19 +16,18 @@ class AuthService {
         final String token = data["data"]["token"];
         final Map<String, dynamic> userData = decodeJwt(token);
         return userData;
-      } else {
-        String errorMessage =
-            'Login failed (Status code: ${response.statusCode})';
+      } else if (response.statusCode == 400) {
+        String errorMessage = '. Try again';
         try {
           final errorData = jsonDecode(response.body);
-          errorMessage = errorData['message'] ?? errorMessage;
+          errorMessage = errorData['error'] + errorMessage;
         } catch (_) {}
-        throw Exception(errorMessage);
+        throw errorMessage;
+      } else {
+        throw "Internal Server Error";
       }
     } catch (e) {
-      throw Exception(
-        'Error during login: ${e.toString()}',
-      );
+      throw e.toString();
     }
   }
 
@@ -43,6 +42,39 @@ class AuthService {
       return jsonDecode(payload);
     } catch (e) {
       throw Exception('Error al decodificar el token');
+    }
+  }
+
+  Future<bool> checkEmailExists(String email) async {
+    final url = Uri.parse('${EnvConfig.apiUrl}/api/email-check/');
+    try {
+      final response = await http.post(
+        url,
+        headers: {"Content-Type": "application/json"},
+        body: '"$email"',
+      );
+
+      if (response.statusCode == 201) {
+        return false;
+      } else if (response.statusCode == 400 || response.statusCode == 500) {
+        try {
+          final responseBody = jsonDecode(response.body);
+          if (responseBody['error']
+                  ?.toString()
+                  .contains("Email already exists") ==
+              true) {
+            return true;
+          } else {
+            throw 'Internal Server Error';
+          }
+        } catch (e) {
+          throw 'Internal Server Error';
+        }
+      } else {
+        throw 'Internal Server Error';
+      }
+    } catch (e) {
+      throw 'Could not check email. Please check your connection and try again.';
     }
   }
 }

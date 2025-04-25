@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/university_id_controller.dart';
 import 'login_screen.dart';
+import 'welcome_screen.dart';
 
 class UniversityIDScreen extends StatefulWidget {
   const UniversityIDScreen({super.key});
@@ -46,14 +47,18 @@ class _UniversityIDScreenState extends State<UniversityIDScreen> {
             backgroundColor: Colors.red,
           ),
         );
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const WelcomeScreen()),
+          (Route<dynamic> route) => false, // Remove all routes below
+        );
         controller.resetStateAfterNavigation();
       }
     });
   }
 
-  // Helper to build image display, simplified for mobile only
   Widget _buildIdImageDisplay(UniversityIdController controller) {
-    final imageFile = controller.idImageFile; // Use the getter for File
+    final imageFile = controller.idImageFile;
 
     return Container(
       width: 329,
