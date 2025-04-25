@@ -138,14 +138,15 @@ class _ConnectStudentsScreenState extends State<ConnectStudentsScreen> {
   }
 
   @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text("TutorApp", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500)),
-        backgroundColor: Colors.white,
-        elevation: 0,
-      ),
-      body: Padding(
+Widget build(BuildContext context) {
+  return Scaffold(
+    appBar: AppBar(
+      title: const Text("TutorApp", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500)),
+      backgroundColor: Colors.white,
+      elevation: 0,
+    ),
+    body: SingleChildScrollView( // Wrap the content in SingleChildScrollView
+      child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
@@ -208,6 +209,8 @@ class _ConnectStudentsScreenState extends State<ConnectStudentsScreen> {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
 }
+}
+

@@ -90,7 +90,7 @@ final sentNotifs = await _cacheService.syncNotificationsWithService(
     debugPrint("🚀 Intentando enviar reseña para sessionId ${review.tutoringSessionId}...");
     bool sent = false;
 
-    for (int attempt = 1; attempt <= 6 && !sent; attempt++) {
+    for (int attempt = 1; attempt <= 48 && !sent; attempt++) {
       try {
         final success = await _reviewService.submitReview(review);
         debugPrint("🔁 Intento $attempt - Resultado: $success");
