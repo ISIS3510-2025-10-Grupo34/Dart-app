@@ -37,18 +37,14 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
   }
 
   Future<void> _triggerPopupCheck() async {
-    // Ensure widget is still mounted before proceeding
     if (!mounted) return;
-    final controller =
-        Provider.of<StudentProfileController>(context, listen: false);
+    final controller = Provider.of<StudentProfileController>(context, listen: false);
     try {
       bool shouldShow = await controller.checkReviewPercentage();
-      // Ensure widget is still mounted after the async call
       if (shouldShow && mounted) {
         _showReviewPopup(context);
       }
     } catch (e) {
-      // Handle potential errors from the check itself if needed
       debugPrint("Error occurred during popup check trigger: $e");
     }
   }
@@ -131,8 +127,7 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
           onPressed: () {
             Navigator.pushReplacement(
               context,
-              MaterialPageRoute(
-                  builder: (context) => const StudentHomeScreen()),
+              MaterialPageRoute(builder: (context) => const StudentHomeScreen()),
             );
           },
         ),
@@ -298,62 +293,58 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
               if (sessionController.isLoading) {
                 return const Center(child: CircularProgressIndicator());
               }
+                            if (sessionController.sessionsToReview.isNotEmpty) {
+                return ListView.builder(
+                  itemCount: sessionController.sessionsToReview.length,
+                  itemBuilder: (context, index) {
+                    final session = sessionController.sessionsToReview[index];
+                    return Card(
+                      color: Colors.white,
+                      margin: const EdgeInsets.symmetric(vertical: 4.0),
+                      child: ListTile(
+                        title: Text('${session.course} with ${session.tutorName}'),
+                        subtitle: Text(session.dateTime),
+                        trailing: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF171F45),
+                            foregroundColor: Colors.white,
+                          ),
+                          child: const Text('Review'),
+                          onPressed: () {
+                            final studentId = Provider.of<AuthProvider>(context, listen: false)
+                                .currentUser
+                                ?.id;
+                            if (studentId != null) {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => WriteReviewScreen(
+                                    tutorId: session.tutorId,
+                                    studentId: int.parse(studentId),
+                                    sessionId: session.id,
+                                  ),
+                                ),
+                              );
+                            } else {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text("Unable to find your student ID")),
+                              );
+                            }
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                );
+              }
+              
               if (sessionController.errorMessage != null) {
                 return Center(
                   child: Text('Error: ${sessionController.errorMessage}'),
                 );
               }
-              if (sessionController.sessions.isEmpty) {
-                return const Center(child: Text('No tutoring sessions found.'));
-              }
-
-              return ListView.builder(
-                itemCount: sessionController.sessions.length,
-                itemBuilder: (context, index) {
-                  final session = sessionController.sessions[index];
-                  final studentId =
-                      Provider.of<AuthProvider>(context, listen: false)
-                          .currentUser
-                          ?.id;
-
-                  return Card(
-                    color: Colors.white,
-                    margin: const EdgeInsets.symmetric(vertical: 4.0),
-                    child: ListTile(
-                      title:
-                          Text('${session.course} with ${session.tutorName}'),
-                      subtitle: Text(session.dateTime),
-                      trailing: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF171F45),
-                          foregroundColor: Colors.white,
-                        ),
-                        child: const Text('Review'),
-                        onPressed: () {
-                          if (studentId != null) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => WriteReviewScreen(
-                                  tutorId: session.tutorId,
-                                  studentId: int.parse(studentId),
-                                  sessionId: session.id,
-                                ),
-                              ),
-                            );
-                          } else {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(
-                                  content:
-                                      Text("Unable to find your student ID")),
-                            );
-                          }
-                        },
-                      ),
-                    ),
-                  );
-                },
-              );
+              
+              return const Center(child: Text('No tutoring sessions found.'));
             },
           ),
         ),
