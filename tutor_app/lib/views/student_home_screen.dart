@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tutor_app/controllers/notification_controller.dart';
+import 'package:tutor_app/controllers/notification_controller.dart'; 
 import 'package:tutor_app/views/notifications_view.dart';
 import 'student_profile_screen.dart';
 import '../controllers/student_home_controller.dart';
-import '../controllers/filter_controller.dart';
+import '../controllers/filter_controller.dart'; 
 import '../controllers/student_tutoring_sessions_controller.dart';
-import '../views/filter_modal.dart';
+import '../views/filter_modal.dart'; 
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -17,19 +17,32 @@ class StudentHomeScreen extends StatefulWidget {
 
 class _StudentHomeScreenState extends State<StudentHomeScreen> {
   DateTime? _screenLoadTime;
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
     super.initState();
     _screenLoadTime = DateTime.now();
-
     preloadNotifications();
-    preloadStudentSessions(); // 👈 Nueva precarga
+    preloadStudentSessions(); 
+    _scrollController.addListener(_onScroll);
+  }
 
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<StudentHomeController>(context, listen: false)
-          .loadAvailableTutoringSessions();
-    });
+  @override
+  void dispose() {
+    _scrollController.removeListener(_onScroll); // Remove listener
+    _scrollController.dispose(); // Dispose controller
+    super.dispose();
+  }
+
+  void _onScroll() {
+    if (_scrollController.position.pixels >=
+        _scrollController.position.maxScrollExtent - 200) { 
+      final controller = Provider.of<StudentHomeController>(context, listen: false);
+       if (controller.state != StudentHomeState.loadingNextPage && controller.hasMorePages) {
+            controller.loadOrderedSessions();
+       }
+    }
   }
 
   void preloadNotifications() {
@@ -103,87 +116,108 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     ],
                   ),
                 ),
-                // Filter
+                // --- Filter Controls Row ---
                 Padding(
-                  padding: const EdgeInsets.only(left: 16),
-                  child: GestureDetector(
-                    onTap: () async {
-                      final filterController =
-                          Provider.of<FilterController>(context, listen: false);
-                      await filterController.loadFilterOptions();
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
+                  child: Row(
+                    children: [
+                      // Filter Button
+                      ElevatedButton.icon(
+                         icon: const Icon(Icons.filter_list),
+                         label: const Text("Filter"),
+                         style: ElevatedButton.styleFrom(
+                             backgroundColor: const Color(0xFF171F45),
+                             foregroundColor: Colors.white,
+                             shape: RoundedRectangleBorder(
+                               borderRadius: BorderRadius.circular(20),
+                             ),
+                           ),
+                         onPressed: () async {
+                           final filterController =
+                               Provider.of<FilterController>(context, listen: false);
+                           await filterController.loadFilterOptions();
 
-                      showModalBottomSheet(
-                        context: context,
-                        isScrollControlled: true,
-                        backgroundColor: Colors.transparent,
-                        builder: (_) {
-                          return FilterModal(
-                            onFilter:
-                                (university, course, professor) async {
-                              if (university.isNotEmpty) {
-                                await filterController
-                                    .registerFilterUsed(university);
-                              }
-                              if (course.isNotEmpty) {
-                                await filterController
-                                    .registerFilterUsed(course);
-                              }
-                              if (professor.isNotEmpty) {
-                                await filterController
-                                    .registerFilterUsed(professor);
-                              }
+                           showModalBottomSheet(
+                             context: context,
+                             isScrollControlled: true,
+                             backgroundColor: Colors.transparent,
+                             builder: (_) {
+                               return FilterModal(
+                                 onFilter:
+                                     (university, course, professor) async {
+                                   if (university.isNotEmpty) { await filterController.registerFilterUsed(university);}
+                                   if (course.isNotEmpty) { await filterController.registerFilterUsed(course); }
+                                   if (professor.isNotEmpty) { await filterController.registerFilterUsed(professor);}
 
-                              await Provider.of<StudentHomeController>(
-                                      context,
-                                      listen: false)
-                                  .filterSessions(
-                                      university, course, professor);
-                            },
-                          );
-                        },
-                      );
-                    },
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: const Color(0xFF171F45),
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 20, vertical: 10),
-                      child: const Text(
-                        "Filter results",
-                        style: TextStyle(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          color: Colors.white,
-                        ),
-                      ),
-                    ),
+                                   controller.applyFiltersAndUpdate(
+                                       university, course, professor);
+                                 },
+                               );
+                             },
+                           );
+                         },
+                       ),
+                       const SizedBox(width: 10),
+                    ],
                   ),
                 ),
+                const SizedBox(height: 10),
+                Padding(
+                    padding: const EdgeInsets.only(left: 16),
+                    child: ElevatedButton.icon(
+                      icon: const Icon(Icons.refresh),
+                      label: const Text("Reload"),
+                      onPressed: () {
+                        controller.loadOrderedSessions(loadFirstPage: true);
+                      },
+                       style: ElevatedButton.styleFrom(
+                         backgroundColor: const Color(0xFF171F45),
+                         foregroundColor: Colors.white,
+                         shape: RoundedRectangleBorder(
+                           borderRadius: BorderRadius.circular(20),
+                         ),
+                       ),
+                    ),
+                  ),
                 const SizedBox(height: 10),
                 // Sessions
                 Expanded(
                   child: Builder(
                     builder: (_) {
-                      if (controller.state == StudentHomeState.loading) {
+                      // Handle initial loading state
+                      if (controller.state == StudentHomeState.loading && controller.sessions.isEmpty) {
                         return const Center(
                             child: CircularProgressIndicator());
-                      } else if (controller.state == StudentHomeState.error) {
+                      } else if (controller.state == StudentHomeState.error && controller.sessions.isEmpty) {
+                        // Show error only if there are no sessions to display
                         return Center(
                           child:
                               Text(controller.errorMessage ?? "Unknown error"),
                         );
-                      } else if (controller.sessions.isEmpty) {
+                      } else if (controller.sessions.isEmpty && controller.state != StudentHomeState.loading) { 
                         return const Center(
-                            child: Text("No available sessions."));
+                            child: Text("No available sessions found."));
                       }
 
                       return ListView.builder(
+                        controller: _scrollController,
                         padding: const EdgeInsets.symmetric(
                             horizontal: 16, vertical: 10),
-                        itemCount: controller.sessions.length,
+                        itemCount: controller.sessions.length +
+                            (controller.state == StudentHomeState.loadingNextPage ? 1 : 0),
                         itemBuilder: (context, index) {
+                          if (index == controller.sessions.length &&
+                              controller.state == StudentHomeState.loadingNextPage) {
+                            return const Padding(
+                              padding: EdgeInsets.symmetric(vertical: 16.0),
+                              child: Center(child: CircularProgressIndicator()),
+                            );
+                          }
+
+                           if (index >= controller.sessions.length) {
+                               return const SizedBox.shrink(); 
+                           }
+
                           final session = controller.sessions[index];
                           return buildSessionCard(session, controller);
                         },
