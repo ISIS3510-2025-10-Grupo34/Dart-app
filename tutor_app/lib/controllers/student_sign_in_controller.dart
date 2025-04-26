@@ -136,6 +136,15 @@ class StudentSignInController with ChangeNotifier {
       isValid = false;
     }
 
+    if (_selectedUniversity == null || _selectedUniversity!.isEmpty) {
+      _universityError = 'Please select a university';
+      isValid = false;
+    }
+    if (_selectedMajor == null || _selectedMajor!.isEmpty) {
+      _majorError = 'Please select a major';
+      isValid = false;
+    }
+
     if (!isValid) {
       _state = StudentSignInState.error;
       notifyListeners();

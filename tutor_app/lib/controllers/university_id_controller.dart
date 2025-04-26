@@ -112,7 +112,7 @@ class UniversityIdController with ChangeNotifier {
       _state = UniversityIdState.success;
       notifyListeners();
     } catch (e) {
-      _errorMessage = "Registration failed: ${e.toString()}";
+      _errorMessage = "Registration failed try again";
       _state = UniversityIdState.error;
       notifyListeners();
     }

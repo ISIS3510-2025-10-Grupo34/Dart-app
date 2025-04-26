@@ -1,18 +1,19 @@
 import 'package:flutter/foundation.dart';
 import 'package:tutor_app/providers/sign_in_process_provider.dart';
+import 'package:tutor_app/services/auth_service.dart';
 
 enum SignInState {
-  initial, // Default state
-  validating, // When validation is in progress (though it's synchronous here)
-  validationSuccessStudent, // Validation passed, navigate to Student sign in
-  validationSuccessTutor, // Validation passed, navigate to Tutor sign in
-  validationError // Validation failed
+  initial,
+  validating,
+  validationSuccessStudent,
+  validationSuccessTutor,
+  validationError
 }
 
 class SignInController with ChangeNotifier {
   final SignInProcessProvider _signInProcessProvider;
-
-  SignInController(this._signInProcessProvider);
+  final AuthService _authService;
+  SignInController(this._signInProcessProvider, this._authService);
 
   SignInState _state = SignInState.initial;
   SignInState get state => _state;
@@ -29,33 +30,50 @@ class SignInController with ChangeNotifier {
   String? _validatedPassword;
   String? get validatedPassword => _validatedPassword;
 
-  void validateAndProceed(
-      String email, String password, String confirmPassword, String role) {
-    _state = SignInState.validating;
+  Future<void> validateAndProceed(String email, String password,
+      String confirmPassword, String role) async {
+    _state = SignInState.validating; // Indicate loading/checking
     _emailError = null;
     _passwordError = null;
+    notifyListeners(); // Update UI to show loading state
 
-    bool isValid = true;
+    bool isFormatValid = true;
+    // --- Basic Format Validation ---
     if (email.isEmpty) {
       _emailError = 'Email is required';
-      isValid = false;
+      isFormatValid = false;
     } else if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
       _emailError = 'Enter a valid email';
-      isValid = false;
+      isFormatValid = false;
     }
 
     if (password.isEmpty) {
       _passwordError = 'Password is required';
-      isValid = false;
+      isFormatValid = false;
     } else if (password.length < 6) {
       _passwordError = 'Password must be at least 6 characters';
-      isValid = false;
+      isFormatValid = false;
     } else if (password != confirmPassword) {
       _passwordError = 'Passwords do not match';
-      isValid = false;
+      isFormatValid = false;
     }
 
-    if (isValid) {
+    if (!isFormatValid) {
+      _state = SignInState.validationError;
+      notifyListeners();
+      return; // Stop if basic format fails
+    }
+
+    // --- API Email Check ---
+    try {
+      bool emailExists = await _authService.checkEmailExists(email);
+      if (emailExists) {
+        _emailError = 'This email is already registered.';
+        _state = SignInState.validationError;
+        notifyListeners();
+        return;
+      }
+
       _validatedEmail = email;
       _validatedPassword = password;
 
@@ -71,10 +89,18 @@ class SignInController with ChangeNotifier {
         _state = SignInState.validationError;
         _passwordError = "Invalid role selected.";
       }
-    } else {
+    } catch (e) {
+      _emailError = e.toString();
       _state = SignInState.validationError;
+    } finally {
+      if (_state == SignInState.validating) {
+        _state = SignInState.validationError;
+        if (_emailError == null && _passwordError == null) {
+          _emailError = "An unexpected error occurred during validation.";
+        }
+      }
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   void resetStateAfterNavigation() {

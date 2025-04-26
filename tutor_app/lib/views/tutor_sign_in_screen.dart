@@ -13,7 +13,7 @@ class TutorSignInScreen extends StatefulWidget {
 
 class _TutorSignInState extends State<TutorSignInScreen> {
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _areaOfExpertiseController =
+  final TextEditingController _areaOfExpertiseMenuController =
       TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
   final TextEditingController _universityMenuController =
@@ -56,9 +56,6 @@ class _TutorSignInState extends State<TutorSignInScreen> {
             : null;
         final phoneError = (controller.state == TutorSignInState.error)
             ? controller.phoneError
-            : null;
-        final expertiseError = (controller.state == TutorSignInState.error)
-            ? controller.expertiseError
             : null;
         final generalError = (controller.state == TutorSignInState.error)
             ? controller.generalError
@@ -182,38 +179,31 @@ class _TutorSignInState extends State<TutorSignInScreen> {
                         ),
                         const SizedBox(height: 16),
                         _buildUniversityDropdown(controller),
-                        const SizedBox(height: 16),
-                        TextField(
-                          controller: _areaOfExpertiseController,
-                          enabled: !isLoading,
-                          onChanged: (_) => controller.clearInputErrors(),
-                          decoration: InputDecoration(
-                            hintText: 'Area of expertise',
-                            errorText: expertiseError,
-                            contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 16,
+                        if (controller.universityError != null)
+                          Padding(
+                            padding:
+                                const EdgeInsets.only(top: 8.0, left: 12.0),
+                            child: Text(
+                              controller.universityError!,
+                              style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                  fontSize: 12),
                             ),
-                            border: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide:
-                                    BorderSide(color: Colors.grey.shade300)),
-                            enabledBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide:
-                                    BorderSide(color: Colors.grey.shade300)),
-                            errorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide:
-                                    const BorderSide(color: Colors.red)),
-                            focusedErrorBorder: OutlineInputBorder(
-                                borderRadius: BorderRadius.circular(8),
-                                borderSide:
-                                    const BorderSide(color: Colors.red)),
                           ),
-                        ),
-                        const SizedBox(height: 16), // Spacing before error
-                        // Display general error message if any
+                        const SizedBox(height: 16),
+                        _buildAOEDropdown(controller),
+                        if (controller.expertiseError != null)
+                          Padding(
+                            padding:
+                                const EdgeInsets.only(top: 8.0, left: 12.0),
+                            child: Text(
+                              controller.expertiseError!,
+                              style: TextStyle(
+                                  color: Theme.of(context).colorScheme.error,
+                                  fontSize: 12),
+                            ),
+                          ),
+                        const SizedBox(height: 16),
                         if (generalError != null)
                           Padding(
                             padding: const EdgeInsets.only(bottom: 8.0),
@@ -224,7 +214,7 @@ class _TutorSignInState extends State<TutorSignInScreen> {
                               textAlign: TextAlign.center,
                             ),
                           ),
-                        const SizedBox(height: 8), // Spacing after error
+                        const SizedBox(height: 8),
                         SizedBox(
                           height: 56,
                           child: ElevatedButton(
@@ -237,8 +227,6 @@ class _TutorSignInState extends State<TutorSignInScreen> {
                                           name: _nameController.text,
                                           phoneNumber:
                                               _phoneNumberController.text,
-                                          areaOfExpertise:
-                                              _areaOfExpertiseController.text,
                                         );
                                   },
                             style: ElevatedButton.styleFrom(
@@ -277,7 +265,7 @@ class _TutorSignInState extends State<TutorSignInScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _areaOfExpertiseController.dispose();
+    _areaOfExpertiseMenuController.dispose();
     _phoneNumberController.dispose();
     _universityMenuController.dispose();
     super.dispose();
@@ -304,6 +292,42 @@ class _TutorSignInState extends State<TutorSignInScreen> {
       expandedInsets: EdgeInsets.zero,
       menuHeight: 300,
       hintText: 'Select University',
+      inputDecorationTheme: InputDecorationTheme(
+        contentPadding:
+            const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey.shade300)),
+        enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(8),
+            borderSide: BorderSide(color: Colors.grey.shade300)),
+      ),
+      menuStyle: MenuStyle(
+        backgroundColor: WidgetStateProperty.all<Color>(Colors.white),
+      ),
+    );
+  }
+
+  Widget _buildAOEDropdown(dynamic controller) {
+    final List<String> aoes = controller.aoe;
+    final String? selectedAOE = controller.selectedAOE;
+    final Function(String?) onSelectedUpdate = controller.selectAOE;
+
+    return DropdownMenu<String>(
+      controller: _areaOfExpertiseMenuController,
+      initialSelection: selectedAOE,
+      dropdownMenuEntries: aoes.map<DropdownMenuEntry<String>>((String value) {
+        return DropdownMenuEntry<String>(
+          value: value,
+          label: value,
+        );
+      }).toList(),
+      onSelected: (String? value) {
+        onSelectedUpdate(value);
+      },
+      expandedInsets: EdgeInsets.zero,
+      menuHeight: 300,
+      hintText: 'Select Area Of Expertise',
       inputDecorationTheme: InputDecorationTheme(
         contentPadding:
             const EdgeInsets.symmetric(horizontal: 16, vertical: 16),

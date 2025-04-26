@@ -110,6 +110,7 @@ class SignInProcessProvider with ChangeNotifier {
     } catch (e) {
       _submissionError = e.toString();
       _submissionState = RegistrationSubmissionState.error;
+      throw "";
     } finally {
       notifyListeners();
     }

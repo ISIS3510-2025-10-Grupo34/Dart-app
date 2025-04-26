@@ -45,8 +45,7 @@ class LoginController with ChangeNotifier {
       } else if (role == "tutor") {
         _state = LoginState.successTutor;
       } else {
-        throw Exception(
-            "Login successful, but user role ('$role') is invalid.");
+        throw Exception("Login successful, but user role is invalid.");
       }
     } catch (e) {
       _errorMessage = e.toString();
