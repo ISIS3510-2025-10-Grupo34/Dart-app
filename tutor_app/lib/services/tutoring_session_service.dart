@@ -17,19 +17,62 @@ class SessionFetchResult {
 void _isolateEntryPoint(Map<String, dynamic> message) async {
   final SendPort sendPort = message['port'] as SendPort;
   final String apiUrl = message['apiUrl'] as String;
+  final String method = message['method'] as String? ?? 'GET'; 
+  final Map<String, dynamic>? body = message['body'] as Map<String, dynamic>?; 
+  final Map<String, String> headers = {'Content-Type': 'application/json'}; 
 
   try {
-    final response = await http.get(Uri.parse(apiUrl));
+    http.Response response;
+    if (method.toUpperCase() == 'POST') {
+      response = await http.post(
+        Uri.parse(apiUrl),
+        headers: headers,
+        body: jsonEncode(body), 
+      );
+    } else { 
+      response = await http.get(
+        Uri.parse(apiUrl),
+        headers: headers,
+      );
+    }
 
     if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      final List<Map<String, dynamic>> resultMaps =
-          List<Map<String, dynamic>>.from(data);
-      sendPort.send({'status': 'success', 'data': resultMaps});
+      final dynamic decodedBody = jsonDecode(response.body);
+
+      if (apiUrl.contains('/api/tutoring-sessions-ordered/')) {
+          if (decodedBody is Map<String, dynamic> && decodedBody.containsKey('tutoring_sessions')) {
+              final List<dynamic> data = decodedBody['tutoring_sessions'];
+              final List<Map<String, dynamic>> resultMaps = List<Map<String, dynamic>>.from(data);
+              sendPort.send({'status': 'success', 'data': resultMaps});
+          } else {
+              sendPort.send({
+                'status': 'error',
+                'message': 'Failed to parse ordered sessions: Unexpected response format'
+              });
+          }
+      } else if (apiUrl.contains('/api/tutoring-sessions-with-names/')) {
+          if (decodedBody is List) {
+              final List<dynamic> data = decodedBody;
+              final List<Map<String, dynamic>> resultMaps = List<Map<String, dynamic>>.from(data);
+              sendPort.send({'status': 'success', 'data': resultMaps});
+          } else {
+              sendPort.send({
+                'status': 'error',
+                'message': 'Failed to parse sessions-with-names: Unexpected response format'
+              });
+          }
+      }
+      else {
+          sendPort.send({
+            'status': 'error',
+            'message': 'Isolate does not know how to handle response from $apiUrl'
+          });
+      }
+
     } else {
       sendPort.send({
         'status': 'error',
-        'message': 'Failed to load sessions: Status code ${response.statusCode}'
+        'message': 'Request failed: Status code ${response.statusCode}, Body: ${response.body}' 
       });
     }
   } catch (e) {
@@ -99,7 +142,7 @@ class TutoringSessionService {
     return allSessions.where((session) => session.student == null).toList();
   }
 
-  Future<SessionFetchResult> fetchOrderedSessions(int page) async { 
+  Future<SessionFetchResult> fetchOrderedSessions(int page) async {
     final prefs = await SharedPreferences.getInstance();
     final cacheKey = 'ordered_sessions_page_$page';
 
@@ -114,33 +157,62 @@ class TutoringSessionService {
       }
     }
 
-    final url = Uri.parse('${EnvConfig.apiUrl}/api/tutoring-sessions-ordered/');
+    final apiUrl = '${EnvConfig.apiUrl}/api/tutoring-sessions-ordered/';
+    final ReceivePort receivePort = ReceivePort();
+    final Completer<List<TutoringSession>> networkCompleter = Completer<List<TutoringSession>>();
+    Isolate? isolate;
     List<TutoringSession> sessions = [];
 
     try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'page': page}),
-      );
-      if (response.statusCode == 200) {
-        final Map<String, dynamic> decodedBody = jsonDecode(response.body);
-        if (decodedBody.containsKey('tutoring_sessions')) {
-            final List<dynamic> data = decodedBody['tutoring_sessions'];
-            sessions = data.map((json) => TutoringSession.fromJson(json)).toList();
-            final List<Map<String, dynamic>> rawSessionData = data.cast<Map<String, dynamic>>();
-            await prefs.setString(cacheKey, jsonEncode(rawSessionData));
-        } else {
-           throw Exception('Failed to parse tutoring sessions: Missing key');
-        }
-      } else {
-        throw Exception('Failed to load tutoring sessions (Status code: ${response.statusCode})');
-      }
-    } catch (e) {
-       throw Exception('Failed to load tutoring sessions: $e');
-    }
+       isolate = await Isolate.spawn(
+          _isolateEntryPoint,
+          {
+            'port': receivePort.sendPort,
+            'apiUrl': apiUrl,
+            'method': 'POST', 
+            'body': {'page': page} 
+          },
+          onError: receivePort.sendPort,
+          onExit: receivePort.sendPort,
+          errorsAreFatal: true);
 
-    return SessionFetchResult(sessions: sessions, isFromCache: false);
+       receivePort.listen((dynamic message) {
+
+         if (message is Map<String, dynamic>) {
+           final String status = message['status'];
+           if (status == 'success') {
+             final List<Map<String, dynamic>> resultMaps = message['data'];
+
+             final parsedSessions = resultMaps.map((json) => TutoringSession.fromJson(json)).toList();
+             if (!networkCompleter.isCompleted) networkCompleter.complete(parsedSessions);
+           } else if (status == 'error') {
+             final String errorMessage = message['message'] ?? 'Unknown isolate error';
+             if (!networkCompleter.isCompleted) networkCompleter.completeError(Exception(errorMessage));
+           } else {
+              if (!networkCompleter.isCompleted) networkCompleter.completeError(Exception("Unexpected message status from isolate"));
+           }
+         } else {
+            if (!networkCompleter.isCompleted) networkCompleter.completeError(Exception("Unexpected data type from isolate: ${message.runtimeType}"));
+         }
+
+         receivePort.close();
+         isolate?.kill(priority: Isolate.immediate);
+         isolate = null;
+       });
+
+
+       sessions = await networkCompleter.future;
+       final List<Map<String, dynamic>> sessionsToCache = sessions.map((s) => s.toJson()).toList(); // Assuming toJson exists
+       await prefs.setString(cacheKey, jsonEncode(sessionsToCache));
+
+       return SessionFetchResult(sessions: sessions, isFromCache: false);
+
+    } catch (e) {
+      receivePort.close(); 
+      isolate?.kill(priority: Isolate.immediate); 
+      isolate = null;
+      throw Exception('Failed to load ordered sessions via isolate: $e');
+    }
   }
 
   Future<void> createTutoringSession({

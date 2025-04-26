@@ -194,7 +194,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                           child:
                               Text(controller.errorMessage ?? "Unknown error"),
                         );
-                      } else if (controller.sessions.isEmpty && controller.state != StudentHomeState.loading) {
+                      } else if (controller.sessions.isEmpty && controller.state != StudentHomeState.loading) { 
                         return const Center(
                             child: Text("No available sessions found."));
                       }
