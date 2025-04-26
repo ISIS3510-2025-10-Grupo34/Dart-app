@@ -68,7 +68,7 @@ class StudentSignInController with ChangeNotifier {
     try {
       _universities = await _universitiesService.fetchUniversities();
     } catch (e) {
-      _universityApiError = "Could not load universities: ${e.toString()}";
+      _universityApiError = e.toString();
       debugPrint(_universityApiError);
     } finally {
       _isLoadingUniversities = false;
@@ -99,7 +99,7 @@ class StudentSignInController with ChangeNotifier {
     try {
       _majors = await _majorsService.fetchMajors(university);
     } catch (e) {
-      _majorApiError = "Could not load majors: ${e.toString()}";
+      _majorApiError = e.toString();
       debugPrint(_majorApiError);
     } finally {
       _isLoadingMajors = false;

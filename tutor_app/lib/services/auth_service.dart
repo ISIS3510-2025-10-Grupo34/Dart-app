@@ -74,7 +74,7 @@ class AuthService {
         throw 'Internal Server Error';
       }
     } catch (e) {
-      throw 'Could not check email. Please check your connection and try again.';
+      throw 'Could not check email. Please check your connection.';
     }
   }
 }

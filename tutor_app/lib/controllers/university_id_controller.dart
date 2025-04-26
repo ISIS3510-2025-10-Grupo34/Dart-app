@@ -31,6 +31,13 @@ class UniversityIdController with ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+  void resetControllerState() {
+    _state = UniversityIdState.initial;
+    _errorMessage = null;
+    _idPickedFile = null;
+    notifyListeners();
+  }
+
   Future<void> pickIdImage(BuildContext context) async {
     _state = UniversityIdState.picking;
     _errorMessage = null;
@@ -98,7 +105,6 @@ class UniversityIdController with ChangeNotifier {
       notifyListeners();
       return;
     }
-
     _state = UniversityIdState.registering;
     _errorMessage = null;
     notifyListeners();
@@ -109,7 +115,6 @@ class UniversityIdController with ChangeNotifier {
 
       await _signInProcessProvider.submitRegistration();
 
-      _state = UniversityIdState.success;
       notifyListeners();
     } catch (e) {
       _errorMessage = "Registration failed try again";
@@ -119,18 +124,9 @@ class UniversityIdController with ChangeNotifier {
   }
 
   void resetStateAfterNavigation() {
-    if (_state == UniversityIdState.success) {
-      _state = UniversityIdState.initial;
-      _errorMessage = null;
-      _idPickedFile = null;
-      _signInProcessProvider.reset();
-      notifyListeners();
-    } else if (_state == UniversityIdState.error) {
-      _state = (_idPickedFile == null)
-          ? UniversityIdState.initial
-          : UniversityIdState.picked;
-      _errorMessage = null;
-      notifyListeners();
+    if (_state == UniversityIdState.success ||
+        _state == UniversityIdState.error) {
+      resetControllerState();
     }
   }
 }

@@ -20,6 +20,7 @@ import 'package:tutor_app/services/sync_service.dart';
 import 'package:tutor_app/services/local_cache_service.dart';
 import 'package:tutor_app/services/location_service.dart';
 import 'package:tutor_app/services/student_tutoring_sessions_service.dart';
+import 'package:tutor_app/services/profile_creation_time_service.dart';
 
 // Controllers & Providers
 import 'package:tutor_app/providers/auth_provider.dart';
@@ -40,6 +41,8 @@ import 'package:tutor_app/controllers/write_review_controller.dart';
 
 // UI
 import 'package:tutor_app/views/welcome_screen.dart';
+import 'package:tutor_app/views/student_home_screen.dart';
+import 'package:tutor_app/views/tutor_profile_screen.dart';
 import 'utils/env_config.dart';
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
@@ -62,9 +65,12 @@ void main() async {
   final majorsService = MajorsService();
   final localCacheService = LocalCacheService();
   final locationService = LocationService();
+  final profileCreationTimeService = ProfileCreationTimeService();
 
   final authProvider = AuthProvider(userService: userService);
-  final signInProcessProvider = SignInProcessProvider(userService: userService);
+  final signInProcessProvider = SignInProcessProvider(
+      userService: userService, localCacheService: localCacheService);
+  await authProvider.tryRestoreSession();
 
   runApp(
     MultiProvider(
@@ -84,18 +90,9 @@ void main() async {
         Provider<MetricsService>.value(value: metricsService),
         Provider<LocalCacheService>.value(value: localCacheService),
         Provider<LocationService>.value(value: locationService),
+        Provider<ProfileCreationTimeService>.value(
+            value: profileCreationTimeService),
 
-        // Sync
-        Provider<SyncService>(
-          create: (context) => SyncService(
-            scaffoldMessengerKey: scaffoldMessengerKey,
-            reviewService: context.read<ReviewService>(),
-            cacheService: context.read<LocalCacheService>(),
-            locationService: context.read<LocationService>(),
-          ),
-        ),
-
-        // Auth & Sign-In Flow
         ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
         ChangeNotifierProvider<SignInProcessProvider>.value(
             value: signInProcessProvider),
@@ -106,10 +103,27 @@ void main() async {
             authProvider: context.read<AuthProvider>(),
           ),
         ),
+
+        // Sync
+        Provider<SyncService>(
+          create: (context) => SyncService(
+            scaffoldMessengerKey: scaffoldMessengerKey,
+            reviewService: context.read<ReviewService>(),
+            cacheService: context.read<LocalCacheService>(),
+            locationService: context.read<LocationService>(),
+            userService: context.read<UserService>(),
+            signInProcessProvider: context.read<SignInProcessProvider>(),
+          ),
+        ),
+
+        // Auth & Sign-In Flow
+
         ChangeNotifierProvider(
           create: (context) => SignInController(
             context.read<SignInProcessProvider>(),
             context.read<AuthService>(),
+            profileCreationTimeService:
+                context.read<ProfileCreationTimeService>(),
           ),
         ),
         ChangeNotifierProvider(
@@ -184,18 +198,26 @@ void main() async {
   );
 }
 
-class TutorApp extends StatelessWidget {
+class TutorApp extends StatefulWidget {
   const TutorApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final syncService =
-        context.read<SyncService>(); // 👈 Garantiza construcción
-    debugPrint("🧠 SyncService initialized in main");
-    Future.microtask(() {
-      context.read<SyncService>().syncPendingData();
-    });
+  State<TutorApp> createState() => _TutorAppState();
+}
 
+class _TutorAppState extends State<TutorApp> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final syncService = context.read<SyncService>();
+      debugPrint("SyncService instance obtained in TutorApp state.");
+      syncService.syncPendingData();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MaterialApp(
       scaffoldMessengerKey: scaffoldMessengerKey,
       title: 'TutorApp',
@@ -207,10 +229,22 @@ class TutorApp extends StatelessWidget {
       home: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
           switch (authProvider.authState) {
-            case AuthState.authenticated:
-              return const WelcomeScreen();
-            case AuthState.unauthenticated:
             case AuthState.unknown:
+              return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()));
+            case AuthState.authenticated:
+              final role = authProvider.currentUser?.role;
+              debugPrint("Authenticated state detected. Role: $role");
+              if (role == 'student') {
+                return const StudentHomeScreen();
+              } else if (role == 'tutor') {
+                return const TutorProfileScreen();
+              } else {
+                debugPrint(
+                    "Authenticated, but role is unknown/invalid. Defaulting to WelcomeScreen.");
+                return const WelcomeScreen();
+              }
+            case AuthState.unauthenticated:
               return const WelcomeScreen();
           }
         },
