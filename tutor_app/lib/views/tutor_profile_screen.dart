@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tutor_app/models/review_model.dart';
+import 'similar_reviews_dialog.dart';
 import '../controllers/tutor_profile_controller.dart';
 import '../models/user_model.dart';
 import 'dart:math';
@@ -19,15 +20,122 @@ class TutorProfileScreen extends StatefulWidget {
 }
 
 class _TutorProfileScreenState extends State<TutorProfileScreen> {
+  bool _didCheckRating = false;
   @override
   void initState() {
     super.initState();
-    final controller = Provider.of<TutorProfileController>(context, listen: false);
+    final controller =
+        Provider.of<TutorProfileController>(context, listen: false);
     controller.fetchTimeToBookInsight();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _checkRatingAndShowPopupIfNeeded();
+    });
+  }
+
+  void _checkRatingAndShowPopupIfNeeded() {
+    if (_didCheckRating || !mounted) return; // Only run once and if mounted
+
+    final controller =
+        Provider.of<TutorProfileController>(context, listen: false);
+    final avgRating = controller.user?.avgRating;
+
+    if (avgRating == null || avgRating < 4.0) {
+      setState(() {
+        _didCheckRating = true;
+      }); // Mark as checked
+
+      showDialog(
+        context: context,
+        barrierDismissible: false, // User must interact
+        builder: (BuildContext dialogContext) {
+          return AlertDialog(
+            title: const Text("Rating Suggestion"),
+            content: const Text(
+                "Your average rating is below 4.0. Would you like to see examples of highly-rated reviews from similar tutors?"),
+            actions: <Widget>[
+              TextButton(
+                child: const Text("No, Thanks"),
+                onPressed: () {
+                  Navigator.of(dialogContext).pop();
+                },
+              ),
+              TextButton(
+                child: const Text("Yes, Show Me"),
+                onPressed: () {
+                  Navigator.of(dialogContext).pop(); // Close this dialog first
+                  _fetchAndDisplaySimilarReviews(); // Fetch and show the next dialog
+                },
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      setState(() {
+        _didCheckRating = true;
+      });
+    }
+  }
+
+  Future<void> _fetchAndDisplaySimilarReviews() async {
+    if (!mounted) return;
+    final controller =
+        Provider.of<TutorProfileController>(context, listen: false);
+
+    showDialog(
+      context: context,
+      barrierDismissible: false, // Prevent dismissal while loading
+      builder: (BuildContext loadingContext) {
+        return const AlertDialog(
+          content: Row(
+            children: [
+              CircularProgressIndicator(),
+              SizedBox(width: 20),
+              Text("Loading reviews..."),
+            ],
+          ),
+        );
+      },
+    );
+
+    await controller.fetchAndShowSimilarReviews();
+
+    if (!mounted) return;
+
+    Navigator.of(context).pop();
+
+    if (controller.similarReviewsError != null) {
+      showDialog(
+        context: context,
+        builder: (BuildContext errorContext) {
+          return AlertDialog(
+            title: const Text("Error"),
+            content: Text(controller.similarReviewsError!),
+            actions: <Widget>[
+              TextButton(
+                child: const Text("OK"),
+                onPressed: () => Navigator.of(errorContext).pop(),
+              ),
+            ],
+          );
+        },
+      );
+    } else {
+      // Show the dialog with fetched reviews
+      showDialog(
+        context: context,
+        builder: (BuildContext reviewDialogContext) {
+          return SimilarReviewsDialog(
+            similarReviews: controller.similarReviews,
+          );
+        },
+      );
+    }
   }
 
   Future<void> _logout(BuildContext context) async {
-    final profileController = Provider.of<TutorProfileController>(context, listen: false);
+    final profileController =
+        Provider.of<TutorProfileController>(context, listen: false);
     try {
       await profileController.logout();
       if (mounted) {
@@ -59,10 +167,13 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
     String sanitizedNumber = phoneNumber.replaceAll(RegExp(r'[^0-9]'), '');
     if (!sanitizedNumber.startsWith('57') && sanitizedNumber.length == 10) {
       sanitizedNumber = '57$sanitizedNumber';
-    } else if (!sanitizedNumber.startsWith('+') && !sanitizedNumber.startsWith('57')) {
+    } else if (!sanitizedNumber.startsWith('+') &&
+        !sanitizedNumber.startsWith('57')) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Cannot determine phone number format: $phoneNumber')),
+          SnackBar(
+              content:
+                  Text('Cannot determine phone number format: $phoneNumber')),
         );
       }
       return;
@@ -77,7 +188,8 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
         debugPrint("Could not launch $whatsappUrl");
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not open WhatsApp. Is it installed?')),
+            const SnackBar(
+                content: Text('Could not open WhatsApp. Is it installed?')),
           );
         }
       }
@@ -98,8 +210,12 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         backgroundColor: Colors.white,
-        title: const Text('Tutor App', style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500, )),
-        automaticallyImplyLeading: false, 
+        title: const Text('Tutor App',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.w500,
+            )),
+        automaticallyImplyLeading: false,
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 8.0),
@@ -109,7 +225,8 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const ConnectStudentsScreen()),
+                  MaterialPageRoute(
+                      builder: (_) => const ConnectStudentsScreen()),
                 );
               },
             ),
@@ -133,7 +250,8 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
     );
   }
 
-  Widget buildProfileContent(BuildContext context, TutorProfileController controller) {
+  Widget buildProfileContent(
+      BuildContext context, TutorProfileController controller) {
     if (controller.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
@@ -155,11 +273,12 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
       );
     }
 
-    final message =  '''Time it takes a student to book with you: 15 seconds. 
+    final message = '''Time it takes a student to book with you: 15 seconds. 
         Your average time is less than the average time to book, keep up the good work.''';
 
     ImageProvider? profileImageProvider;
-    if (user.profilePicturePath != null && user.profilePicturePath!.isNotEmpty) {
+    if (user.profilePicturePath != null &&
+        user.profilePicturePath!.isNotEmpty) {
       profileImageProvider = FileImage(File(user.profilePicturePath!));
     }
 
@@ -178,7 +297,8 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
                       user.name?.isNotEmpty == true
                           ? user.name![0].toUpperCase()
                           : 'S',
-                      style: const TextStyle(fontSize: 40, fontWeight: FontWeight.bold),
+                      style: const TextStyle(
+                          fontSize: 40, fontWeight: FontWeight.bold),
                     )
                   : null,
             ),
@@ -283,7 +403,8 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
               onPressed: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => const CreateTutoringSessionScreen()),
+                  MaterialPageRoute(
+                      builder: (_) => const CreateTutoringSessionScreen()),
                 );
               },
               style: ElevatedButton.styleFrom(
@@ -291,7 +412,8 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(32),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 32, vertical: 14),
               ),
               child: const Text(
                 "Announce tutoring session",
@@ -304,7 +426,6 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
             ),
           ),
           const SizedBox(height: 24), // Bottom padding
-
         ],
       ),
     );
@@ -356,7 +477,8 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: reviews.length,
-      separatorBuilder: (context, index) => const Divider(height: 1, thickness: 1),
+      separatorBuilder: (context, index) =>
+          const Divider(height: 1, thickness: 1),
       itemBuilder: (context, index) {
         final review = reviews[index];
         return _buildReviewCard(review);
