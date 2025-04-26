@@ -7,11 +7,13 @@ import 'review_service.dart';
 import 'location_service.dart';
 import 'local_cache_service.dart';
 import '../models/review_model.dart';
+import '../services/user_service.dart';
 
 class SyncService {
   final ReviewService _reviewService;
   final LocationService _locationService;
   final LocalCacheService _cacheService;
+  final UserService _userService;
   final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey;
   StreamSubscription<ConnectivityResult>? _connectivitySubscription;
   bool _isSyncing = false;
@@ -21,9 +23,11 @@ class SyncService {
     ReviewService? reviewService,
     LocationService? locationService,
     LocalCacheService? cacheService,
+    UserService? userService,
   })  : _reviewService = reviewService ?? ReviewService(),
         _locationService = locationService ?? LocationService(),
-        _cacheService = cacheService ?? LocalCacheService() {
+        _cacheService = cacheService ?? LocalCacheService(),
+        _userService = userService ?? UserService() {
     _listenToConnectivity();
   }
 
@@ -49,6 +53,7 @@ class SyncService {
       }
 
       final sentReviews = await _syncReviews();
+      final sentRegistrations = await _syncRegistrations();
       final now = DateTime.now();
       final pendingNotifs = await _cacheService.getPendingNotificationsRaw();
 
@@ -69,11 +74,18 @@ class SyncService {
         notificationsToSend: validNotifs,
       );
 
-      if (sentReviews > 0)
+      if (sentReviews > 0) {
         _showSnack('🔔 $sentReviews Review sent.', Colors.blue);
-      if (sentNotifs > 0)
+      }
+      if (sentRegistrations > 0) {
+        _showSnack(
+            '🔔 $sentRegistrations Registration(s) completed.', Colors.green);
+      }
+      if (sentNotifs > 0) {
         _showSnack('🔔 $sentNotifs Notification sent.', Colors.blue);
+      }
     } catch (e) {
+      rethrow;
     } finally {
       _isSyncing = false;
     }
@@ -140,5 +152,41 @@ class SyncService {
 
   void dispose() {
     _connectivitySubscription?.cancel();
+  }
+
+  Future<int> _syncRegistrations() async {
+    final pendingRegistrations = await _cacheService.getPendingRegistrations();
+    int sentCount = 0;
+    if (pendingRegistrations.isEmpty) {
+      return 0;
+    }
+    List<Map<String, dynamic>> registrationsToProcess =
+        List.from(pendingRegistrations);
+    for (final regData in registrationsToProcess) {
+      try {
+        final userData = regData['userData'] as Map<String, dynamic>?;
+        final profilePath = regData['profilePicturePath'] as String?;
+        final idPath = regData['idPicturePath'] as String?;
+
+        if (userData == null || idPath == null) {
+          continue;
+        }
+        final Map<String, String> stringUserData =
+            userData.map((key, value) => MapEntry(key, value.toString()));
+
+        bool success = await _userService.registerUser(
+            stringUserData, profilePath, idPath);
+
+        if (success) {
+          await _cacheService.removePendingRegistration(regData);
+          sentCount++;
+        } else {
+          await _cacheService.removePendingRegistration(regData);
+        }
+      } catch (e) {
+        rethrow;
+      }
+    }
+    return sentCount;
   }
 }

@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../controllers/university_id_controller.dart';
 import 'login_screen.dart';
 import 'welcome_screen.dart';
+import '../providers/sign_in_process_provider.dart';
 
 class UniversityIDScreen extends StatefulWidget {
   const UniversityIDScreen({super.key});
@@ -21,12 +22,53 @@ class _UniversityIDScreenState extends State<UniversityIDScreen> {
   }
 
   void _setupNavigationListener() {
+    final signInProvider =
+        Provider.of<SignInProcessProvider>(context, listen: false);
+
+    signInProvider.addListener(() {
+      if (!mounted) return;
+
+      final state = signInProvider.submissionState;
+      final errorMessage = signInProvider.submissionError;
+
+      if (state == RegistrationSubmissionState.success) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+              content: Text("Registration successful! Please log in."),
+              backgroundColor: Colors.green),
+        );
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const LoginScreen()),
+          (route) => false,
+        );
+        signInProvider.reset();
+      } else if (state == RegistrationSubmissionState.queuedOffline) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content:
+                Text(errorMessage ?? "No connection. Registration queued."),
+            backgroundColor: Colors.orange,
+          ),
+        );
+      } else if (state == RegistrationSubmissionState.error &&
+          errorMessage != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(errorMessage),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    });
+
     final controller =
         Provider.of<UniversityIdController>(context, listen: false);
     controller.addListener(() {
       if (!mounted) return;
 
       final state = controller.state;
+
       if (state == UniversityIdState.success) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(

@@ -40,6 +40,8 @@ import 'package:tutor_app/controllers/write_review_controller.dart';
 
 // UI
 import 'package:tutor_app/views/welcome_screen.dart';
+import 'package:tutor_app/views/student_home_screen.dart';
+import 'package:tutor_app/views/tutor_profile_screen.dart';
 import 'utils/env_config.dart';
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
@@ -64,7 +66,9 @@ void main() async {
   final locationService = LocationService();
 
   final authProvider = AuthProvider(userService: userService);
-  final signInProcessProvider = SignInProcessProvider(userService: userService);
+  final signInProcessProvider = SignInProcessProvider(
+      userService: userService, localCacheService: localCacheService);
+  await authProvider.tryRestoreSession();
 
   runApp(
     MultiProvider(
@@ -184,18 +188,27 @@ void main() async {
   );
 }
 
-class TutorApp extends StatelessWidget {
+class TutorApp extends StatefulWidget {
   const TutorApp({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final syncService =
-        context.read<SyncService>(); // 👈 Garantiza construcción
-    debugPrint("🧠 SyncService initialized in main");
-    Future.microtask(() {
-      context.read<SyncService>().syncPendingData();
-    });
+  State<TutorApp> createState() => _TutorAppState();
+}
 
+class _TutorAppState extends State<TutorApp> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final syncService = context.read<SyncService>();
+      debugPrint("SyncService instance obtained in TutorApp state.");
+
+      syncService.syncPendingData();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return MaterialApp(
       scaffoldMessengerKey: scaffoldMessengerKey,
       title: 'TutorApp',
@@ -207,10 +220,22 @@ class TutorApp extends StatelessWidget {
       home: Consumer<AuthProvider>(
         builder: (context, authProvider, child) {
           switch (authProvider.authState) {
-            case AuthState.authenticated:
-              return const WelcomeScreen();
-            case AuthState.unauthenticated:
             case AuthState.unknown:
+              return const Scaffold(
+                  body: Center(child: CircularProgressIndicator()));
+            case AuthState.authenticated:
+              final role = authProvider.currentUser?.role;
+              debugPrint("Authenticated state detected. Role: $role");
+              if (role == 'student') {
+                return const StudentHomeScreen();
+              } else if (role == 'tutor') {
+                return const TutorProfileScreen();
+              } else {
+                debugPrint(
+                    "Authenticated, but role is unknown/invalid. Defaulting to WelcomeScreen.");
+                return const WelcomeScreen();
+              }
+            case AuthState.unauthenticated:
               return const WelcomeScreen();
           }
         },
