@@ -64,10 +64,10 @@ class SyncService {
         }
       }).toList();
 
-final sentNotifs = await _cacheService.syncNotificationsWithService(
-  _locationService,
-  notificationsToSend: validNotifs,
-);
+      final sentNotifs = await _cacheService.syncNotificationsWithService(
+        _locationService,
+        notificationsToSend: validNotifs,
+      );
 
       if (sentReviews > 0)
         _showSnack('🔔 $sentReviews Review sent.', Colors.blue);
@@ -80,13 +80,16 @@ final sentNotifs = await _cacheService.syncNotificationsWithService(
   }
 
   Future<int> _syncReviews() async {
-  final pendingReviews = await _cacheService.getPendingReviews();
-  int sentCount = 0;
-
-    for (int attempt = 1; attempt <= 48 && !sent; attempt++) {
-      try {
-        final success = await _reviewService.submitReview(review);
-        debugPrint("🔁 Intento $attempt - Resultado: $success");
+    final pendingReviews = await _cacheService.getPendingReviews();
+    int sentCount = 0;
+    for (final review in pendingReviews) {
+      debugPrint(
+          "🚀 Intentando enviar reseña para sessionId ${review.tutoringSessionId}...");
+      bool sent = false;
+      for (int attempt = 1; attempt <= 48 && !sent; attempt++) {
+        try {
+          final success = await _reviewService.submitReview(review);
+          debugPrint("🔁 Intento $attempt - Resultado: $success");
 
           if (success) {
             await _cacheService.removePendingReview(review);
