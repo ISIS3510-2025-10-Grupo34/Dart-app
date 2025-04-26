@@ -5,8 +5,12 @@ import '../services/user_service.dart';
 import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:shared_preferences/shared_preferences.dart';
 
 enum AuthState { unknown, authenticated, unauthenticated }
+
+const String _sessionUserIdKey = 'session_user_id';
+const String _sessionUserRoleKey = 'session_user_role';
 
 class AuthProvider with ChangeNotifier {
   final UserService _userService;
@@ -28,6 +32,24 @@ class AuthProvider with ChangeNotifier {
     _authState = AuthState.authenticated;
     _profileIsLoading = false;
     _profileError = null;
+
+    if (_currentUser?.id != null && _currentUser?.role != null) {
+      await _fetchFullProfile(_currentUser!.id!, _currentUser!.role!);
+    } else {
+      _profileError =
+          "Login partially successful, but failed to get essential user details (ID/Role).";
+      notifyListeners();
+      return;
+    }
+
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(_sessionUserIdKey, _currentUser!.id!);
+      await prefs.setString(_sessionUserRoleKey, _currentUser!.role!);
+      debugPrint("✅ Session saved for user ID: ${_currentUser!.id}");
+    } catch (e) {
+      rethrow;
+    }
     notifyListeners();
 
     if (_currentUser?.id != null && _currentUser?.role != null) {
@@ -121,10 +143,56 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> logout() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove(_sessionUserIdKey);
+      await prefs.remove(_sessionUserRoleKey);
+    } catch (e) {
+      rethrow;
+    }
     await clearLocalProfilePicture();
     _currentUser = null;
-
     _authState = AuthState.unauthenticated;
+    _profileError = null;
+    _profileIsLoading = false;
+
     notifyListeners();
+  }
+
+  Future<bool> tryRestoreSession() async {
+    debugPrint("Attempting to restore session...");
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString(_sessionUserIdKey);
+      final userRole = prefs.getString(_sessionUserRoleKey);
+
+      if (userId != null &&
+          userId.isNotEmpty &&
+          userRole != null &&
+          userRole.isNotEmpty) {
+        debugPrint(" Found session data for User ID: $userId, Role: $userRole");
+        _currentUser = User(id: userId, role: userRole);
+        _authState = AuthState.authenticated;
+        _profileError = null;
+        _profileIsLoading = false;
+
+        notifyListeners();
+
+        _fetchFullProfile(userId, userRole);
+
+        return true; // Session restored
+      } else {
+        debugPrint(" No valid session data found.");
+        _authState = AuthState.unauthenticated;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _currentUser = null;
+      _authState = AuthState.unauthenticated;
+      _profileError = "Failed to restore session.";
+      notifyListeners();
+      return false;
+    }
   }
 }

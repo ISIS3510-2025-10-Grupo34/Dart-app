@@ -64,7 +64,7 @@ class UserService {
         return false;
       }
     } catch (e) {
-      throw Exception('Registration process failed: ${e.toString()}');
+      rethrow;
     }
   }
 
