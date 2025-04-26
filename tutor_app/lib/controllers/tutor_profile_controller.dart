@@ -10,7 +10,6 @@ import '../services/universities_service.dart';
 import '../services/course_service.dart';
 import '../models/course_model.dart';
 
-
 class TutorProfileController with ChangeNotifier {
   final AuthProvider _authProvider;
   final UserService _userService;
@@ -88,9 +87,9 @@ class TutorProfileController with ChangeNotifier {
       _timeInsight = await _tutorService.fetchTimeToBookInsight();
       notifyListeners();
     } catch (e) {
-      _timeInsight = TimeToBookInsight(message: 
-        'Time it takes a student to book with you: 15 seconds. '
-        'Your average time is less than the average time to book, keep up the good work.');
+      _timeInsight = TimeToBookInsight(
+          message: 'Time it takes a student to book with you: 15 seconds. '
+              'Your average time is less than the average time to book, keep up the good work.');
       notifyListeners();
     }
   }
@@ -130,13 +129,13 @@ class TutorProfileController with ChangeNotifier {
 
   int? getCourseIdByName(String courseName) {
     try {
-      return _courses.firstWhere((course) => course.course_name == courseName).id;
+      return _courses
+          .firstWhere((course) => course.course_name == courseName)
+          .id;
     } catch (e) {
       return null;
     }
   }
-
-
 
   Future<void> logout() async {
     try {
@@ -184,7 +183,6 @@ class TutorProfileController with ChangeNotifier {
       throw Exception("Failed to fetch estimated price: $e");
     }
   }
-
 
   @override
   void dispose() {

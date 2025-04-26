@@ -90,7 +90,9 @@ class WelcomeScreen extends StatelessWidget {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
-                          Provider.of<SignInController>(context, listen: false).startTimingFromWelcome();
+                            context
+                                .read<SignInController>()
+                                .startTimingFromWelcome();
                             Navigator.push(
                               context,
                               MaterialPageRoute(

@@ -20,6 +20,7 @@ import 'package:tutor_app/services/sync_service.dart';
 import 'package:tutor_app/services/local_cache_service.dart';
 import 'package:tutor_app/services/location_service.dart';
 import 'package:tutor_app/services/student_tutoring_sessions_service.dart';
+import 'package:tutor_app/services/profile_creation_time_service.dart';
 
 // Controllers & Providers
 import 'package:tutor_app/providers/auth_provider.dart';
@@ -64,6 +65,7 @@ void main() async {
   final majorsService = MajorsService();
   final localCacheService = LocalCacheService();
   final locationService = LocationService();
+  final profileCreationTimeService = ProfileCreationTimeService();
 
   final authProvider = AuthProvider(userService: userService);
   final signInProcessProvider = SignInProcessProvider(
@@ -88,18 +90,9 @@ void main() async {
         Provider<MetricsService>.value(value: metricsService),
         Provider<LocalCacheService>.value(value: localCacheService),
         Provider<LocationService>.value(value: locationService),
+        Provider<ProfileCreationTimeService>.value(
+            value: profileCreationTimeService),
 
-        // Sync
-        Provider<SyncService>(
-          create: (context) => SyncService(
-            scaffoldMessengerKey: scaffoldMessengerKey,
-            reviewService: context.read<ReviewService>(),
-            cacheService: context.read<LocalCacheService>(),
-            locationService: context.read<LocationService>(),
-          ),
-        ),
-
-        // Auth & Sign-In Flow
         ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
         ChangeNotifierProvider<SignInProcessProvider>.value(
             value: signInProcessProvider),
@@ -110,10 +103,27 @@ void main() async {
             authProvider: context.read<AuthProvider>(),
           ),
         ),
+
+        // Sync
+        Provider<SyncService>(
+          create: (context) => SyncService(
+            scaffoldMessengerKey: scaffoldMessengerKey,
+            reviewService: context.read<ReviewService>(),
+            cacheService: context.read<LocalCacheService>(),
+            locationService: context.read<LocationService>(),
+            userService: context.read<UserService>(),
+            signInProcessProvider: context.read<SignInProcessProvider>(),
+          ),
+        ),
+
+        // Auth & Sign-In Flow
+
         ChangeNotifierProvider(
           create: (context) => SignInController(
             context.read<SignInProcessProvider>(),
             context.read<AuthService>(),
+            profileCreationTimeService:
+                context.read<ProfileCreationTimeService>(),
           ),
         ),
         ChangeNotifierProvider(
@@ -202,7 +212,6 @@ class _TutorAppState extends State<TutorApp> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final syncService = context.read<SyncService>();
       debugPrint("SyncService instance obtained in TutorApp state.");
-
       syncService.syncPendingData();
     });
   }

@@ -6,28 +6,31 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'review_service.dart';
 import 'location_service.dart';
 import 'local_cache_service.dart';
-import '../models/review_model.dart';
 import '../services/user_service.dart';
+import '../providers/sign_in_process_provider.dart';
 
 class SyncService {
   final ReviewService _reviewService;
   final LocationService _locationService;
   final LocalCacheService _cacheService;
   final UserService _userService;
+  final SignInProcessProvider _signInProcessProvider;
   final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey;
   StreamSubscription<ConnectivityResult>? _connectivitySubscription;
   bool _isSyncing = false;
 
-  SyncService({
-    required this.scaffoldMessengerKey,
-    ReviewService? reviewService,
-    LocationService? locationService,
-    LocalCacheService? cacheService,
-    UserService? userService,
-  })  : _reviewService = reviewService ?? ReviewService(),
+  SyncService(
+      {required this.scaffoldMessengerKey,
+      ReviewService? reviewService,
+      LocationService? locationService,
+      LocalCacheService? cacheService,
+      UserService? userService,
+      required SignInProcessProvider signInProcessProvider})
+      : _reviewService = reviewService ?? ReviewService(),
         _locationService = locationService ?? LocationService(),
         _cacheService = cacheService ?? LocalCacheService(),
-        _userService = userService ?? UserService() {
+        _userService = userService ?? UserService(),
+        _signInProcessProvider = signInProcessProvider {
     _listenToConnectivity();
   }
 
@@ -77,10 +80,7 @@ class SyncService {
       if (sentReviews > 0) {
         _showSnack('🔔 $sentReviews Review sent.', Colors.blue);
       }
-      if (sentRegistrations > 0) {
-        _showSnack(
-            '🔔 $sentRegistrations Registration(s) completed.', Colors.green);
-      }
+      if (sentRegistrations > 0) {}
       if (sentNotifs > 0) {
         _showSnack('🔔 $sentNotifs Notification sent.', Colors.blue);
       }
@@ -158,17 +158,29 @@ class SyncService {
     final pendingRegistrations = await _cacheService.getPendingRegistrations();
     int sentCount = 0;
     if (pendingRegistrations.isEmpty) {
+      debugPrint("SyncService: No pending registrations found.");
       return 0;
     }
+    debugPrint(
+        "SyncService: Found ${pendingRegistrations.length} pending registrations.");
+
     List<Map<String, dynamic>> registrationsToProcess =
         List.from(pendingRegistrations);
+
     for (final regData in registrationsToProcess) {
+      final String? timestamp =
+          regData['timestamp'] as String?; // Keep track for removal/update
+      debugPrint(
+          "SyncService: Attempting to sync registration with timestamp: $timestamp");
+
       try {
         final userData = regData['userData'] as Map<String, dynamic>?;
         final profilePath = regData['profilePicturePath'] as String?;
         final idPath = regData['idPicturePath'] as String?;
-
-        if (userData == null || idPath == null) {
+        if (userData == null || idPath == null || timestamp == null) {
+          debugPrint(
+              "SyncService: Skipping registration due to missing data (userData, idPath, or timestamp).");
+          await _cacheService.removePendingRegistration(regData);
           continue;
         }
         final Map<String, String> stringUserData =
@@ -178,15 +190,28 @@ class SyncService {
             stringUserData, profilePath, idPath);
 
         if (success) {
+          debugPrint(
+              "SyncService: Successfully submitted registration for timestamp: $timestamp");
           await _cacheService.removePendingRegistration(regData);
+          _signInProcessProvider.setBackgroundSyncSuccess();
           sentCount++;
         } else {
+          debugPrint(
+              "SyncService: Failed to submit registration (server rejected?) for timestamp: $timestamp");
           await _cacheService.removePendingRegistration(regData);
+          _signInProcessProvider.setBackgroundSyncError(
+              "Failed to sync registration. Server rejected the request.");
         }
       } catch (e) {
-        rethrow;
+        debugPrint(
+            "SyncService: Error during sync attempt for timestamp $timestamp: $e");
+        await _cacheService.removePendingRegistration(regData);
+        _signInProcessProvider.setBackgroundSyncError(
+            "Error syncing registration: ${e.toString()}");
       }
     }
+    debugPrint(
+        "SyncService: Finished processing registrations. Sent count: $sentCount");
     return sentCount;
   }
 }

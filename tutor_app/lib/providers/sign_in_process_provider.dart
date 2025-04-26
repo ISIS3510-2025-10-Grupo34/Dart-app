@@ -79,7 +79,9 @@ class SignInProcessProvider with ChangeNotifier {
 
   Future<void> submitRegistration() async {
     if (_submissionState == RegistrationSubmissionState.submitting ||
-        _submissionState == RegistrationSubmissionState.queuedOffline) return;
+        _submissionState == RegistrationSubmissionState.queuedOffline) {
+      return;
+    }
 
     if (_email == null || _password == null || _role == null || _name == null) {
       _submissionError = "Error: Missing essential registration information.";
@@ -117,10 +119,15 @@ class SignInProcessProvider with ChangeNotifier {
       if (success) {
         _submissionState = RegistrationSubmissionState.success;
       } else {
-        throw Exception("Registration failed in service.");
+        _submissionError =
+            "Registration failed. The server rejected the request.";
+        _submissionState = RegistrationSubmissionState.error;
+        debugPrint(
+            "SignInProcessProvider: Initial registration failed (server rejected).");
       }
     } on SocketException catch (e) {
-      debugPrint("Network error during registration: $e");
+      debugPrint(
+          "SignInProcessProvider: Network error during initial registration: $e");
       _submissionError = "No internet connection. Registration queued.";
       _submissionState = RegistrationSubmissionState.queuedOffline;
       final registrationData = {
@@ -131,21 +138,43 @@ class SignInProcessProvider with ChangeNotifier {
       };
       try {
         await _localCacheService.cachePendingRegistration(registrationData);
-        debugPrint("Registration queued locally.");
+        debugPrint("SignInProcessProvider: Registration queued locally.");
       } catch (cacheError) {
-        debugPrint("Failed to cache registration: $cacheError");
+        debugPrint(
+            "SignInProcessProvider: Failed to cache registration: $cacheError");
         _submissionError =
             "Network error, and failed to queue registration locally.";
-        _submissionState =
-            RegistrationSubmissionState.error; // Fallback to general error
+        _submissionState = RegistrationSubmissionState.error;
       }
     } catch (e) {
-      _submissionError = e.toString();
+      debugPrint(
+          "SignInProcessProvider: Unexpected error during initial registration: $e");
+      _submissionError = "An unexpected error occurred: ${e.toString()}";
       _submissionState = RegistrationSubmissionState.error;
-      throw "";
     } finally {
       notifyListeners();
     }
+  }
+
+  void setBackgroundSyncSuccess() {
+    if (_submissionState == RegistrationSubmissionState.queuedOffline ||
+        _submissionState == RegistrationSubmissionState.submitting) {
+      debugPrint(
+          "SignInProcessProvider: Background sync successful. Updating state.");
+      _submissionState = RegistrationSubmissionState.success;
+      _submissionError = null;
+      notifyListeners();
+    } else {
+      debugPrint(
+          "SignInProcessProvider: Background sync successful, but current state is $_submissionState. Not updating state.");
+    }
+  }
+
+  void setBackgroundSyncError(String error) {
+    debugPrint("SignInProcessProvider: Background sync error. Updating state.");
+    _submissionState = RegistrationSubmissionState.error;
+    _submissionError = error;
+    notifyListeners();
   }
 
   void reset() {
