@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
+import 'package:tutor_app/controllers/sign_in_controller.dart';
 import 'login_screen.dart';
 import 'sign_in_screen.dart';
 
@@ -88,6 +90,9 @@ class WelcomeScreen extends StatelessWidget {
                         width: double.infinity,
                         child: ElevatedButton(
                           onPressed: () {
+                            context
+                                .read<SignInController>()
+                                .startTimingFromWelcome();
                             Navigator.push(
                               context,
                               MaterialPageRoute(

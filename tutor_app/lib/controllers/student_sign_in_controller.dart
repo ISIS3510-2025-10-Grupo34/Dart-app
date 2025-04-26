@@ -68,7 +68,7 @@ class StudentSignInController with ChangeNotifier {
     try {
       _universities = await _universitiesService.fetchUniversities();
     } catch (e) {
-      _universityApiError = "Could not load universities: ${e.toString()}";
+      _universityApiError = e.toString();
       debugPrint(_universityApiError);
     } finally {
       _isLoadingUniversities = false;
@@ -99,7 +99,7 @@ class StudentSignInController with ChangeNotifier {
     try {
       _majors = await _majorsService.fetchMajors(university);
     } catch (e) {
-      _majorApiError = "Could not load majors: ${e.toString()}";
+      _majorApiError = e.toString();
       debugPrint(_majorApiError);
     } finally {
       _isLoadingMajors = false;
@@ -133,6 +133,15 @@ class StudentSignInController with ChangeNotifier {
       isValid = false;
     } else if (!RegExp(r'^\+?[0-9\s\-()]{7,}$').hasMatch(phoneNumber.trim())) {
       _phoneError = 'Enter a valid phone number';
+      isValid = false;
+    }
+
+    if (_selectedUniversity == null || _selectedUniversity!.isEmpty) {
+      _universityError = 'Please select a university';
+      isValid = false;
+    }
+    if (_selectedMajor == null || _selectedMajor!.isEmpty) {
+      _majorError = 'Please select a major';
       isValid = false;
     }
 

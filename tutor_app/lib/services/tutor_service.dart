@@ -4,6 +4,7 @@ import 'package:tutor_app/models/time_insight.dart';
 import '../utils/env_config.dart';
 import '../models/tutor_list_item_model.dart';
 import '../models/tutor_profile.dart';
+import '../models/similar_tutor_review_model.dart';
 
 class TutorService {
   Future<List<TutorListItemModel>> fetchTutors() async {
@@ -75,12 +76,33 @@ class TutorService {
         final Map<String, dynamic> data = jsonDecode(response.body);
         return TimeToBookInsight.fromJson(data);
       } else {
-        print("Error fetching insight: ${response.statusCode} - ${response.body}");
+        print(
+            "Error fetching insight: ${response.statusCode} - ${response.body}");
         return null;
       }
     } catch (e) {
       print("Exception fetching insight: $e");
       return null;
+    }
+  }
+
+  Future<SimilarTutorReviewsResponse> fetchSimilarTutorReviews(
+      int tutorId) async {
+    final String endpointPath = '/api/similar-tutors-reviews/$tutorId';
+    final apiUrl = '${EnvConfig.apiUrl}$endpointPath';
+    try {
+      final response = await http.get(Uri.parse(apiUrl));
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> decodedBody =
+            jsonDecode(utf8.decode(response.bodyBytes));
+        return SimilarTutorReviewsResponse.fromJson(decodedBody);
+      } else {
+        throw Exception(
+            'Failed to load similar reviews (Status code: ${response.statusCode})');
+      }
+    } catch (e) {
+      throw Exception('Failed to fetch similar reviews: ${e.toString()}');
     }
   }
 }

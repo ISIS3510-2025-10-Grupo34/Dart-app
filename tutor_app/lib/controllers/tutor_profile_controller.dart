@@ -9,7 +9,7 @@ import '../models/time_insight.dart';
 import '../services/universities_service.dart';
 import '../services/course_service.dart';
 import '../models/course_model.dart';
-
+import '../models/similar_tutor_review_model.dart';
 
 class TutorProfileController with ChangeNotifier {
   final AuthProvider _authProvider;
@@ -38,6 +38,15 @@ class TutorProfileController with ChangeNotifier {
 
   String? _universityError;
   String? get universityError => _universityError;
+
+  bool _isFetchingSimilarReviews = false;
+  bool get isFetchingSimilarReviews => _isFetchingSimilarReviews;
+
+  String? _similarReviewsError;
+  String? get similarReviewsError => _similarReviewsError;
+
+  List<SimilarTutorInfo> _similarReviews = [];
+  List<SimilarTutorInfo> get similarReviews => _similarReviews;
 
   TutorProfileController({
     required AuthProvider authProvider,
@@ -88,9 +97,9 @@ class TutorProfileController with ChangeNotifier {
       _timeInsight = await _tutorService.fetchTimeToBookInsight();
       notifyListeners();
     } catch (e) {
-      _timeInsight = TimeToBookInsight(message: 
-        'Time it takes a student to book with you: 15 seconds. '
-        'Your average time is less than the average time to book, keep up the good work.');
+      _timeInsight = TimeToBookInsight(
+          message: 'Time it takes a student to book with you: 15 seconds. '
+              'Your average time is less than the average time to book, keep up the good work.');
       notifyListeners();
     }
   }
@@ -130,13 +139,39 @@ class TutorProfileController with ChangeNotifier {
 
   int? getCourseIdByName(String courseName) {
     try {
-      return _courses.firstWhere((course) => course.course_name == courseName).id;
+      return _courses
+          .firstWhere((course) => course.course_name == courseName)
+          .id;
     } catch (e) {
       return null;
     }
   }
 
+  Future<void> fetchAndShowSimilarReviews() async {
+    if (_user?.id == null) {
+      _similarReviewsError = "Cannot fetch reviews: Tutor ID not found.";
+      notifyListeners();
+      return;
+    }
+    if (_isFetchingSimilarReviews) return; // Prevent concurrent calls
 
+    _isFetchingSimilarReviews = true;
+    _similarReviewsError = null;
+    _similarReviews = []; // Clear previous results
+    notifyListeners();
+
+    try {
+      final tutorId = int.parse(_user!.id!); // Assume ID is parsable int
+      final response = await _tutorService.fetchSimilarTutorReviews(tutorId);
+      _similarReviews = response.similarTutorReviews;
+    } catch (e) {
+      _similarReviewsError = "Failed to load similar reviews: ${e.toString()}";
+      debugPrint(_similarReviewsError);
+    } finally {
+      _isFetchingSimilarReviews = false;
+      notifyListeners();
+    }
+  }
 
   Future<void> logout() async {
     try {
@@ -184,7 +219,6 @@ class TutorProfileController with ChangeNotifier {
       throw Exception("Failed to fetch estimated price: $e");
     }
   }
-
 
   @override
   void dispose() {

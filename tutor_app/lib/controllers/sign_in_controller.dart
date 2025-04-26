@@ -1,18 +1,27 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:http/http.dart' as http;
 import 'package:tutor_app/providers/sign_in_process_provider.dart';
+import 'package:tutor_app/services/auth_service.dart';
+import 'package:tutor_app/services/profile_creation_time_service.dart';
+import 'package:tutor_app/utils/env_config.dart';
 
 enum SignInState {
-  initial, // Default state
-  validating, // When validation is in progress (though it's synchronous here)
-  validationSuccessStudent, // Validation passed, navigate to Student sign in
-  validationSuccessTutor, // Validation passed, navigate to Tutor sign in
-  validationError // Validation failed
+  initial,
+  validating,
+  validationSuccessStudent,
+  validationSuccessTutor,
+  validationError
 }
 
 class SignInController with ChangeNotifier {
   final SignInProcessProvider _signInProcessProvider;
-
-  SignInController(this._signInProcessProvider);
+  final AuthService _authService;
+  final ProfileCreationTimeService _profileCreationTimeService;
+  SignInController(this._signInProcessProvider, this._authService, {
+    ProfileCreationTimeService? profileCreationTimeService,
+  }) : _profileCreationTimeService =
+            profileCreationTimeService ?? ProfileCreationTimeService();
 
   SignInState _state = SignInState.initial;
   SignInState get state => _state;
@@ -29,52 +38,90 @@ class SignInController with ChangeNotifier {
   String? _validatedPassword;
   String? get validatedPassword => _validatedPassword;
 
-  void validateAndProceed(
-      String email, String password, String confirmPassword, String role) {
+  DateTime? _startTime;
+
+  void startTimingFromWelcome() {
+    _startTime = DateTime.now();
+
+  }
+
+   Future<void> _sendTimeIfNeeded(String email) async {
+    await _profileCreationTimeService.sendTimeIfNeeded(_startTime);
+  }
+
+
+  Future<void> validateAndProceed(String email, String password,
+      String confirmPassword, String role) async {
     _state = SignInState.validating;
     _emailError = null;
     _passwordError = null;
+    notifyListeners();
 
-    bool isValid = true;
+    bool isFormatValid = true;
+
     if (email.isEmpty) {
       _emailError = 'Email is required';
-      isValid = false;
+      isFormatValid = false;
     } else if (!RegExp(r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$').hasMatch(email)) {
       _emailError = 'Enter a valid email';
-      isValid = false;
+      isFormatValid = false;
     }
 
     if (password.isEmpty) {
       _passwordError = 'Password is required';
-      isValid = false;
+      isFormatValid = false;
     } else if (password.length < 6) {
       _passwordError = 'Password must be at least 6 characters';
-      isValid = false;
+      isFormatValid = false;
     } else if (password != confirmPassword) {
       _passwordError = 'Passwords do not match';
-      isValid = false;
+      isFormatValid = false;
     }
 
-    if (isValid) {
+    if (!isFormatValid) {
+      _state = SignInState.validationError;
+      notifyListeners();
+      return;
+    }
+
+    try {
+      bool emailExists = await _authService.checkEmailExists(email);
+      if (emailExists) {
+        _emailError = 'This email is already registered.';
+        _state = SignInState.validationError;
+        notifyListeners();
+        return;
+      }
+
       _validatedEmail = email;
       _validatedPassword = password;
 
       if (role == "student") {
         _state = SignInState.validationSuccessStudent;
-        _signInProcessProvider.setCredentialsAndRole(
-            _validatedEmail!, _validatedPassword!, role);
+        _signInProcessProvider.setCredentialsAndRole(email, password, role);
       } else if (role == "tutor") {
         _state = SignInState.validationSuccessTutor;
-        _signInProcessProvider.setCredentialsAndRole(
-            _validatedEmail!, _validatedPassword!, role);
+        _signInProcessProvider.setCredentialsAndRole(email, password, role);
       } else {
         _state = SignInState.validationError;
         _passwordError = "Invalid role selected.";
       }
-    } else {
+
+      // Enviar tiempo si todo fue exitoso
+      if (_state == SignInState.validationSuccessStudent ||
+          _state == SignInState.validationSuccessTutor) {
+        await _sendTimeIfNeeded(email);
+      }
+    } catch (e) {
+      _emailError = e.toString();
       _state = SignInState.validationError;
+    } finally {
+      if (_state == SignInState.validating) {
+        _state = SignInState.validationError;
+        _emailError ??= "An unexpected error occurred during validation.";
+      }
+      notifyListeners();
     }
-    notifyListeners();
   }
 
   void resetStateAfterNavigation() {

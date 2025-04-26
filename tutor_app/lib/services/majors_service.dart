@@ -19,7 +19,12 @@ class MajorsService {
             'Failed to load majors (Status code: ${response.statusCode})');
       }
     } catch (e) {
-      throw Exception('Error fetching majors: ${e.toString()}');
+      final String error = e.toString();
+      if (error == "Connection failed") {
+        throw "Please check your connection";
+      } else {
+        throw e.toString();
+      }
     }
   }
 }

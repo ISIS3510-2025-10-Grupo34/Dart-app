@@ -22,4 +22,14 @@ class NotificationModel {
       date: DateTime.parse(json['date']),
     );
   }
+  Map<String, dynamic> toJson() {
+  return {
+    'title': title,
+    'message': message,
+    'place': place,
+    'university': university,
+    'date': date.toIso8601String(), 
+  };
+}
+
 }
