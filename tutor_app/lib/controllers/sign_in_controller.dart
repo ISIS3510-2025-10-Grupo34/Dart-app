@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import 'package:tutor_app/providers/sign_in_process_provider.dart';
 import 'package:tutor_app/services/auth_service.dart';
+import 'package:tutor_app/services/profile_creation_time_service.dart';
 import 'package:tutor_app/utils/env_config.dart';
 
 enum SignInState {
@@ -16,7 +17,11 @@ enum SignInState {
 class SignInController with ChangeNotifier {
   final SignInProcessProvider _signInProcessProvider;
   final AuthService _authService;
-  SignInController(this._signInProcessProvider, this._authService);
+  final ProfileCreationTimeService _profileCreationTimeService;
+  SignInController(this._signInProcessProvider, this._authService, {
+    ProfileCreationTimeService? profileCreationTimeService,
+  }) : _profileCreationTimeService =
+            profileCreationTimeService ?? ProfileCreationTimeService();
 
   SignInState _state = SignInState.initial;
   SignInState get state => _state;
@@ -37,32 +42,13 @@ class SignInController with ChangeNotifier {
 
   void startTimingFromWelcome() {
     _startTime = DateTime.now();
+
   }
 
-  Future<void> _sendTimeIfNeeded(String email) async {
-    if (_startTime == null) return;
-
-    final duration = DateTime.now().difference(_startTime!);
-    final timeInSeconds = duration.inMilliseconds / 1000;
-
-    final url = Uri.parse('${EnvConfig.apiUrl}/api/profile-creation-time/');
-
-    try {
-      final response = await http.post(
-        url,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({
-          "time": timeInSeconds,
-        }),
-      );
-
-      if (response.statusCode != 200) {
-        debugPrint('Failed to send time: ${response.body}');
-      }
-    } catch (e) {
-      debugPrint("Error sending profile creation time: $e");
-    }
+   Future<void> _sendTimeIfNeeded(String email) async {
+    await _profileCreationTimeService.sendTimeIfNeeded(_startTime);
   }
+
 
   Future<void> validateAndProceed(String email, String password,
       String confirmPassword, String role) async {
