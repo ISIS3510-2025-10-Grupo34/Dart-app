@@ -141,6 +141,21 @@ class TutoringSessionService {
     final allSessions = await fetchTutoringSessions();
     return allSessions.where((session) => session.student == null).toList();
   }
+  Future<TutoringSession> fetchTutoringSessionById(int sessionId) async {
+  final response = await http.get(
+    Uri.parse('${EnvConfig.apiUrl}/api/tutoring-sessions/$sessionId/'),
+    headers: {
+      'Accept': 'application/json',
+    },
+  );
+
+  if (response.statusCode == 200) {
+    final Map<String, dynamic> data = jsonDecode(response.body);
+    return TutoringSession.fromJson(data);
+  } else {
+    throw Exception('Failed to fetch tutoring session details');
+  }
+}
 
   Future<SessionFetchResult> fetchOrderedSessions(int page) async {
     final prefs = await SharedPreferences.getInstance();

@@ -1,10 +1,8 @@
-// main.dart
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:tutor_app/services/area_of_expertise_service.dart';
-
+import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 // Services
 import 'package:tutor_app/services/auth_service.dart';
 import 'package:tutor_app/services/tutor_service.dart';
@@ -21,6 +19,8 @@ import 'package:tutor_app/services/local_cache_service.dart';
 import 'package:tutor_app/services/location_service.dart';
 import 'package:tutor_app/services/student_tutoring_sessions_service.dart';
 import 'package:tutor_app/services/profile_creation_time_service.dart';
+import 'package:tutor_app/services/area_of_expertise_service.dart';
+import 'package:tutor_app/services/local_database_service.dart';
 
 // Controllers & Providers
 import 'package:tutor_app/providers/auth_provider.dart';
@@ -43,6 +43,7 @@ import 'package:tutor_app/controllers/write_review_controller.dart';
 import 'package:tutor_app/views/welcome_screen.dart';
 import 'package:tutor_app/views/student_home_screen.dart';
 import 'package:tutor_app/views/tutor_profile_screen.dart';
+
 import 'utils/env_config.dart';
 
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
@@ -50,6 +51,11 @@ final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializar sqflite_ffi
+  sqfliteFfiInit();
+  databaseFactory = databaseFactoryFfi;
+
   await EnvConfig.load();
 
   final authService = AuthService();
@@ -69,13 +75,15 @@ void main() async {
 
   final authProvider = AuthProvider(userService: userService);
   final signInProcessProvider = SignInProcessProvider(
-      userService: userService, localCacheService: localCacheService);
+    userService: userService,
+    localCacheService: localCacheService,
+  );
   await authProvider.tryRestoreSession();
 
   runApp(
     MultiProvider(
       providers: [
-        // Core Services
+        // Services (non-ChangeNotifier)
         Provider<AuthService>.value(value: authService),
         Provider<TutorService>.value(value: tutorService),
         Provider<CourseService>.value(value: courseService),
@@ -92,108 +100,113 @@ void main() async {
         Provider<LocationService>.value(value: locationService),
         Provider<ProfileCreationTimeService>.value(
             value: profileCreationTimeService),
-
+        Provider<LocalDatabaseService>(
+          create: (_) => LocalDatabaseService(),
+        ),
+        // Base providers
         ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
         ChangeNotifierProvider<SignInProcessProvider>.value(
             value: signInProcessProvider),
-
-        ChangeNotifierProvider(
-          create: (context) => LoginController(
-            authService: context.read<AuthService>(),
-            authProvider: context.read<AuthProvider>(),
-          ),
-        ),
-
-        // Sync
-        Provider<SyncService>(
-          create: (context) => SyncService(
-            scaffoldMessengerKey: scaffoldMessengerKey,
-            reviewService: context.read<ReviewService>(),
-            cacheService: context.read<LocalCacheService>(),
-            locationService: context.read<LocationService>(),
-            userService: context.read<UserService>(),
-            signInProcessProvider: context.read<SignInProcessProvider>(),
-          ),
-        ),
-
-        // Auth & Sign-In Flow
-
-        ChangeNotifierProvider(
-          create: (context) => SignInController(
-            context.read<SignInProcessProvider>(),
-            context.read<AuthService>(),
-            profileCreationTimeService:
-                context.read<ProfileCreationTimeService>(),
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (context) => StudentHomeController(
-            tutorService: context.read<TutorService>(),
-            authProvider: context.read<AuthProvider>(),
-            sessionService: context.read<TutoringSessionService>(),
-            metricsService: context.read<MetricsService>(),
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (context) =>
-              LearningStylesController(context.read<SignInProcessProvider>()),
-        ),
-        ChangeNotifierProvider(
-          create: (context) =>
-              ProfilePictureController(context.read<SignInProcessProvider>()),
-        ),
-        ChangeNotifierProvider(
-          create: (context) =>
-              UniversityIdController(context.read<SignInProcessProvider>()),
-        ),
-        ChangeNotifierProvider(
-          create: (context) => StudentSignInController(
-            context.read<SignInProcessProvider>(),
-            context.read<UniversitiesService>(),
-            context.read<MajorsService>(),
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (context) => TutorProfileController(
-            authProvider: context.read<AuthProvider>(),
-            userService: context.read<UserService>(),
-            sessionService: context.read<TutoringSessionService>(),
-            universitiesService: context.read<UniversitiesService>(),
-            courseService: context.read<CourseService>(),
-            tutorService: context.read<TutorService>(),
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (context) => TutorSignInController(
-            context.read<SignInProcessProvider>(),
-            context.read<UniversitiesService>(),
-            context.read<AreaOfExpertiseService>(),
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (_) => FilterController(filterService: FilterService()),
-        ),
-        ChangeNotifierProvider(
-          create: (context) => StudentProfileController(
-            authProvider: authProvider,
-            reviewService: reviewService,
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (context) => StudentTutoringSessionsController(
-            studentTutoringSessionsService: studentTutoringSessionsService,
-            authProvider: authProvider,
-          ),
-        ),
-        ChangeNotifierProvider(
-          create: (context) => WriteReviewController(
-            reviewService: context.read<ReviewService>(),
-            userService: context.read<UserService>(),
-            cacheService: context.read<LocalCacheService>(),
-          ),
-        ),
       ],
-      child: const TutorApp(),
+      child: Builder(
+        builder: (context) => MultiProvider(
+          providers: [
+            // Now all services are available for reading
+            ChangeNotifierProvider(
+              create: (context) => LoginController(
+                authService: context.read<AuthService>(),
+                authProvider: context.read<AuthProvider>(),
+              ),
+            ),
+            ChangeNotifierProvider(
+              create: (context) => SignInController(
+                context.read<SignInProcessProvider>(),
+                context.read<AuthService>(),
+                profileCreationTimeService:
+                    context.read<ProfileCreationTimeService>(),
+              ),
+            ),
+            ChangeNotifierProvider(
+              create: (context) => StudentHomeController(
+                tutorService: context.read<TutorService>(),
+                authProvider: context.read<AuthProvider>(),
+                sessionService: context.read<TutoringSessionService>(),
+                metricsService: context.read<MetricsService>(),
+              ),
+            ),
+            ChangeNotifierProvider(
+              create: (context) =>
+                  LearningStylesController(context.read<SignInProcessProvider>()),
+            ),
+            ChangeNotifierProvider(
+              create: (context) =>
+                  ProfilePictureController(context.read<SignInProcessProvider>()),
+            ),
+            ChangeNotifierProvider(
+              create: (context) =>
+                  UniversityIdController(context.read<SignInProcessProvider>()),
+            ),
+            ChangeNotifierProvider(
+              create: (context) => StudentSignInController(
+                context.read<SignInProcessProvider>(),
+                context.read<UniversitiesService>(),
+                context.read<MajorsService>(),
+              ),
+            ),
+            ChangeNotifierProvider(
+              create: (context) => TutorProfileController(
+                authProvider: context.read<AuthProvider>(),
+                userService: context.read<UserService>(),
+                sessionService: context.read<TutoringSessionService>(),
+                universitiesService: context.read<UniversitiesService>(),
+                courseService: context.read<CourseService>(),
+                tutorService: context.read<TutorService>(),
+              ),
+            ),
+            ChangeNotifierProvider(
+              create: (context) => TutorSignInController(
+                context.read<SignInProcessProvider>(),
+                context.read<UniversitiesService>(),
+                context.read<AreaOfExpertiseService>(),
+              ),
+            ),
+            ChangeNotifierProvider(
+              create: (_) => FilterController(filterService: FilterService()),
+            ),
+            ChangeNotifierProvider(
+              create: (context) => StudentProfileController(
+                authProvider: authProvider,
+                reviewService: reviewService,
+              ),
+            ),
+            ChangeNotifierProvider(
+              create: (context) => StudentTutoringSessionsController(
+                studentTutoringSessionsService: studentTutoringSessionsService,
+                authProvider: authProvider,
+              ),
+            ),
+            ChangeNotifierProvider(
+              create: (context) => WriteReviewController(
+                reviewService: context.read<ReviewService>(),
+                localDatabaseService: context.read<LocalDatabaseService>(),
+              ),
+            ),
+
+            // SyncService (notifier-less, but has dependencies)
+            Provider<SyncService>(
+              create: (context) => SyncService(
+                scaffoldMessengerKey: scaffoldMessengerKey,
+                reviewService: context.read<ReviewService>(),
+                cacheService: context.read<LocalCacheService>(),
+                locationService: context.read<LocationService>(),
+                userService: context.read<UserService>(),
+                signInProcessProvider: context.read<SignInProcessProvider>(),
+              ),
+            ),
+          ],
+          child: const TutorApp(),
+        ),
+      ),
     ),
   );
 }
