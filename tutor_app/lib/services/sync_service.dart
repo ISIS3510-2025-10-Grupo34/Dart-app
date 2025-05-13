@@ -2,7 +2,7 @@ import 'dart:async';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
-
+import 'local_database_service.dart';
 import 'review_service.dart';
 import 'location_service.dart';
 import 'local_cache_service.dart';
@@ -16,6 +16,7 @@ class SyncService {
   final UserService _userService;
   final SignInProcessProvider _signInProcessProvider;
   final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey;
+  final LocalDatabaseService _dbService;
   StreamSubscription<ConnectivityResult>? _connectivitySubscription;
   bool _isSyncing = false;
 
@@ -25,11 +26,13 @@ class SyncService {
       LocationService? locationService,
       LocalCacheService? cacheService,
       UserService? userService,
+      LocalDatabaseService? dbService,
       required SignInProcessProvider signInProcessProvider})
       : _reviewService = reviewService ?? ReviewService(),
         _locationService = locationService ?? LocationService(),
         _cacheService = cacheService ?? LocalCacheService(),
         _userService = userService ?? UserService(),
+        _dbService = dbService ?? LocalDatabaseService(),
         _signInProcessProvider = signInProcessProvider {
     _listenToConnectivity();
   }
@@ -92,38 +95,38 @@ class SyncService {
   }
 
   Future<int> _syncReviews() async {
-    final pendingReviews = await _cacheService.getPendingReviews();
-    int sentCount = 0;
-    for (final review in pendingReviews) {
-      debugPrint(
-          "🚀 Intentando enviar reseña para sessionId ${review.tutoringSessionId}...");
-      bool sent = false;
-      for (int attempt = 1; attempt <= 48 && !sent; attempt++) {
-        try {
-          final success = await _reviewService.submitReview(review);
-          debugPrint("🔁 Intento $attempt - Resultado: $success");
+  final pendingReviews = await _dbService.getPendingReviews();
+  int sentCount = 0;
 
-          if (success) {
-            await _cacheService.removePendingReview(review);
-            sentCount++;
-            sent = true;
-          } else {
-            await Future.delayed(Duration(seconds: 3 * attempt));
-          }
-        } catch (e) {
-          debugPrint("❌ Error en intento $attempt: $e");
+  for (final review in pendingReviews) {
+    debugPrint("🚀 Intentando enviar reseña para sessionId ${review.tutoringSessionId}...");
+    bool sent = false;
+
+    for (int attempt = 1; attempt <= 48 && !sent; attempt++) {
+      try {
+        final success = await _reviewService.submitReview(review);
+        debugPrint("🔁 Intento $attempt - Resultado: $success");
+
+        if (success) {
+          await _dbService.removePendingReview(review);
+          sentCount++;
+          sent = true;
+        } else {
           await Future.delayed(Duration(seconds: 3 * attempt));
         }
-      }
-
-      if (!sent) {
-        debugPrint(
-            "⚠️ Fallaron todos los intentos para sessionId ${review.tutoringSessionId}");
+      } catch (e) {
+        debugPrint("❌ Error en intento $attempt: $e");
+        await Future.delayed(Duration(seconds: 3 * attempt));
       }
     }
 
-    return sentCount;
+    if (!sent) {
+      debugPrint("⚠️ Fallaron todos los intentos para sessionId ${review.tutoringSessionId}");
+    }
   }
+
+  return sentCount;
+}
 
   Future<void> _retryConnection({int maxAttempts = 6}) async {
     for (int i = 1; i <= maxAttempts; i++) {
