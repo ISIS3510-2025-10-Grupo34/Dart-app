@@ -59,8 +59,8 @@ void main() async {
   await Hive.initFlutter(appDocumentDir.path);
   await Hive.openBox(HiveKeys.signUpProgressBox);
 
-  sqfliteFfiInit();
-  databaseFactory = databaseFactoryFfi;
+  //sqfliteFfiInit();
+  //databaseFactory = databaseFactoryFfi;
 
   await EnvConfig.load();
 

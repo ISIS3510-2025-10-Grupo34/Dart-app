@@ -333,6 +333,14 @@ class _StudentSignInState extends State<StudentSignInScreen> {
     final String? apiError = controller.majorApiError;
     final bool isEnabled =
         controller.selectedUniversity != null && !isLoading && apiError == null;
+    if (controller.selectedMajor == null &&
+        _majorMenuController.text.isNotEmpty) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _majorMenuController.clear();
+        }
+      });
+    }
 
     if (apiError != null && controller.selectedUniversity != null) {
       return Padding(
