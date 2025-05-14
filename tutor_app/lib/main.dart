@@ -1,8 +1,11 @@
 import 'dart:io';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'misc/constants.dart';
 // Services
 import 'package:tutor_app/services/auth_service.dart';
 import 'package:tutor_app/services/tutor_service.dart';
@@ -52,7 +55,10 @@ final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Inicializar sqflite_ffi
+  final appDocumentDir = await getApplicationDocumentsDirectory();
+  await Hive.initFlutter(appDocumentDir.path);
+  await Hive.openBox(HiveKeys.signUpProgressBox);
+
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;
 
@@ -83,7 +89,6 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
-        // Services (non-ChangeNotifier)
         Provider<AuthService>.value(value: authService),
         Provider<TutorService>.value(value: tutorService),
         Provider<CourseService>.value(value: courseService),
@@ -135,12 +140,12 @@ void main() async {
               ),
             ),
             ChangeNotifierProvider(
-              create: (context) =>
-                  LearningStylesController(context.read<SignInProcessProvider>()),
+              create: (context) => LearningStylesController(
+                  context.read<SignInProcessProvider>()),
             ),
             ChangeNotifierProvider(
-              create: (context) =>
-                  ProfilePictureController(context.read<SignInProcessProvider>()),
+              create: (context) => ProfilePictureController(
+                  context.read<SignInProcessProvider>()),
             ),
             ChangeNotifierProvider(
               create: (context) =>

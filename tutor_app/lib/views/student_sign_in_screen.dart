@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/student_sign_in_controller.dart';
 import 'student_learning_styles_screen.dart';
+import '../providers/sign_in_process_provider.dart';
 
 class StudentSignInScreen extends StatefulWidget {
   const StudentSignInScreen({super.key});
@@ -12,7 +13,6 @@ class StudentSignInScreen extends StatefulWidget {
 
 class _StudentSignInState extends State<StudentSignInScreen> {
   final TextEditingController _nameController = TextEditingController();
-  final TextEditingController _majorController = TextEditingController();
   final TextEditingController _phoneNumberController = TextEditingController();
   final TextEditingController _universityMenuController =
       TextEditingController();
@@ -21,6 +21,16 @@ class _StudentSignInState extends State<StudentSignInScreen> {
   @override
   void initState() {
     super.initState();
+    final signInProcessProvider =
+        Provider.of<SignInProcessProvider>(context, listen: false);
+    signInProcessProvider.loadSignUpProgress().then((_) {
+      _nameController.text = signInProcessProvider.savedName ?? '';
+      _phoneNumberController.text =
+          signInProcessProvider.savedPhoneNumber ?? '';
+      _majorMenuController.text = signInProcessProvider.savedMajor ?? '';
+      _universityMenuController.text =
+          signInProcessProvider.savedUniversity ?? '';
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _setupNavigationListener();
     });
@@ -262,7 +272,6 @@ class _StudentSignInState extends State<StudentSignInScreen> {
   @override
   void dispose() {
     _nameController.dispose();
-    _majorController.dispose();
     _phoneNumberController.dispose();
     _universityMenuController.dispose();
     _majorMenuController.dispose();
@@ -270,6 +279,11 @@ class _StudentSignInState extends State<StudentSignInScreen> {
   }
 
   Widget _buildUniversityDropdown(dynamic controller) {
+    final signInProcessProvider =
+        Provider.of<SignInProcessProvider>(context, listen: false);
+    if (signInProcessProvider.savedUniversity != null) {
+      controller.selectUniversity(signInProcessProvider.savedUniversity);
+    }
     final List<String> universities = controller.universities;
     final String? selectedValue = controller.selectedUniversity;
     final Function(String?) onSelectedUpdate = controller.selectUniversity;
@@ -307,6 +321,11 @@ class _StudentSignInState extends State<StudentSignInScreen> {
   }
 
   Widget _buildMajorDropdown(dynamic controller) {
+    final signInProcessProvider =
+        Provider.of<SignInProcessProvider>(context, listen: false);
+    if (signInProcessProvider.savedMajor != null) {
+      controller.selectMajor(signInProcessProvider.savedMajor);
+    }
     final List<String> majors = controller.majors;
     final String? selectedValue = controller.selectedMajor;
     final bool isLoading = controller.isLoadingMajors;
@@ -314,6 +333,7 @@ class _StudentSignInState extends State<StudentSignInScreen> {
     final String? apiError = controller.majorApiError;
     final bool isEnabled =
         controller.selectedUniversity != null && !isLoading && apiError == null;
+
     if (apiError != null && controller.selectedUniversity != null) {
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 8.0),
