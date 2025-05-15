@@ -2,30 +2,42 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/course_model.dart';
 import '../utils/env_config.dart';
+import 'local_database_service.dart';
 
 class CourseService {
-  final String baseUrl = '${EnvConfig.apiUrl}/api/courses/';
+  final String baseUrl = '${EnvConfig.apiUrl}/api/info/courses/';
+  final LocalDatabaseService _dbService = LocalDatabaseService();
 
-  Future<List<Course>> getCourses({int? tutorId, String? university, String? major}) async {
-    String url = baseUrl;
-    List<String> queryParams = [];
+  Future<List<Course>> fetchCourses() async {
+    final url = Uri.parse(baseUrl);
+    try {
+      final response = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
 
-    if (tutorId != null) queryParams.add('tutor_id=$tutorId');
-    if (university != null) queryParams.add('university=$university');
-    if (major != null) queryParams.add('major=$major');
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        final List<dynamic> courseList = decoded["courses"];
 
-    if (queryParams.isNotEmpty) {
-      url += '?${queryParams.join('&')}';
-    }
+        // Preparar lista de mapas para insertar en la base local
+        List<Map<String, dynamic>> coursesToInsert = courseList.map((courseJson) {
+          return {
+            'course_name': courseJson['course_name'],
+            'university_id': courseJson['university_id']
+          };
+        }).toList();
 
-    final response = await http.get(Uri.parse(url));
+        // Guardar en local en batch
+        await _dbService.bulkInsertCourses(coursesToInsert);
 
-    if (response.statusCode == 200) {
-      final List<dynamic> data = jsonDecode(response.body);
-      // Convertir la respuesta JSON en una lista de objetos Course
-      return data.map((json) => Course.fromJson(json)).toList();
-    } else {
-      throw Exception('Failed to load courses');
+        // Retornar lista de objetos Course
+        return courseList.map((courseJson) => Course.fromJson(courseJson)).toList();
+      } else {
+        throw Exception('Error fetching courses (status ${response.statusCode})');
+      }
+    } catch (e) {
+      throw Exception('Error fetching courses: $e');
     }
   }
 
@@ -50,7 +62,5 @@ class CourseService {
       throw Exception('Error fetching courses: $e');
     }
   }
-
-  
 
 }

@@ -5,11 +5,14 @@ import '../utils/env_config.dart';
 import '../models/tutor_list_item_model.dart';
 import '../models/tutor_profile.dart';
 import '../models/similar_tutor_review_model.dart';
+import 'local_database_service.dart';
 
 class TutorService {
+  final LocalDatabaseService _dbService = LocalDatabaseService();
+
   Future<List<TutorListItemModel>> fetchTutors() async {
     try {
-      final apiUrl = '${EnvConfig.apiUrl}/api/tutors/';
+      final apiUrl = '${EnvConfig.apiUrl}/api/info/tutors/';
       final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
@@ -26,6 +29,23 @@ class TutorService {
             })
             .whereType<TutorListItemModel>()
             .toList();
+
+        List<Map<String, dynamic>> tutorsToInsert = tutorDataList.map((tutor) {
+          return {
+            'id': tutor['id'],
+            'name': tutor['name'],
+            'phone_number': tutor['phone_number'],
+            'role': tutor['role'],
+            'profile_picture': tutor['profile_picture_url'],
+            'id_profile_picture': tutor['id_picture_url'],
+            'average_rating': tutor['avg_rating'],
+            'university_id': tutor['university_id'],
+            'major_id': tutor['major_id'],
+            'area_of_expertise_id': tutor['area_of_expertise_id'],
+          };
+        }).toList();
+
+        await _dbService.bulkInsertTutors(tutorsToInsert);
 
         return tutors;
       } else {

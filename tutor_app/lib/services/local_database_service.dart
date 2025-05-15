@@ -73,6 +73,33 @@ class LocalDatabaseService {
       name TEXT NOT NULL UNIQUE
     )
   ''');
+
+    await db.execute('''
+    CREATE TABLE tutors (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      phone_number TEXT NOT NULL,
+      role TEXT NOT NULL,
+      profile_picture TEXT,
+      id_profile_picture TEXT,
+      average_rating REAL,
+      university_id INTEGER NOT NULL,
+      major_id INTEGER NOT NULL,
+      area_of_expertise_id INTEGER NOT NULL,
+      FOREIGN KEY (university_id) REFERENCES universities (id) ON DELETE CASCADE,
+      FOREIGN KEY (major_id) REFERENCES majors (id) ON DELETE CASCADE,
+      FOREIGN KEY (area_of_expertise_id) REFERENCES areas_of_expertise (id) ON DELETE CASCADE
+    )
+  ''');
+
+    await db.execute('''
+    CREATE TABLE courses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      course_name TEXT NOT NULL,
+      university_id INTEGER NOT NULL,
+      FOREIGN KEY (university_id) REFERENCES universities (id) ON DELETE CASCADE
+    )
+  ''');
   }
 
   Future<void> cachePendingReview(Review review) async {
@@ -214,5 +241,97 @@ class LocalDatabaseService {
     final List<Map<String, dynamic>> maps =
         await db.query('areas_of_expertise', orderBy: 'name');
     return List.generate(maps.length, (i) => maps[i]['name'] as String);
+  }
+
+  // Tutors methods
+  Future<int> insertTutor(Map<String, dynamic> tutorData) async {
+    final db = await database;
+    return await db.insert('tutors', tutorData);
+  }
+
+  Future<List<Map<String, dynamic>>> getTutors() async {
+    final db = await database;
+    return await db.query('tutors', orderBy: 'name');
+  }
+
+  Future<Map<String, dynamic>?> getTutorById(int id) async {
+    final db = await database;
+    final result = await db.query('tutors', where: 'id = ?', whereArgs: [id], limit: 1);
+    if (result.isNotEmpty) {
+      return result.first;
+    }
+    return null;
+  }
+
+  Future<void> deleteTutor(int id) async {
+    final db = await database;
+    await db.delete('tutors', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> updateTutor(int id, Map<String, dynamic> updatedData) async {
+    final db = await database;
+    await db.update('tutors', updatedData, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> bulkInsertTutors(List<Map<String, dynamic>> tutors) async {
+    final db = await database;
+    Batch batch = db.batch();
+    for (var tutor in tutors) {
+      batch.insert(
+        'tutors',
+        tutor,
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
+    }
+    await batch.commit(noResult: true);
+  }
+
+  // Funciones para manejar cursos
+  Future<int> insertCourse(String courseName, int universityId) async {
+    final db = await database;
+    return await db.insert('courses', {
+      'course_name': courseName,
+      'university_id': universityId
+    });
+  }
+
+  Future<List<Map<String, dynamic>>> getCourses() async {
+    final db = await database;
+    return await db.query('courses', orderBy: 'course_name');
+  }
+
+  Future<List<String>> getCoursesByUniversity(int universityId) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'courses',
+      columns: ['course_name'],
+      where: 'university_id = ?',
+      whereArgs: [universityId],
+      orderBy: 'course_name',
+    );
+    return List.generate(maps.length, (i) => maps[i]['course_name'] as String);
+  }
+
+  Future<void> deleteCourse(int id) async {
+    final db = await database;
+    await db.delete('courses', where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> updateCourse(int id, String newName) async {
+    final db = await database;
+    await db.update('courses', {'course_name': newName}, where: 'id = ?', whereArgs: [id]);
+  }
+
+  Future<void> bulkInsertCourses(List<Map<String, dynamic>> courses) async {
+    final db = await database;
+    Batch batch = db.batch();
+    for (var course in courses) {
+      batch.insert(
+        'courses',
+        course,
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
+    }
+    await batch.commit(noResult: true);
   }
 }
