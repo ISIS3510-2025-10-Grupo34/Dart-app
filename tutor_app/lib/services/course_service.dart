@@ -1,12 +1,14 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import '../models/course_model.dart';
+import 'package:lru/lru.dart';
 import '../utils/env_config.dart';
 import 'local_database_service.dart';
 
 class CourseService {
   final String baseUrl = '${EnvConfig.apiUrl}/api/info/courses/';
   final LocalDatabaseService _dbService = LocalDatabaseService();
+  final LruCache<String, String> _mostSubscribedCourseCache = LruCache(1);
 
     Future<List<String>> fetchCourses(String university) async {
     List<String> localCourses =
@@ -75,6 +77,10 @@ class CourseService {
   }
 
   Future<String> fetchMostSubscribedCourseName() async {
+    if (_mostSubscribedCourseCache.containsKey('mostSubscribedCourse')) {
+      return _mostSubscribedCourseCache['mostSubscribedCourse']!;
+    }
+
     final url = Uri.parse('${EnvConfig.apiUrl}/api/most-subscribed-course/');
 
     try {
@@ -85,14 +91,19 @@ class CourseService {
 
       if (response.statusCode == 200) {
         final decoded = jsonDecode(response.body);
-        final mostSubscribedCourse = decoded["most_subscribed_course"];
-        return mostSubscribedCourse["course_name"] as String;
+        final courseName = decoded['most_subscribed_course']?['course_name'];
+
+        if (courseName != null && courseName is String) {
+          _mostSubscribedCourseCache['mostSubscribedCourse'] = courseName;
+          return courseName;
+        } else {
+          throw Exception('Invalid response format: course_name missing');
+        }
       } else {
-        throw Exception('Error fetching most subscribed course name (status ${response.statusCode})');
+        throw Exception('Failed to fetch most subscribed course (status: ${response.statusCode})');
       }
     } catch (e) {
-      throw Exception('Error fetching most subscribed course name: $e');
+      throw Exception('Error fetching most subscribed course: $e');
     }
   }
-
 }
