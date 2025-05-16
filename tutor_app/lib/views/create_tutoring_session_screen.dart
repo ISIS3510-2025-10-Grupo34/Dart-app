@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tutor_app/utils/network_utils.dart';
 import '../controllers/tutor_profile_controller.dart';
 import '../providers/create_tutoring_session_process_provider.dart';
 import 'package:intl/intl.dart';
@@ -135,26 +136,32 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: (_universityController.text.trim().isNotEmpty && _selectedCourse != null)
-                    ? () async {
-                        try {
-                          final controller = Provider.of<TutorProfileController>(context, listen: false);
-                          final university = _universityController.text.trim();
-
-                          final estimatedPrice = await controller.getEstimatedPrice(university);
-
-                          setState(() {
-                            _priceController.text = estimatedPrice.toString();
-                            _priceError = null;
-                          });
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Estimated price set: $estimatedPrice COP")),
-                          );
-                        } catch (e) {
-                          _showError("Failed to estimate price: $e");
-                        }
+                  ? () async {
+                      final hasConnection = await NetworkUtils.hasInternetConnection();
+                      if (!hasConnection) {
+                        NetworkUtils.showNoInternetDialog(context);
+                        return;
                       }
-                    : null,
+
+                      try {
+                        final controller = Provider.of<TutorProfileController>(context, listen: false);
+                        final university = _universityController.text.trim();
+
+                        final estimatedPrice = await controller.getEstimatedPrice(university);
+
+                        setState(() {
+                          _priceController.text = estimatedPrice.toString();
+                          _priceError = null;
+                        });
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Estimated price set: $estimatedPrice COP")),
+                        );
+                      } catch (e) {
+                        _showError("Failed to estimate price: $e");
+                      }
+                    }
+                  : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF171F45),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
@@ -427,6 +434,11 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
   }
 
   void _handleSubmit() async {
+    final hasConnection = await NetworkUtils.hasInternetConnection();
+    if (!hasConnection) {
+      NetworkUtils.showNoInternetDialog(context);
+      return;
+    }
     final controller = Provider.of<TutorProfileController>(context, listen: false);
     final hiveProvider = Provider.of<CreateTutoringSessionProcessProvider>(context, listen: false);
 
