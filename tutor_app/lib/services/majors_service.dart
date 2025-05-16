@@ -23,7 +23,7 @@ class MajorsService {
       if (error == "Connection failed") {
         throw "Please check your connection";
       } else {
-        throw e.toString();
+        throw ("Please check your conection.");
       }
     }
   }

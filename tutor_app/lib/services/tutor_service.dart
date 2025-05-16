@@ -58,8 +58,7 @@ class TutorService {
             'Failed to load profile (Status code: ${response.statusCode})');
       }
     } catch (e) {
-      print("Error fetching tutor profile: $e");
-      throw Exception('Failed to fetch profile: ${e.toString()}');
+      throw ("Please check your connection");
     }
   }
 
@@ -102,7 +101,7 @@ class TutorService {
             'Failed to load similar reviews (Status code: ${response.statusCode})');
       }
     } catch (e) {
-      throw Exception('Failed to fetch similar reviews: ${e.toString()}');
+      throw ("Please check your connection.");
     }
   }
 }
