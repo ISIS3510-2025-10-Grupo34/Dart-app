@@ -277,4 +277,51 @@ class TutoringSessionService {
       throw Exception("Failed to fetch estimated price: ${response.body}");
     }
   }
+
+  Future<List<TutoringSession>> fetchTutoringSessionsInOrder() async {
+    try {
+      // 1. Obtener todas las sesiones
+      final responseSessions = await http.get(
+        Uri.parse('${EnvConfig.apiUrl}/api/tutoring-sessions-with-names/'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      // 2. Obtener el orden de tutores
+      final responseOrderedTutors = await http.get(
+        Uri.parse('${EnvConfig.apiUrl}/api/tutors_id_ordered/'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (responseSessions.statusCode == 200 && responseOrderedTutors.statusCode == 200) {
+        final List<dynamic> sessionList = jsonDecode(responseSessions.body);
+        final Map<String, dynamic> orderedTutorsJson = jsonDecode(responseOrderedTutors.body);
+        final List<dynamic> orderedTutorIds = orderedTutorsJson['ordered_tutor_ids'];
+
+        final List<Map<String, dynamic>> sessions = List<Map<String, dynamic>>.from(sessionList);
+
+        // Filtrar por sesiones disponibles (student == null)
+        final availableSessions = sessions.where((session) => session['student'] == null).toList();
+
+        // Ordenar según el orden de tutor_id
+        availableSessions.sort((a, b) {
+          final int indexA = orderedTutorIds.indexOf(a['tutor_id']);
+          final int indexB = orderedTutorIds.indexOf(b['tutor_id']);
+
+          if (indexA == -1 && indexB == -1) return 0;
+          if (indexA == -1) return 1;
+          if (indexB == -1) return -1;
+          return indexA.compareTo(indexB);
+        });
+
+        // Mapear a TutoringSession model
+        return availableSessions.map((json) => TutoringSession.fromJson(json)).toList();
+      } else {
+        throw Exception(
+            'Error en la carga de sesiones (${responseSessions.statusCode}) o en la carga de orden de tutores (${responseOrderedTutors.statusCode})');
+      }
+    } catch (e) {
+      throw Exception('Error al obtener sesiones ordenadas: $e');
+    }
+  }
+
 }

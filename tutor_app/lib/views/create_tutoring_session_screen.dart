@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tutor_app/utils/network_utils.dart';
 import '../controllers/tutor_profile_controller.dart';
+import '../providers/create_tutoring_session_process_provider.dart';
 import 'package:intl/intl.dart';
 
 class CreateTutoringSessionScreen extends StatefulWidget {
@@ -20,6 +22,65 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
   String? _priceError;
   String? _dateTimeError;
   DateTime? _selectedDateTime;
+
+  bool _restoredFromCache = false; // Solo muestra un banner temporal, no afecta lógica de negocio
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final hiveProvider = Provider.of<CreateTutoringSessionProcessProvider>(context, listen: false);
+      final controller = Provider.of<TutorProfileController>(context, listen: false);
+      await _restoreSessionProgress(hiveProvider, controller);
+      await controller.fetchMostSubscribedCourse();
+    });
+  }
+
+
+  Future<void> _restoreSessionProgress(
+    CreateTutoringSessionProcessProvider hiveProvider,
+    TutorProfileController tutorController
+  ) async {
+    final university = hiveProvider.savedUniversity;
+    final courseName = hiveProvider.savedCourseName;
+    final cost = hiveProvider.savedCost;
+    final dateTimeStr = hiveProvider.savedDateTime;
+
+    bool wasRestored = false;
+
+    if (university != null) {
+      _universityController.text = university;
+      await tutorController.fetchCoursesForUniversity(university);
+      wasRestored = true;
+    }
+
+    if (courseName != null) {
+      _courseController.text = courseName;
+      _selectedCourse = courseName;
+      wasRestored = true;
+    }
+
+    if (cost != null) {
+      _priceController.text = cost.toString();
+      wasRestored = true;
+    }
+
+    if (dateTimeStr != null) {
+      final parsedDate = DateTime.tryParse(dateTimeStr);
+      if (parsedDate != null) {
+        _selectedDateTime = parsedDate;
+        _dateTimeController.text = DateFormat("dd/MM/yyyy - HH:mm").format(parsedDate);
+        wasRestored = true;
+      }
+    }
+
+    if (wasRestored) {
+      setState(() {
+        _restoredFromCache = true;
+      });
+    }
+  }
+
 
   @override
   void dispose() {
@@ -47,12 +108,43 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
               const Text("TutorApp", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500)),
               const SizedBox(height: 24),
               const Text("Create a tutoring session", style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700)),
+              if (_restoredFromCache)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.yellow.shade100,
+                    border: Border.all(color: Colors.orange),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    "Previous tutoring session data was restored. You can continue where you left off.",
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ),
               const SizedBox(height: 24),
               _buildUniversityField(universities),
               const SizedBox(height: 16),
               _buildCourseDropdown(courseNames),
               const SizedBox(height: 16),
-              _buildPriceField(),
+              if (controller.mostSubscribedCourse != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'We recommend that you create a tutoring session for "${controller.mostSubscribedCourse}" '
+                    'since it is the course with the most subscribed students.',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+              ],
+
+              _buildPriceField(controller),
               const SizedBox(height: 8),
               const Text(
                 "Hint: Tutors that use our price estimator increased their students in 20%",
@@ -61,26 +153,32 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
               const SizedBox(height: 16),
               ElevatedButton(
                 onPressed: (_universityController.text.trim().isNotEmpty && _selectedCourse != null)
-                    ? () async {
-                        try {
-                          final controller = Provider.of<TutorProfileController>(context, listen: false);
-                          final university = _universityController.text.trim();
-
-                          final estimatedPrice = await controller.getEstimatedPrice(university);
-
-                          setState(() {
-                            _priceController.text = estimatedPrice.toString();
-                            _priceError = null;
-                          });
-
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(content: Text("Estimated price set: $estimatedPrice COP")),
-                          );
-                        } catch (e) {
-                          _showError("Failed to estimate price: $e");
-                        }
+                  ? () async {
+                      final hasConnection = await NetworkUtils.hasInternetConnection();
+                      if (!hasConnection) {
+                        NetworkUtils.showNoInternetDialog(context);
+                        return;
                       }
-                    : null,
+
+                      try {
+                        final controller = Provider.of<TutorProfileController>(context, listen: false);
+                        final university = _universityController.text.trim();
+
+                        final estimatedPrice = await controller.getEstimatedPrice(university);
+
+                        setState(() {
+                          _priceController.text = estimatedPrice.toString();
+                          _priceError = null;
+                        });
+
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text("Estimated price set: $estimatedPrice COP")),
+                        );
+                      } catch (e) {
+                        _showError("Failed to estimate price: $e");
+                      }
+                    }
+                  : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF171F45),
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
@@ -91,7 +189,7 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
               ),
 
               const SizedBox(height: 24),
-              _buildDateTimeField(),
+              _buildDateTimeField(controller),
               const SizedBox(height: 24),
               Center(
                 child: ElevatedButton(
@@ -114,6 +212,8 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
   }
 
   Widget _buildUniversityField(List<String> options) {
+    final hiveProvider = Provider.of<CreateTutoringSessionProcessProvider>(context, listen: false);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -130,12 +230,24 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
             setState(() {});
           },
           fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
-            textEditingController.text = _universityController.text;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (textEditingController.text != _universityController.text) {
+                textEditingController.text = _universityController.text;
+                textEditingController.selection = TextSelection.fromPosition(
+                  TextPosition(offset: textEditingController.text.length),
+                );
+              }
+            });
+
             return TextField(
               controller: textEditingController,
               focusNode: focusNode,
               onChanged: (val) {
                 _universityController.text = val;
+
+                // ✅ Guarda al vuelo si deseas
+                final hiveProvider = Provider.of<CreateTutoringSessionProcessProvider>(context, listen: false);
+                hiveProvider.setUniversity(val);
               },
               decoration: InputDecoration(
                 hintText: "Select University",
@@ -152,7 +264,7 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             );
-          },
+          }
         )
       ],
     );
@@ -160,7 +272,6 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
 
   Widget _buildCourseDropdown(List<String> options) {
     final isUniversitySelected = _universityController.text.trim().isNotEmpty;
-
     final focusNode = FocusNode();
 
     return Column(
@@ -185,6 +296,7 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
                 setState(() {
                   _selectedCourse = value;
                 });
+                Provider.of<CreateTutoringSessionProcessProvider>(context, listen: false).setCourseName(value);
               },
               fieldViewBuilder: (BuildContext context, TextEditingController controller, FocusNode fieldFocusNode, VoidCallback onFieldSubmitted) {
                 return TextField(
@@ -232,7 +344,7 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
     );
   }
 
-  Widget _buildPriceField() {
+  Widget _buildPriceField(TutorProfileController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -241,9 +353,16 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
         TextField(
           controller: _priceController,
           keyboardType: TextInputType.number,
+          onChanged: (value) {
+            final hiveProvider = Provider.of<CreateTutoringSessionProcessProvider>(context, listen: false);
+            final parsed = int.tryParse(value);
+            if (parsed != null) {
+              hiveProvider.setCost(parsed); 
+            }
+          },
           decoration: InputDecoration(
             hintText: "Set the price (COP/hour)",
-            errorText: _priceError,
+            errorText: _priceError ?? controller.costValidationError,
             suffixIcon: IconButton(
               icon: const Icon(Icons.clear),
               onPressed: () => _priceController.clear(),
@@ -255,7 +374,8 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
     );
   }
 
-  Widget _buildDateTimeField() {
+
+  Widget _buildDateTimeField(TutorProfileController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -266,7 +386,7 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
           readOnly: true,
           decoration: InputDecoration(
             hintText: "Select date and time",
-            errorText: _dateTimeError,
+            errorText: _dateTimeError ?? controller.dateTimeValidationError,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             suffixIcon: IconButton(
               icon: const Icon(Icons.calendar_today),
@@ -308,6 +428,7 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
       _dateTimeError = null;
       _dateTimeController.text = DateFormat("dd/MM/yyyy - HH:mm").format(selected);
     });
+    Provider.of<CreateTutoringSessionProcessProvider>(context, listen: false).setDateTime(selected.toIso8601String());
   }
 
   Future<void> _loadCourses(String university) async {
@@ -329,63 +450,59 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
   }
 
   void _handleSubmit() async {
-    setState(() {
-      _priceError = null;
-      _dateTimeError = null;
-    });
+    final hasConnection = await NetworkUtils.hasInternetConnection();
+    if (!hasConnection) {
+      NetworkUtils.showNoInternetDialog(context);
+      return;
+    }
+    final controller = Provider.of<TutorProfileController>(context, listen: false);
+    final hiveProvider = Provider.of<CreateTutoringSessionProcessProvider>(context, listen: false);
 
     final university = _universityController.text.trim();
     final price = _priceController.text.trim();
     final course = _selectedCourse;
     final dateTime = _selectedDateTime;
 
-    final controller = Provider.of<TutorProfileController>(context, listen: false);
+    await controller.validateAndCreateSession(
+      universityName: university,
+      courseName: course ?? '',
+      costText: price,
+      dateTime: dateTime,
+    );
 
-    if (!controller.universities.contains(university)) {
-      _showError("Please select a valid university from the list.");
-      return;
-    }
+    // ✅ Guardar en Hive si pasa la validación
+    if (controller.creationState == SessionCreationState.success ||
+        controller.creationState == SessionCreationState.error) {
+      final parsedPrice = double.tryParse(price);
+      final courseId = controller.getCourseIdByName(course ?? '');
 
-    if (course == null || controller.getCourseIdByName(course) == null) {
-      _showError("Please select a valid course from the list.");
-      return;
-    }
-
-    if (dateTime == null || dateTime.isBefore(DateTime.now())) {
-      setState(() {
-        _dateTimeError = "Please select a valid future date and time.";
-      });
-      return;
-    }
-
-    final parsedPrice = double.tryParse(price);
-    if (parsedPrice == null) {
-      setState(() {
-        _priceError = "Please enter a valid number.";
-      });
-      return;
-    }
-
-    try {
-      final courseId = controller.getCourseIdByName(course);
-      if (courseId == null) {
-        _showError("Invalid course ID.");
-        return;
+      if (parsedPrice != null && courseId != null && controller.user?.id != null && dateTime != null) {
+        await hiveProvider.setSessionDetails(
+          cost: parsedPrice.toInt(),
+          courseId: courseId,
+          tutorId: int.parse(controller.user!.id!),
+          dateTime: dateTime.toIso8601String(),
+          universityName: university,
+          courseName: course!,
+        );
       }
+    }
 
-      await controller.createTutoringSession(
-        cost: parsedPrice.toInt(),
-        dateTime: dateTime.toIso8601String(),
-        courseId: courseId,
-      );
-
+    if (controller.creationState == SessionCreationState.success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Tutoring session created successfully!")),
       );
-
+      await hiveProvider.clearSessionProgress(); // ✅ limpia Hive al éxito
       Navigator.pop(context);
-    } catch (e) {
-      _showError("Failed to create session: ${e.toString()}");
+    } else if (controller.creationState == SessionCreationState.error) {
+      _showError(controller.creationError ?? "An unexpected error occurred.");
     }
+
+    setState(() {
+      _priceError = controller.costValidationError;
+      _dateTimeError = controller.dateTimeValidationError;
+    });
   }
+
+
 }

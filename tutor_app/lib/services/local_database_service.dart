@@ -73,6 +73,33 @@ class LocalDatabaseService {
       name TEXT NOT NULL UNIQUE
     )
   ''');
+
+    await db.execute('''
+    CREATE TABLE tutors (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT NOT NULL,
+      phone_number TEXT NOT NULL,
+      role TEXT NOT NULL,
+      profile_picture TEXT,
+      id_profile_picture TEXT,
+      average_rating REAL,
+      university_id INTEGER NOT NULL,
+      major_id INTEGER NOT NULL,
+      area_of_expertise_id INTEGER NOT NULL,
+      FOREIGN KEY (university_id) REFERENCES universities (id) ON DELETE CASCADE,
+      FOREIGN KEY (major_id) REFERENCES majors (id) ON DELETE CASCADE,
+      FOREIGN KEY (area_of_expertise_id) REFERENCES areas_of_expertise (id) ON DELETE CASCADE
+    )
+  ''');
+
+    await db.execute('''
+    CREATE TABLE courses (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      course_name TEXT NOT NULL,
+      university_id INTEGER NOT NULL,
+      FOREIGN KEY (university_id) REFERENCES universities (id) ON DELETE CASCADE
+    )
+  ''');
   }
 
   Future<void> cachePendingReview(Review review) async {
@@ -214,5 +241,126 @@ class LocalDatabaseService {
     final List<Map<String, dynamic>> maps =
         await db.query('areas_of_expertise', orderBy: 'name');
     return List.generate(maps.length, (i) => maps[i]['name'] as String);
+  }
+
+  // Tutors methods
+  Future<int> insertTutor(Map<String, dynamic> tutor) async {
+    final db = await database;
+    try {
+      return await db.insert(
+        'tutors',
+        tutor,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    } catch (e) {
+      return -1;
+    }
+  }
+
+  Future<void> bulkInsertTutors(List<Map<String, dynamic>> tutors) async {
+    final db = await database;
+    Batch batch = db.batch();
+    for (var tutor in tutors) {
+      batch.insert(
+        'tutors',
+        tutor,
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<Map<String, dynamic>>> getTutors() async {
+    final db = await database;
+    return await db.query('tutors', orderBy: 'average_rating DESC');
+  }
+
+  Future<Map<String, dynamic>?> getTutorById(int id) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'tutors',
+      where: 'id = ?',
+      whereArgs: [id],
+      limit: 1,
+    );
+    if (maps.isNotEmpty) {
+      return maps.first;
+    }
+    return null;
+  }
+
+  // Funciones para manejar cursos
+  Future<List<String>> getCoursesByUniversityName(String universityName) async {
+    final universityId = await getUniversityIdByName(universityName);
+    if (universityId == null) return [];
+
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'courses',
+      columns: ['name'],
+      where: 'university_id = ?',
+      whereArgs: [universityId],
+      orderBy: 'name',
+    );
+    return List.generate(maps.length, (i) => maps[i]['name'] as String);
+  }
+
+  Future<void> bulkInsertCoursesForUniversity(
+      String universityName, List<String> courseNames) async {
+    final universityId = await getUniversityIdByName(universityName);
+    if (universityId == null) return;
+
+    final db = await database;
+    Batch batch = db.batch();
+    for (String name in courseNames) {
+      batch.insert(
+        'courses',
+        {'name': name, 'university_id': universityId},
+        conflictAlgorithm: ConflictAlgorithm.ignore,
+      );
+    }
+    await batch.commit(noResult: true);
+  }
+
+  Future<int> insertCourse(String name) async {
+    final db = await database;
+    try {
+      return await db.insert('courses', {'name': name},
+          conflictAlgorithm: ConflictAlgorithm.ignore);
+    } catch (e) {
+      return -1;
+    }
+  }
+
+  Future<void> bulkInsertCourses(List<String> courseNames) async {
+    final db = await database;
+    Batch batch = db.batch();
+    for (String name in courseNames) {
+      batch.insert('courses', {'name': name},
+          conflictAlgorithm: ConflictAlgorithm.ignore);
+    }
+    await batch.commit(noResult: true);
+  }
+
+  Future<List<String>> getCourses() async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps =
+        await db.query('courses', orderBy: 'name');
+    return List.generate(maps.length, (i) => maps[i]['name'] as String);
+  }
+
+  Future<int?> getCourseIdByName(String name) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'courses',
+      columns: ['id'],
+      where: 'name = ?',
+      whereArgs: [name],
+      limit: 1,
+    );
+    if (maps.isNotEmpty) {
+      return maps.first['id'] as int?;
+    }
+    return null;
   }
 }

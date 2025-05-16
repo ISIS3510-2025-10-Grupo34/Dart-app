@@ -1,12 +1,15 @@
 import 'package:flutter/foundation.dart';
-import 'package:tutor_app/providers/auth_provider.dart'; 
+import 'package:tutor_app/providers/auth_provider.dart';
 import 'package:tutor_app/services/metrics_service.dart';
+import 'package:tutor_app/utils/network_utils.dart';
 import '../models/tutor_list_item_model.dart';
 import '../models/tutoring_session_model.dart';
 import '../services/tutor_service.dart';
-import '../services/tutoring_session_service.dart'; 
+import '../services/tutoring_session_service.dart';
+import '../services/universities_service.dart';
+import '../services/course_service.dart';
 
-enum StudentHomeState { initial, loading, loadingNextPage, loaded, error } 
+enum StudentHomeState { initial, loading, loaded, error }
 
 enum StudentHomeNavigationTarget { none, profile, review, booking }
 
@@ -15,6 +18,8 @@ class StudentHomeController with ChangeNotifier {
   final AuthProvider _authProvider;
   final TutoringSessionService _sessionService;
   final MetricsService _metricsService;
+  final UniversitiesService _universitiesService = UniversitiesService();
+  final CourseService _coursesService = CourseService();
 
   StudentHomeController({
     required TutorService tutorService,
@@ -25,8 +30,8 @@ class StudentHomeController with ChangeNotifier {
         _authProvider = authProvider,
         _sessionService = sessionService,
         _metricsService = metricsService {
-        loadOrderedSessions(loadFirstPage: true);
-        }
+    loadOrderedSessions();
+  }
 
   StudentHomeState _state = StudentHomeState.initial;
   StudentHomeState get state => _state;
@@ -37,18 +42,10 @@ class StudentHomeController with ChangeNotifier {
   List<TutoringSession> _sessions = [];
   List<TutoringSession> get sessions => _sessions;
 
-  List<TutoringSession> _displayedSessions = [];
-
-  int _currentPage = 1;
-  bool _hasMorePages = true; 
-  bool _isLoadingPage = false; 
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
-  bool get hasMorePages => _hasMorePages;
-
-  StudentHomeNavigationTarget _navigationTarget =
-      StudentHomeNavigationTarget.none;
+  StudentHomeNavigationTarget _navigationTarget = StudentHomeNavigationTarget.none;
   StudentHomeNavigationTarget get navigationTarget => _navigationTarget;
 
   String _activeUniversityFilter = '';
@@ -60,85 +57,54 @@ class StudentHomeController with ChangeNotifier {
       _activeCourseFilter.isNotEmpty ||
       _activeTutorFilter.isNotEmpty;
 
+  List<String> _universities = [];
+  List<String> get universities => _universities;
+
+  List<String> _courses = [];
+  List<String> get courses => _courses;
+
   void _applyFilters() {
     List<TutoringSession> filtered = List.from(_sessions);
 
     if (_activeUniversityFilter.isNotEmpty) {
-      filtered = filtered.where((session) =>
-          session.university.toLowerCase().contains(_activeUniversityFilter.toLowerCase())
-      ).toList();
+      filtered = filtered
+          .where((session) => session.university
+              .toLowerCase()
+              .contains(_activeUniversityFilter.toLowerCase()))
+          .toList();
     }
     if (_activeCourseFilter.isNotEmpty) {
-      filtered = filtered.where((session) =>
-          session.course.toLowerCase().contains(_activeCourseFilter.toLowerCase())
-      ).toList();
+      filtered = filtered
+          .where((session) => session.course
+              .toLowerCase()
+              .contains(_activeCourseFilter.toLowerCase()))
+          .toList();
     }
     if (_activeTutorFilter.isNotEmpty) {
-      filtered = filtered.where((session) =>
-          session.tutorName.toLowerCase().contains(_activeTutorFilter.toLowerCase())
-      ).toList();
+      filtered = filtered
+          .where((session) => session.tutorName
+              .toLowerCase()
+              .contains(_activeTutorFilter.toLowerCase()))
+          .toList();
     }
 
-    _displayedSessions = filtered;
+    _sessions = filtered;
   }
 
-  Future<void> loadOrderedSessions({bool loadFirstPage = false}) async {
-    if (_isLoadingPage || (!_hasMorePages && !loadFirstPage)) return;
-
-    _isLoadingPage = true;
-    _errorMessage = null;
-    StudentHomeState previousState = _state; 
-
-    if (loadFirstPage) {
-      _state = StudentHomeState.loading;
-      _currentPage = 1;
-      _hasMorePages = true;
-      _sessions = []; 
-      _displayedSessions = []; 
-      _activeUniversityFilter = '';
-      _activeCourseFilter = '';
-      _activeTutorFilter = '';
-    } else {
-      _state = StudentHomeState.loadingNextPage;
-    }
-    notifyListeners();
-
-    try {
-      final SessionFetchResult result = await _sessionService.fetchOrderedSessions(_currentPage);
-
-      _sessions.addAll(result.sessions);
-      _applyFilters(); 
-
-      const int sessionsPerPage = 10;
-      if (result.sessions.length < sessionsPerPage) {
-        _hasMorePages = false;
-      }
-
-      _currentPage++;
-      _state = StudentHomeState.loaded;
-
-
-    } catch (e) {
-      _errorMessage = "Failed to load sessions: ${e.toString()}";
-      _state = StudentHomeState.error;
-      if (!loadFirstPage) {
-           _state = previousState; 
-      }
-    } finally {
-      _isLoadingPage = false;
-      notifyListeners();
-    }
-  }
-  Future<void> loadTutors() async {
-    if (_state == StudentHomeState.loading) return;
-
-    _state = StudentHomeState.loading; 
+  Future<void> loadOrderedSessions() async {
+    _state = StudentHomeState.loading;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      _tutors = await _tutorService.fetchTutors();
-      _tutors.sort((a, b) => b.averageRating.compareTo(a.averageRating));
+      final hasInternet = await NetworkUtils.hasInternetConnection();
+      if (!hasInternet) {
+        throw Exception("Unable to load tutoring sessions. No internet connection.");
+      }
+
+      final fetchedSessions = await _sessionService.fetchTutoringSessionsInOrder();
+      _sessions = fetchedSessions;
+      _applyFilters();
       _state = StudentHomeState.loaded;
     } catch (e) {
       _errorMessage = e.toString();
@@ -148,42 +114,81 @@ class StudentHomeController with ChangeNotifier {
     }
   }
 
+  Future<void> loadUniversitiesAndCourses(String universityName) async {
+    try {
+      _universities = await _universitiesService.fetchUniversities();
+      _courses = await _coursesService.fetchCourses(universityName);
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString();
+      _state = StudentHomeState.error;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadTutors() async {
+    _state = StudentHomeState.loading;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final rawTutors = await _tutorService.fetchTutors(); 
+      _tutors = rawTutors
+          .map((json) => TutorListItemModel.fromJson(json))
+          .toList();
+
+      _state = StudentHomeState.loaded;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _state = StudentHomeState.error;
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadCoursesForUniversity(String universityName) async {
+    try {
+      _courses = (await _coursesService.fetchCoursesByUniversity(universityName)).cast<String>();
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Failed to load courses: $e");
+    }
+  }
+
   void applyFiltersAndUpdate(String university, String course, String tutor) {
-     _activeUniversityFilter = university;
-     _activeCourseFilter = course;
-     _activeTutorFilter = tutor;
-     _applyFilters(); 
-     notifyListeners(); 
+    _activeUniversityFilter = university;
+    _activeCourseFilter = course;
+    _activeTutorFilter = tutor;
+    _applyFilters();
+    notifyListeners();
   }
 
-  void clearFiltersAndUpdate() {
-     _activeUniversityFilter = '';
-     _activeCourseFilter = '';
-     _activeTutorFilter = '';
-     _applyFilters(); 
-     notifyListeners(); 
+  Future<void> clearFiltersAndUpdate() async {
+    _activeUniversityFilter = '';
+    _activeCourseFilter = '';
+    _activeTutorFilter = '';
+    await loadOrderedSessions();
   }
-
-  Future<void> clearFiltersAndReload() async {
-    await loadOrderedSessions(loadFirstPage: true);
-  }
-
 
   Future<void> sendTimeToBookMetric(int milliseconds) async {
-     try {
-       await _metricsService.sendTimeToBook(milliseconds);
-     } catch (e) {
-       if (kDebugMode) { print("Failed to send time to book metric: $e"); }
-     }
-   }
+    try {
+      await _metricsService.sendTimeToBook(milliseconds);
+    } catch (e) {
+      if (kDebugMode) {
+        print("Failed to send time to book metric: $e");
+      }
+    }
+  }
 
-   Future<void> sendTutorProfileLoadTime(int milliseconds) async {
-     try {
-       await _metricsService.sendTutorProfileLoadTime(milliseconds);
-     } catch (e) {
-       if (kDebugMode) { print("Failed to send profile load time metric: $e");}
-     }
-   }
+  Future<void> sendTutorProfileLoadTime(int milliseconds) async {
+    try {
+      await _metricsService.sendTutorProfileLoadTime(milliseconds);
+    } catch (e) {
+      if (kDebugMode) {
+        print("Failed to send profile load time metric: $e");
+      }
+    }
+  }
 
   void navigateToStudentProfile() {
     _navigationTarget = StudentHomeNavigationTarget.none;
@@ -194,13 +199,12 @@ class StudentHomeController with ChangeNotifier {
       _navigationTarget = StudentHomeNavigationTarget.profile;
     } else {
       _errorMessage = "Error: Student profile ID not found.";
-      _state = StudentHomeState.error; // Or handle differently
+      _state = StudentHomeState.error;
     }
     notifyListeners();
   }
 
   void resetNavigationState() {
     _navigationTarget = StudentHomeNavigationTarget.none;
-
   }
 }

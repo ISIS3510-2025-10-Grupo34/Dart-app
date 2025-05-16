@@ -6,29 +6,35 @@ import '../models/tutor_list_item_model.dart';
 import '../models/tutor_profile.dart';
 import '../models/similar_tutor_review_model.dart';
 import 'package:lru/lru.dart';
+import 'local_database_service.dart';
 
 class TutorService {
   final LruCache<int, SimilarTutorReviewsResponse> _similarReviewsCache =
       LruCache(10);
-  Future<List<TutorListItemModel>> fetchTutors() async {
+  final LocalDatabaseService _dbService = LocalDatabaseService();
+
+  Future<List<Map<String, dynamic>>> fetchTutors() async {
+    final localTutors = await _dbService.getTutors();
+    if (localTutors.isNotEmpty) {
+      return localTutors;
+    }
+
+    final apiUrl = '${EnvConfig.apiUrl}/info/tutors/';
     try {
-      final apiUrl = '${EnvConfig.apiUrl}/api/tutors/';
-      final response = await http.get(Uri.parse(apiUrl));
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {"Content-Type": "application/json"},
+      );
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> decodedBody = jsonDecode(response.body);
-        final List<dynamic> tutorDataList = decodedBody['tutors'] ?? [];
+        Map<String, dynamic> data = jsonDecode(response.body);
+        List<dynamic> tutorList = data['tutors'] as List<dynamic>? ?? [];
+        List<Map<String, dynamic>> tutors =
+            List<Map<String, dynamic>>.from(tutorList);
 
-        List<TutorListItemModel> tutors = tutorDataList
-            .map((tutorJson) {
-              try {
-                return TutorListItemModel.fromJson(tutorJson);
-              } catch (e) {
-                return null;
-              }
-            })
-            .whereType<TutorListItemModel>()
-            .toList();
+        if (tutors.isNotEmpty) {
+          await _dbService.bulkInsertTutors(tutors);
+        }
 
         return tutors;
       } else {
@@ -36,7 +42,7 @@ class TutorService {
             'Failed to load tutors (Status code: ${response.statusCode})');
       }
     } catch (e) {
-      throw Exception('Failed to fetch tutors: ${e.toString()}');
+      throw Exception('Error fetching tutors: ${e.toString()}');
     }
   }
 
