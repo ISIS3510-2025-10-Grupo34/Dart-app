@@ -29,6 +29,7 @@ import 'package:tutor_app/services/local_database_service.dart';
 // Controllers & Providers
 import 'package:tutor_app/providers/auth_provider.dart';
 import 'package:tutor_app/providers/sign_in_process_provider.dart';
+import 'package:tutor_app/providers/create_tutoring_session_process_provider.dart';
 import 'package:tutor_app/controllers/login_controller.dart';
 import 'package:tutor_app/controllers/sign_in_controller.dart';
 import 'package:tutor_app/controllers/student_home_controller.dart';
@@ -61,6 +62,7 @@ void main() async {
   final appDocumentDir = await getApplicationDocumentsDirectory();
   await Hive.initFlutter(appDocumentDir.path);
   await Hive.openBox(HiveKeys.signUpProgressBox);
+  await Hive.openBox(HiveKeys.sessionProgressBox);
   final similarTutorReviewsCache = SimilarTutorReviewsCache(10);
   //sqfliteFfiInit();
   //databaseFactory = databaseFactoryFfi;
@@ -89,6 +91,10 @@ void main() async {
     localCacheService: localCacheService,
   );
   await authProvider.tryRestoreSession();
+  final createTutoringSessionProcessProvider = CreateTutoringSessionProcessProvider(
+    sessionService: tutoringSessionService, 
+    localCacheService: localCacheService,
+  );
 
   runApp(
     MultiProvider(
@@ -121,6 +127,8 @@ void main() async {
             value: signInProcessProvider),
         Provider<SimilarTutorReviewsCache>.value(
             value: similarTutorReviewsCache),
+        ChangeNotifierProvider<CreateTutoringSessionProcessProvider>.value(
+            value: createTutoringSessionProcessProvider),
       ],
       child: Builder(
         builder: (context) => MultiProvider(

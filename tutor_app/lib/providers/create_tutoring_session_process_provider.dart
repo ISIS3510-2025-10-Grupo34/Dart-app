@@ -45,12 +45,12 @@ class CreateTutoringSessionProcessProvider with ChangeNotifier {
   String? get submissionError => _submissionError;
 
   // Getters para los datos guardados
-  int? get savedCost => _sessionBox.get(HiveKeys.cost, defaultValue: _cost);
-  int? get savedCourseId => _sessionBox.get(HiveKeys.courseId, defaultValue: _courseId);
-  int? get savedTutorId => _sessionBox.get(HiveKeys.tutorId, defaultValue: _tutorId);
-  String? get savedDateTime => _sessionBox.get(HiveKeys.dateTime, defaultValue: _dateTime);
-  String? get savedUniversity => _sessionBox.get(HiveKeys.university, defaultValue: _universityName);
-  String? get savedCourseName => _sessionBox.get(HiveKeys.courseName, defaultValue: _courseName);
+  int? get savedCost => _sessionBox.get(HiveKeys.tsCost, defaultValue: _cost);
+  int? get savedCourseId => _sessionBox.get(HiveKeys.tsCourseId, defaultValue: _courseId);
+  int? get savedTutorId => _sessionBox.get(HiveKeys.tsTutorId, defaultValue: _tutorId);
+  String? get savedDateTime => _sessionBox.get(HiveKeys.tsDateTime, defaultValue: _dateTime);
+  String? get savedUniversity => _sessionBox.get(HiveKeys.tsUniversity, defaultValue: _universityName);
+  String? get savedCourseName => _sessionBox.get(HiveKeys.tsCourseName, defaultValue: _courseName);
 
   // Setter para guardar todos los datos de la sesión
   Future<void> setSessionDetails({
@@ -68,12 +68,12 @@ class CreateTutoringSessionProcessProvider with ChangeNotifier {
     _universityName = universityName;
     _courseName = courseName;
 
-    await _sessionBox.put(HiveKeys.cost, cost);
-    await _sessionBox.put(HiveKeys.courseId, courseId);
-    await _sessionBox.put(HiveKeys.tutorId, tutorId);
-    await _sessionBox.put(HiveKeys.dateTime, dateTime);
-    await _sessionBox.put(HiveKeys.universityTutoringSession, universityName);
-    await _sessionBox.put(HiveKeys.courseName, courseName);
+    await _sessionBox.put(HiveKeys.tsCost, cost);
+    await _sessionBox.put(HiveKeys.tsCourseId, courseId);
+    await _sessionBox.put(HiveKeys.tsTutorId, tutorId);
+    await _sessionBox.put(HiveKeys.tsDateTime, dateTime);
+    await _sessionBox.put(HiveKeys.tsUniversity, universityName);
+    await _sessionBox.put(HiveKeys.tsCourseName, courseName);
 
     notifyListeners();
   }
@@ -152,6 +152,42 @@ class CreateTutoringSessionProcessProvider with ChangeNotifier {
   void setBackgroundSyncError(String error) {
     _submissionState = TutoringSessionSubmissionState.error;
     _submissionError = error;
+    notifyListeners();
+  }
+
+  Future<void> setUniversity(String universityName) async {
+    _universityName = universityName;
+    await _sessionBox.put(HiveKeys.tsUniversity, universityName);
+    notifyListeners();
+  }
+
+  Future<void> setCourseName(String courseName) async {
+    _courseName = courseName;
+    await _sessionBox.put(HiveKeys.tsCourseName, courseName);
+    notifyListeners();
+  }
+
+  Future<void> setCost(int cost) async {
+    _cost = cost;
+    await _sessionBox.put(HiveKeys.tsCost, cost);
+    notifyListeners();
+  }
+
+  Future<void> setCourseId(int courseId) async {
+    _courseId = courseId;
+    await _sessionBox.put(HiveKeys.tsCourseId, courseId);
+    notifyListeners();
+  }
+
+  Future<void> setTutorId(int tutorId) async {
+    _tutorId = tutorId;
+    await _sessionBox.put(HiveKeys.tsTutorId, tutorId);
+    notifyListeners();
+  }
+
+  Future<void> setDateTime(String dateTime) async {
+    _dateTime = dateTime;
+    await _sessionBox.put(HiveKeys.tsDateTime, dateTime);
     notifyListeners();
   }
 

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../controllers/tutor_profile_controller.dart';
+import '../providers/create_tutoring_session_process_provider.dart';
 import 'package:intl/intl.dart';
 
 class CreateTutoringSessionScreen extends StatefulWidget {
@@ -20,6 +21,64 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
   String? _priceError;
   String? _dateTimeError;
   DateTime? _selectedDateTime;
+
+  bool _restoredFromCache = false; // Solo muestra un banner temporal, no afecta lógica de negocio
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      final hiveProvider = Provider.of<CreateTutoringSessionProcessProvider>(context, listen: false);
+      final controller = Provider.of<TutorProfileController>(context, listen: false);
+      await _restoreSessionProgress(hiveProvider, controller);
+    });
+  }
+
+
+  Future<void> _restoreSessionProgress(
+    CreateTutoringSessionProcessProvider hiveProvider,
+    TutorProfileController tutorController
+  ) async {
+    final university = hiveProvider.savedUniversity;
+    final courseName = hiveProvider.savedCourseName;
+    final cost = hiveProvider.savedCost;
+    final dateTimeStr = hiveProvider.savedDateTime;
+
+    bool wasRestored = false;
+
+    if (university != null) {
+      _universityController.text = university;
+      await tutorController.fetchCoursesForUniversity(university);
+      wasRestored = true;
+    }
+
+    if (courseName != null) {
+      _courseController.text = courseName;
+      _selectedCourse = courseName;
+      wasRestored = true;
+    }
+
+    if (cost != null) {
+      _priceController.text = cost.toString();
+      wasRestored = true;
+    }
+
+    if (dateTimeStr != null) {
+      final parsedDate = DateTime.tryParse(dateTimeStr);
+      if (parsedDate != null) {
+        _selectedDateTime = parsedDate;
+        _dateTimeController.text = DateFormat("dd/MM/yyyy - HH:mm").format(parsedDate);
+        wasRestored = true;
+      }
+    }
+
+    if (wasRestored) {
+      setState(() {
+        _restoredFromCache = true;
+      });
+    }
+  }
+
 
   @override
   void dispose() {
@@ -47,6 +106,21 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
               const Text("TutorApp", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500)),
               const SizedBox(height: 24),
               const Text("Create a tutoring session", style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700)),
+              if (_restoredFromCache)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.yellow.shade100,
+                    border: Border.all(color: Colors.orange),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Text(
+                    "Previous tutoring session data was restored. You can continue where you left off.",
+                    style: TextStyle(fontSize: 14),
+                  ),
+                ),
               const SizedBox(height: 24),
               _buildUniversityField(universities),
               const SizedBox(height: 16),
@@ -114,6 +188,8 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
   }
 
   Widget _buildUniversityField(List<String> options) {
+    final hiveProvider = Provider.of<CreateTutoringSessionProcessProvider>(context, listen: false);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -130,12 +206,24 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
             setState(() {});
           },
           fieldViewBuilder: (context, textEditingController, focusNode, onFieldSubmitted) {
-            textEditingController.text = _universityController.text;
+            WidgetsBinding.instance.addPostFrameCallback((_) {
+              if (textEditingController.text != _universityController.text) {
+                textEditingController.text = _universityController.text;
+                textEditingController.selection = TextSelection.fromPosition(
+                  TextPosition(offset: textEditingController.text.length),
+                );
+              }
+            });
+
             return TextField(
               controller: textEditingController,
               focusNode: focusNode,
               onChanged: (val) {
                 _universityController.text = val;
+
+                // ✅ Guarda al vuelo si deseas
+                final hiveProvider = Provider.of<CreateTutoringSessionProcessProvider>(context, listen: false);
+                hiveProvider.setUniversity(val);
               },
               decoration: InputDecoration(
                 hintText: "Select University",
@@ -152,7 +240,7 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
                 border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
               ),
             );
-          },
+          }
         )
       ],
     );
@@ -185,6 +273,7 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
                 setState(() {
                   _selectedCourse = value;
                 });
+                Provider.of<CreateTutoringSessionProcessProvider>(context, listen: false).setCourseName(value);
               },
               fieldViewBuilder: (BuildContext context, TextEditingController controller, FocusNode fieldFocusNode, VoidCallback onFieldSubmitted) {
                 return TextField(
@@ -241,6 +330,13 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
         TextField(
           controller: _priceController,
           keyboardType: TextInputType.number,
+          onChanged: (value) {
+            final hiveProvider = Provider.of<CreateTutoringSessionProcessProvider>(context, listen: false);
+            final parsed = int.tryParse(value);
+            if (parsed != null) {
+              hiveProvider.setCost(parsed); 
+            }
+          },
           decoration: InputDecoration(
             hintText: "Set the price (COP/hour)",
             errorText: _priceError ?? controller.costValidationError,
@@ -254,6 +350,7 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
       ],
     );
   }
+
 
   Widget _buildDateTimeField(TutorProfileController controller) {
     return Column(
@@ -308,6 +405,7 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
       _dateTimeError = null;
       _dateTimeController.text = DateFormat("dd/MM/yyyy - HH:mm").format(selected);
     });
+    Provider.of<CreateTutoringSessionProcessProvider>(context, listen: false).setDateTime(selected.toIso8601String());
   }
 
   Future<void> _loadCourses(String university) async {
@@ -330,6 +428,8 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
 
   void _handleSubmit() async {
     final controller = Provider.of<TutorProfileController>(context, listen: false);
+    final hiveProvider = Provider.of<CreateTutoringSessionProcessProvider>(context, listen: false);
+
     final university = _universityController.text.trim();
     final price = _priceController.text.trim();
     final course = _selectedCourse;
@@ -342,10 +442,29 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
       dateTime: dateTime,
     );
 
+    // ✅ Guardar en Hive si pasa la validación
+    if (controller.creationState == SessionCreationState.success ||
+        controller.creationState == SessionCreationState.error) {
+      final parsedPrice = double.tryParse(price);
+      final courseId = controller.getCourseIdByName(course ?? '');
+
+      if (parsedPrice != null && courseId != null && controller.user?.id != null && dateTime != null) {
+        await hiveProvider.setSessionDetails(
+          cost: parsedPrice.toInt(),
+          courseId: courseId,
+          tutorId: int.parse(controller.user!.id!),
+          dateTime: dateTime.toIso8601String(),
+          universityName: university,
+          courseName: course!,
+        );
+      }
+    }
+
     if (controller.creationState == SessionCreationState.success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Tutoring session created successfully!")),
       );
+      await hiveProvider.clearSessionProgress(); // ✅ limpia Hive al éxito
       Navigator.pop(context);
     } else if (controller.creationState == SessionCreationState.error) {
       _showError(controller.creationError ?? "An unexpected error occurred.");
@@ -356,5 +475,6 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
       _dateTimeError = controller.dateTimeValidationError;
     });
   }
+
 
 }

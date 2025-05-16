@@ -11,10 +11,10 @@ class HiveKeys {
   static const String learningStyles = 'learningStyles';
   static const String profilePicturePath = 'profilePicturePath';
   static const String sessionProgressBox = 'session_progress_box';
-  static const String cost = 'cost';
-  static const String courseId = 'course_id';
-  static const String tutorId = 'tutor_id';
-  static const String dateTime = 'date_time';
-  static const String universityTutoringSession = 'university';
-  static const String courseName = 'course_name';
+  static const String tsCost = 'ts_cost';
+  static const String tsCourseId = 'ts_course_id';
+  static const String tsTutorId = 'ts_tutor_id';
+  static const String tsDateTime = 'ts_date_time';
+  static const String tsUniversity = 'ts_university';
+  static const String tsCourseName = 'ts_course_name';
 }
