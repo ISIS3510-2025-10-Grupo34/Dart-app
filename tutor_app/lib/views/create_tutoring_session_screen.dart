@@ -52,7 +52,7 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
               const SizedBox(height: 16),
               _buildCourseDropdown(courseNames),
               const SizedBox(height: 16),
-              _buildPriceField(),
+              _buildPriceField(controller),
               const SizedBox(height: 8),
               const Text(
                 "Hint: Tutors that use our price estimator increased their students in 20%",
@@ -91,7 +91,7 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
               ),
 
               const SizedBox(height: 24),
-              _buildDateTimeField(),
+              _buildDateTimeField(controller),
               const SizedBox(height: 24),
               Center(
                 child: ElevatedButton(
@@ -232,7 +232,7 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
     );
   }
 
-  Widget _buildPriceField() {
+  Widget _buildPriceField(TutorProfileController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -243,7 +243,7 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
           keyboardType: TextInputType.number,
           decoration: InputDecoration(
             hintText: "Set the price (COP/hour)",
-            errorText: _priceError,
+            errorText: _priceError ?? controller.costValidationError,
             suffixIcon: IconButton(
               icon: const Icon(Icons.clear),
               onPressed: () => _priceController.clear(),
@@ -255,7 +255,7 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
     );
   }
 
-  Widget _buildDateTimeField() {
+  Widget _buildDateTimeField(TutorProfileController controller) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -266,7 +266,7 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
           readOnly: true,
           decoration: InputDecoration(
             hintText: "Select date and time",
-            errorText: _dateTimeError,
+            errorText: _dateTimeError ?? controller.dateTimeValidationError,
             border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
             suffixIcon: IconButton(
               icon: const Icon(Icons.calendar_today),
@@ -329,63 +329,32 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
   }
 
   void _handleSubmit() async {
-    setState(() {
-      _priceError = null;
-      _dateTimeError = null;
-    });
-
+    final controller = Provider.of<TutorProfileController>(context, listen: false);
     final university = _universityController.text.trim();
     final price = _priceController.text.trim();
     final course = _selectedCourse;
     final dateTime = _selectedDateTime;
 
-    final controller = Provider.of<TutorProfileController>(context, listen: false);
+    await controller.validateAndCreateSession(
+      universityName: university,
+      courseName: course ?? '',
+      costText: price,
+      dateTime: dateTime,
+    );
 
-    if (!controller.universities.contains(university)) {
-      _showError("Please select a valid university from the list.");
-      return;
-    }
-
-    if (course == null || controller.getCourseIdByName(course) == null) {
-      _showError("Please select a valid course from the list.");
-      return;
-    }
-
-    if (dateTime == null || dateTime.isBefore(DateTime.now())) {
-      setState(() {
-        _dateTimeError = "Please select a valid future date and time.";
-      });
-      return;
-    }
-
-    final parsedPrice = double.tryParse(price);
-    if (parsedPrice == null) {
-      setState(() {
-        _priceError = "Please enter a valid number.";
-      });
-      return;
-    }
-
-    try {
-      final courseId = controller.getCourseIdByName(course);
-      if (courseId == null) {
-        _showError("Invalid course ID.");
-        return;
-      }
-
-      await controller.createTutoringSession(
-        cost: parsedPrice.toInt(),
-        dateTime: dateTime.toIso8601String(),
-        courseId: courseId,
-      );
-
+    if (controller.creationState == SessionCreationState.success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("Tutoring session created successfully!")),
       );
-
       Navigator.pop(context);
-    } catch (e) {
-      _showError("Failed to create session: ${e.toString()}");
+    } else if (controller.creationState == SessionCreationState.error) {
+      _showError(controller.creationError ?? "An unexpected error occurred.");
     }
+
+    setState(() {
+      _priceError = controller.costValidationError;
+      _dateTimeError = controller.dateTimeValidationError;
+    });
   }
+
 }

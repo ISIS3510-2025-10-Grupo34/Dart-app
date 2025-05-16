@@ -11,6 +11,17 @@ import '../services/course_service.dart';
 import '../models/course_model.dart';
 import '../models/similar_tutor_review_model.dart';
 
+enum SessionCreationState {
+  initial,
+  validating,
+  validationSuccess,
+  validationError,
+  creating,
+  success,
+  error
+}
+
+
 class TutorProfileController with ChangeNotifier {
   final AuthProvider _authProvider;
   final UserService _userService;
@@ -47,6 +58,21 @@ class TutorProfileController with ChangeNotifier {
 
   List<SimilarTutorInfo> _similarReviews = [];
   List<SimilarTutorInfo> get similarReviews => _similarReviews;
+
+  SessionCreationState _creationState = SessionCreationState.initial;
+  SessionCreationState get creationState => _creationState;
+
+  String? _universityValidationError;
+  String? _courseValidationError;
+  String? _costValidationError;
+  String? _dateTimeValidationError;
+  String? _creationError;
+
+  String? get universityValidationError => _universityValidationError;
+  String? get courseValidationError => _courseValidationError;
+  String? get costValidationError => _costValidationError;
+  String? get dateTimeValidationError => _dateTimeValidationError;
+  String? get creationError => _creationError;
 
   TutorProfileController({
     required AuthProvider authProvider,
@@ -218,6 +244,83 @@ class TutorProfileController with ChangeNotifier {
     } catch (e) {
       throw Exception("Failed to fetch estimated price: $e");
     }
+  }
+
+  Future<void> validateAndCreateSession({
+    required String universityName,
+    required String courseName,
+    required String costText,
+    required DateTime? dateTime,
+  }) async {
+    _creationState = SessionCreationState.validating;
+    _universityValidationError = null;
+    _courseValidationError = null;
+    _costValidationError = null;
+    _dateTimeValidationError = null;
+    _creationError = null;
+    notifyListeners();
+
+    bool isValid = true;
+
+    if (!_universities.contains(universityName)) {
+      _universityValidationError = 'Select a valid university from the list.';
+      isValid = false;
+    }
+
+    final courseId = getCourseIdByName(courseName);
+    if (courseId == null) {
+      _courseValidationError = 'Select a valid course from the list.';
+      isValid = false;
+    }
+
+    final parsedCost = double.tryParse(costText);
+    if (parsedCost == null || parsedCost <= 0) {
+      _costValidationError = 'Enter a valid positive number.';
+      isValid = false;
+    }
+
+    if (dateTime == null || dateTime.isBefore(DateTime.now())) {
+      _dateTimeValidationError = 'Choose a valid future date and time.';
+      isValid = false;
+    }
+
+    if (!isValid) {
+      _creationState = SessionCreationState.validationError;
+      notifyListeners();
+      return;
+    }
+
+    try {
+      _creationState = SessionCreationState.creating;
+      notifyListeners();
+
+      final tutorId = int.tryParse(_user?.id ?? '');
+      if (tutorId == null) throw Exception("No valid tutor ID.");
+
+      await _sessionService.createTutoringSession(
+        cost: parsedCost!.toInt(),
+        dateTime: dateTime!.toIso8601String(),
+        courseId: courseId!,
+        tutorId: tutorId,
+      );
+
+      _creationState = SessionCreationState.success;
+    } catch (e) {
+      _creationError = e.toString();
+      _creationState = SessionCreationState.error;
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  void resetSessionCreationState() {
+    _creationState = SessionCreationState.initial;
+    _universityValidationError = null;
+    _courseValidationError = null;
+    _costValidationError = null;
+    _dateTimeValidationError = null;
+    _creationError = null;
+    notifyListeners();
   }
 
   @override

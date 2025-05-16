@@ -7,6 +7,7 @@ import 'review_service.dart';
 import 'location_service.dart';
 import 'local_cache_service.dart';
 import '../services/user_service.dart';
+import '../services/tutoring_session_service.dart';
 import '../providers/sign_in_process_provider.dart';
 
 class SyncService {
@@ -14,6 +15,7 @@ class SyncService {
   final LocationService _locationService;
   final LocalCacheService _cacheService;
   final UserService _userService;
+  final TutoringSessionService _tutoringSessionService;
   final SignInProcessProvider _signInProcessProvider;
   final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey;
   final LocalDatabaseService _dbService;
@@ -26,6 +28,7 @@ class SyncService {
       LocationService? locationService,
       LocalCacheService? cacheService,
       UserService? userService,
+      TutoringSessionService? tutoringSessionService,
       LocalDatabaseService? dbService,
       required SignInProcessProvider signInProcessProvider})
       : _reviewService = reviewService ?? ReviewService(),
@@ -33,9 +36,10 @@ class SyncService {
         _cacheService = cacheService ?? LocalCacheService(),
         _userService = userService ?? UserService(),
         _dbService = dbService ?? LocalDatabaseService(),
+        _tutoringSessionService = tutoringSessionService ?? TutoringSessionService(),
         _signInProcessProvider = signInProcessProvider {
-    _listenToConnectivity();
-  }
+            _listenToConnectivity();
+          }
 
   void _listenToConnectivity() {
     _connectivitySubscription =
@@ -217,4 +221,48 @@ class SyncService {
         "SyncService: Finished processing registrations. Sent count: $sentCount");
     return sentCount;
   }
+
+  Future<int> _syncTutoringSessions() async {
+    final pendingSessions = await _cacheService.getPendingRegistrations();
+    int sentCount = 0;
+
+    for (final session in pendingSessions) {
+      if (session.containsKey('userData')) {
+        // Este no es una sesión de tutoría sino una cuenta, se ignora aquí
+        continue;
+      }
+
+      final String? timestamp = session['timestamp'] as String?;
+      final int? cost = session['cost'] as int?;
+      final int? courseId = session['courseId'] as int?;
+      final int? tutorId = session['tutorId'] as int?;
+      final String? dateTime = session['dateTime'] as String?;
+
+      if (timestamp == null || cost == null || courseId == null || tutorId == null || dateTime == null) {
+        debugPrint("SyncService: Skipping tutoring session due to incomplete data.");
+        await _cacheService.removePendingRegistration(session);
+        continue;
+      }
+
+      debugPrint("SyncService: Attempting to sync tutoring session with timestamp: $timestamp");
+
+      try {
+        await _tutoringSessionService.createTutoringSession(
+          cost: cost,
+          dateTime: dateTime,
+          courseId: courseId,
+          tutorId: tutorId,
+        );
+
+        debugPrint("✅ Tutoring session submitted for timestamp: $timestamp");
+        await _cacheService.removePendingRegistration(session);
+        sentCount++;
+      } catch (e) {
+        debugPrint("❌ Failed to sync tutoring session [$timestamp]: $e");
+      }
+    }
+
+    return sentCount;
+  }
+
 }
