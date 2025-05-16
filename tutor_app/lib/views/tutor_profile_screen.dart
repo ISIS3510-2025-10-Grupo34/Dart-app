@@ -11,6 +11,7 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'create_tutoring_session_screen.dart';
 import 'connect_students_screen.dart';
+import 'package:provider/provider.dart';
 
 class TutorProfileScreen extends StatefulWidget {
   const TutorProfileScreen({super.key});
@@ -380,7 +381,20 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
           ],
           const SizedBox(height: 24),
           Center(
-            child: _buildStarRating(user.avgRating, 40),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                _buildStarRating(user.avgRating, 40),
+                IconButton(
+                  icon:
+                      const Icon(Icons.help_outline, color: Color(0xFF192650)),
+                  tooltip: 'See reviews from similar tutors',
+                  onPressed: () {
+                    _fetchAndDisplaySimilarReviews();
+                  },
+                )
+              ],
+            ),
           ),
           const SizedBox(height: 16),
           Align(

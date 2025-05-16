@@ -4,7 +4,6 @@ import 'package:http_parser/http_parser.dart';
 import '../utils/env_config.dart';
 
 class UserService {
-  /// Registers a user with optional profile and ID pictures.
   Future<bool> registerUser(
     Map<String, String> userData,
     String? profilePicturePath,
@@ -64,7 +63,7 @@ class UserService {
         return false;
       }
     } catch (e) {
-      rethrow;
+      throw "Please check your connection";
     }
   }
 
@@ -92,7 +91,7 @@ class UserService {
         throw Exception(errorMessage);
       }
     } catch (e) {
-      throw Exception('Failed to load student profile data: ${e.toString()}');
+      throw "Please check your connection";
     }
   }
 
@@ -120,7 +119,7 @@ class UserService {
         throw Exception(errorMessage);
       }
     } catch (e) {
-      throw Exception('Failed to load tutor profile data: ${e.toString()}');
+      throw "Please check your connection";
     }
   }
 }

@@ -5,8 +5,11 @@ import '../utils/env_config.dart';
 import '../models/tutor_list_item_model.dart';
 import '../models/tutor_profile.dart';
 import '../models/similar_tutor_review_model.dart';
+import 'package:lru/lru.dart';
 
 class TutorService {
+  final LruCache<int, SimilarTutorReviewsResponse> _similarReviewsCache =
+      LruCache(10);
   Future<List<TutorListItemModel>> fetchTutors() async {
     try {
       final apiUrl = '${EnvConfig.apiUrl}/api/tutors/';
@@ -58,8 +61,7 @@ class TutorService {
             'Failed to load profile (Status code: ${response.statusCode})');
       }
     } catch (e) {
-      print("Error fetching tutor profile: $e");
-      throw Exception('Failed to fetch profile: ${e.toString()}');
+      throw "Please check your connection";
     }
   }
 
@@ -76,8 +78,6 @@ class TutorService {
         final Map<String, dynamic> data = jsonDecode(response.body);
         return TimeToBookInsight.fromJson(data);
       } else {
-        print(
-            "Error fetching insight: ${response.statusCode} - ${response.body}");
         return null;
       }
     } catch (e) {
@@ -88,6 +88,10 @@ class TutorService {
 
   Future<SimilarTutorReviewsResponse> fetchSimilarTutorReviews(
       int tutorId) async {
+    final cachedResponse = _similarReviewsCache[tutorId];
+    if (cachedResponse != null) {
+      return cachedResponse;
+    }
     final String endpointPath = '/api/similar-tutors-reviews/$tutorId';
     final apiUrl = '${EnvConfig.apiUrl}$endpointPath';
     try {
@@ -96,13 +100,16 @@ class TutorService {
       if (response.statusCode == 200) {
         final Map<String, dynamic> decodedBody =
             jsonDecode(utf8.decode(response.bodyBytes));
-        return SimilarTutorReviewsResponse.fromJson(decodedBody);
+        final networkResponse =
+            SimilarTutorReviewsResponse.fromJson(decodedBody);
+        _similarReviewsCache[tutorId] = networkResponse;
+        return networkResponse;
       } else {
         throw Exception(
             'Failed to load similar reviews (Status code: ${response.statusCode})');
       }
     } catch (e) {
-      throw Exception('Failed to fetch similar reviews: ${e.toString()}');
+      throw "Please check your connection";
     }
   }
 }

@@ -27,7 +27,7 @@ class AuthService {
         throw "Internal Server Error";
       }
     } catch (e) {
-      throw e.toString();
+      throw "Please check your connection";
     }
   }
 

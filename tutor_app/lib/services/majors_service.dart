@@ -34,15 +34,14 @@ class MajorsService {
         }
         return fetchedMajors;
       } else {
-        throw Exception(
-            'Failed to load majors (Status code: ${response.statusCode})');
+        throw "Please check your connection";
       }
     } catch (e) {
       final String error = e.toString();
       if (error == "Connection failed") {
         throw "Please check your connection";
       } else {
-        throw e.toString();
+        throw "Please check your connection";
       }
     }
   }
