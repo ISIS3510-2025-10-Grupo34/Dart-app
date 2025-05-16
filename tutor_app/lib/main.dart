@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'misc/constants.dart';
+import 'package:lru/lru.dart';
 // Services
 import 'package:tutor_app/services/auth_service.dart';
 import 'package:tutor_app/services/tutor_service.dart';
@@ -41,6 +42,7 @@ import 'package:tutor_app/controllers/student_profile_controller.dart';
 import 'package:tutor_app/controllers/filter_controller.dart';
 import 'package:tutor_app/controllers/student_tutoring_sessions_controller.dart';
 import 'package:tutor_app/controllers/write_review_controller.dart';
+import 'package:tutor_app/models/similar_tutor_review_model.dart';
 
 // UI
 import 'package:tutor_app/views/welcome_screen.dart';
@@ -52,13 +54,14 @@ import 'utils/env_config.dart';
 final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
 
+typedef SimilarTutorReviewsCache = LruCache<int, SimilarTutorReviewsResponse>;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   final appDocumentDir = await getApplicationDocumentsDirectory();
   await Hive.initFlutter(appDocumentDir.path);
   await Hive.openBox(HiveKeys.signUpProgressBox);
-
+  final similarTutorReviewsCache = SimilarTutorReviewsCache(10);
   //sqfliteFfiInit();
   //databaseFactory = databaseFactoryFfi;
 
@@ -111,9 +114,13 @@ void main() async {
           create: (_) => LocalDatabaseService(),
         ),
         // Base providers
-        ChangeNotifierProvider<AuthProvider>.value(value: authProvider),
+        ChangeNotifierProvider<AuthProvider>.value(
+          value: authProvider,
+        ),
         ChangeNotifierProvider<SignInProcessProvider>.value(
             value: signInProcessProvider),
+        Provider<SimilarTutorReviewsCache>.value(
+            value: similarTutorReviewsCache),
       ],
       child: Builder(
         builder: (context) => MultiProvider(

@@ -30,7 +30,7 @@ class UniversitiesService {
             'Failed to load universities (Status code: ${response.statusCode})');
       }
     } catch (e) {
-      throw Exception('Error fetching universities: ${e.toString()}');
+      throw "Please check your connection";
     }
   }
 }
