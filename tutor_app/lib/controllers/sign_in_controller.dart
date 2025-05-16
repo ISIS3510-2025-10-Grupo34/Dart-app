@@ -18,7 +18,9 @@ class SignInController with ChangeNotifier {
   final SignInProcessProvider _signInProcessProvider;
   final AuthService _authService;
   final ProfileCreationTimeService _profileCreationTimeService;
-  SignInController(this._signInProcessProvider, this._authService, {
+  SignInController(
+    this._signInProcessProvider,
+    this._authService, {
     ProfileCreationTimeService? profileCreationTimeService,
   }) : _profileCreationTimeService =
             profileCreationTimeService ?? ProfileCreationTimeService();
@@ -40,15 +42,16 @@ class SignInController with ChangeNotifier {
 
   DateTime? _startTime;
 
+  String? get initialEmail => _signInProcessProvider.savedEmail;
+  String? get initialPassword => _signInProcessProvider.savedPassword;
+
   void startTimingFromWelcome() {
     _startTime = DateTime.now();
-
   }
 
-   Future<void> _sendTimeIfNeeded(String email) async {
+  Future<void> _sendTimeIfNeeded(String email) async {
     await _profileCreationTimeService.sendTimeIfNeeded(_startTime);
   }
-
 
   Future<void> validateAndProceed(String email, String password,
       String confirmPassword, String role) async {
@@ -99,15 +102,18 @@ class SignInController with ChangeNotifier {
       if (role == "student") {
         _state = SignInState.validationSuccessStudent;
         _signInProcessProvider.setCredentialsAndRole(email, password, role);
+        await _signInProcessProvider.setCredentialsAndRole(
+            email, password, role);
       } else if (role == "tutor") {
         _state = SignInState.validationSuccessTutor;
         _signInProcessProvider.setCredentialsAndRole(email, password, role);
+        await _signInProcessProvider.setCredentialsAndRole(
+            email, password, role);
       } else {
         _state = SignInState.validationError;
         _passwordError = "Invalid role selected.";
       }
 
-      // Enviar tiempo si todo fue exitoso
       if (_state == SignInState.validationSuccessStudent ||
           _state == SignInState.validationSuccessTutor) {
         await _sendTimeIfNeeded(email);

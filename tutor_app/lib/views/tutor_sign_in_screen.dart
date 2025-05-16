@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../controllers/tutor_sign_in_controller.dart';
 import 'profile_picture_screen.dart';
 import 'welcome_screen.dart';
+import '../providers/sign_in_process_provider.dart';
 
 class TutorSignInScreen extends StatefulWidget {
   const TutorSignInScreen({super.key});
@@ -22,6 +23,21 @@ class _TutorSignInState extends State<TutorSignInScreen> {
   @override
   void initState() {
     super.initState();
+    final signInProcessProvider =
+        Provider.of<SignInProcessProvider>(context, listen: false);
+    signInProcessProvider.loadSignUpProgress().then((_) {
+      _nameController.text = signInProcessProvider.savedName ?? '';
+      _phoneNumberController.text =
+          signInProcessProvider.savedPhoneNumber ?? '';
+      if (signInProcessProvider.savedUniversity != null) {
+        _universityMenuController.text =
+            signInProcessProvider.savedUniversity ?? '';
+      }
+      if (signInProcessProvider.savedAreaOfExpertise != null) {
+        _areaOfExpertiseMenuController.text =
+            signInProcessProvider.savedAreaOfExpertise ?? '';
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _setupNavigationListener();
     });
@@ -31,16 +47,15 @@ class _TutorSignInState extends State<TutorSignInScreen> {
     final controller =
         Provider.of<TutorSignInController>(context, listen: false);
     controller.addListener(() {
-      if (!mounted) return; // Safety check
+      if (!mounted) return;
 
       final state = controller.state;
       if (state == TutorSignInState.success) {
         Navigator.pushAndRemoveUntil(
           context,
           MaterialPageRoute(builder: (context) => const ProfilePictureScreen()),
-          (route) => false, // Remove all previous routes
+          (route) => false,
         );
-        // Reset controller state after navigation is initiated
         controller.resetStateAfterNavigation();
       }
     });
@@ -272,6 +287,11 @@ class _TutorSignInState extends State<TutorSignInScreen> {
   }
 
   Widget _buildUniversityDropdown(dynamic controller) {
+    final signInProcessProvider =
+        Provider.of<SignInProcessProvider>(context, listen: false);
+    if (signInProcessProvider.savedUniversity != null) {
+      controller.selectUniversity(signInProcessProvider.savedUniversity);
+    }
     final List<String> universities = controller.universities;
     final String? selectedValue = controller.selectedUniversity;
     final Function(String?) onSelectedUpdate = controller.selectUniversity;
@@ -309,6 +329,11 @@ class _TutorSignInState extends State<TutorSignInScreen> {
   }
 
   Widget _buildAOEDropdown(dynamic controller) {
+    final signInProcessProvider =
+        Provider.of<SignInProcessProvider>(context, listen: false);
+    if (signInProcessProvider.savedAreaOfExpertise != null) {
+      controller.selectAOE(signInProcessProvider.savedAreaOfExpertise);
+    }
     final List<String> aoes = controller.aoe;
     final String? selectedAOE = controller.selectedAOE;
     final Function(String?) onSelectedUpdate = controller.selectAOE;

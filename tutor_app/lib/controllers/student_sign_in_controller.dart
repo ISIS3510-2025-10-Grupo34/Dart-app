@@ -61,6 +61,11 @@ class StudentSignInController with ChangeNotifier {
   String? _generalError;
   String? get generalError => _generalError;
 
+  String? get initialName => _signInProcessProvider.savedName;
+  String? get initialPhoneNumber => _signInProcessProvider.savedPhoneNumber;
+  String? get initialUniversity => _signInProcessProvider.savedUniversity;
+  String? get initialMajor => _signInProcessProvider.savedMajor;
+
   Future<void> _loadUniversities() async {
     _isLoadingUniversities = true;
     _universityApiError = null;
@@ -158,8 +163,7 @@ class StudentSignInController with ChangeNotifier {
         'university': _selectedUniversity!,
         'major': _selectedMajor!,
       };
-      _signInProcessProvider.setStudentDetails(studentData);
-
+      await _signInProcessProvider.setStudentDetails(studentData);
       _state = StudentSignInState.success;
       notifyListeners();
     } catch (e) {

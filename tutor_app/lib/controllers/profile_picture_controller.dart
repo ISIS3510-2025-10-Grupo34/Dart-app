@@ -16,7 +16,9 @@ class ProfilePictureController with ChangeNotifier {
   final SignInProcessProvider _signInProcessProvider;
   final ImagePicker _picker = ImagePicker();
 
-  ProfilePictureController(this._signInProcessProvider);
+  ProfilePictureController(this._signInProcessProvider) {
+    _initializePickedFile();
+  }
 
   ProfilePictureState _state = ProfilePictureState.initial;
   ProfilePictureState get state => _state;
@@ -30,6 +32,22 @@ class ProfilePictureController with ChangeNotifier {
   String? _errorMessage;
   String? get errorMessage => _errorMessage;
 
+  void _initializePickedFile() {
+    final String? savedPath = _signInProcessProvider.savedProfilePicturePath;
+    if (savedPath != null && savedPath.isNotEmpty) {
+      if (File(savedPath).existsSync()) {
+        _pickedFile = XFile(savedPath);
+        _state = ProfilePictureState.picked;
+      } else {
+        debugPrint(
+            "Saved profile picture path not found: $savedPath. Clearing from Hive.");
+        _signInProcessProvider.setProfilePicturePath(null);
+        _pickedFile = null;
+        _state = ProfilePictureState.initial;
+      }
+    }
+  }
+
   Future<void> pickImage() async {
     _state = ProfilePictureState.picking;
     _errorMessage = null;
@@ -40,10 +58,11 @@ class ProfilePictureController with ChangeNotifier {
       if (image != null) {
         _pickedFile = image;
         _state = ProfilePictureState.picked;
+        await _signInProcessProvider.setProfilePicturePath(image.path);
       } else {
         _state = (_pickedFile == null)
             ? ProfilePictureState.initial
-            : ProfilePictureState.picked; // Revert state
+            : ProfilePictureState.picked;
       }
       notifyListeners();
     } catch (e) {
@@ -61,7 +80,7 @@ class ProfilePictureController with ChangeNotifier {
     try {
       final String? imagePath = _pickedFile?.path;
 
-      _signInProcessProvider.setProfilePicturePath(imagePath);
+      await _signInProcessProvider.setProfilePicturePath(imagePath);
 
       _state = ProfilePictureState.success;
       notifyListeners();

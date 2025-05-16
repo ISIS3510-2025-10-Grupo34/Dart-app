@@ -4,6 +4,7 @@ import '../controllers/sign_in_controller.dart';
 import 'student_sign_in_screen.dart';
 import 'tutor_sign_in_screen.dart';
 import 'welcome_screen.dart';
+import '../providers/sign_in_process_provider.dart';
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -23,6 +24,18 @@ class _SignInScreenState extends State<SignInScreen> {
   @override
   void initState() {
     super.initState();
+    final signInController =
+        Provider.of<SignInController>(context, listen: false);
+    final signInProcessProvider =
+        Provider.of<SignInProcessProvider>(context, listen: false);
+    signInProcessProvider.loadSignUpProgress().then((_) {
+      if (signInProcessProvider.hasSavedProgress) {
+        _emailController.text = signInProcessProvider.savedEmail ?? '';
+        _passwordController.text = signInProcessProvider.savedPassword ?? '';
+        _confirmPasswordController.text =
+            signInProcessProvider.savedPassword ?? '';
+      }
+    });
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _setupNavigationListener();
     });

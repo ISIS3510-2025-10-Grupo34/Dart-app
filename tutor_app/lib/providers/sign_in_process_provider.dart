@@ -2,6 +2,8 @@ import 'package:flutter/foundation.dart';
 import 'dart:io';
 import '../services/user_service.dart';
 import '../services/local_cache_service.dart';
+import '../misc/constants.dart';
+import 'package:hive/hive.dart';
 
 enum RegistrationSubmissionState {
   idle,
@@ -14,12 +16,19 @@ enum RegistrationSubmissionState {
 class SignInProcessProvider with ChangeNotifier {
   final UserService _userService;
   final LocalCacheService _localCacheService;
+  late Box _signUpProgressBox;
 
-  SignInProcessProvider(
-      {required UserService userService,
-      required LocalCacheService localCacheService})
-      : _userService = userService,
-        _localCacheService = localCacheService;
+  SignInProcessProvider({
+    required UserService userService,
+    required LocalCacheService localCacheService,
+  })  : _userService = userService,
+        _localCacheService = localCacheService {
+    _initHiveBox();
+  }
+
+  Future<void> _initHiveBox() async {
+    _signUpProgressBox = await Hive.openBox(HiveKeys.signUpProgressBox);
+  }
 
   String? _email;
   String? _password;
@@ -43,37 +52,114 @@ class SignInProcessProvider with ChangeNotifier {
   String? _submissionError;
   String? get submissionError => _submissionError;
 
-  void setCredentialsAndRole(String email, String password, String role) {
+  String? get savedEmail =>
+      _signUpProgressBox.get(HiveKeys.email, defaultValue: _email);
+  String? get savedPassword =>
+      _signUpProgressBox.get(HiveKeys.password, defaultValue: _password);
+  String? get savedRole =>
+      _signUpProgressBox.get(HiveKeys.role, defaultValue: _role);
+  String? get savedName =>
+      _signUpProgressBox.get(HiveKeys.name, defaultValue: _name);
+  String? get savedPhoneNumber =>
+      _signUpProgressBox.get(HiveKeys.phoneNumber, defaultValue: _phoneNumber);
+  String? get savedUniversity =>
+      _signUpProgressBox.get(HiveKeys.university, defaultValue: _university);
+  String? get savedMajor =>
+      _signUpProgressBox.get(HiveKeys.major, defaultValue: _major);
+  String? get savedAreaOfExpertise => _signUpProgressBox
+      .get(HiveKeys.areaOfExpertise, defaultValue: _areaOfExpertise);
+  String? get savedLearningStyles => _signUpProgressBox
+      .get(HiveKeys.learningStyles, defaultValue: _learningStyles);
+  String? get savedProfilePicturePath => _signUpProgressBox
+      .get(HiveKeys.profilePicturePath, defaultValue: _profilePicturePath);
+
+  Future<void> setCredentialsAndRole(
+      String email, String password, String role) async {
     _email = email;
     _password = password;
     _role = role;
+    await _signUpProgressBox.put(HiveKeys.email, email);
+    await _signUpProgressBox.put(HiveKeys.password, password);
+    await _signUpProgressBox.put(HiveKeys.role, role);
+    notifyListeners();
   }
 
-  void setStudentDetails(Map<String, String> studentData) {
+  Future<void> setStudentDetails(Map<String, String> studentData) async {
     _name = studentData['name'];
     _phoneNumber = studentData['phone_number'];
     _university = studentData['university'];
     _major = studentData['major'];
+    await _signUpProgressBox.put(HiveKeys.name, _name);
+    await _signUpProgressBox.put(HiveKeys.phoneNumber, _phoneNumber);
+    await _signUpProgressBox.put(HiveKeys.university, _university);
+    await _signUpProgressBox.put(HiveKeys.major, _major);
+    notifyListeners();
   }
 
-  void setTutorDetails(Map<String, String> tutorData) {
+  Future<void> setTutorDetails(Map<String, String> tutorData) async {
     _name = tutorData['name'];
     _phoneNumber = tutorData['phone_number'];
     _university = tutorData['university'];
     _areaOfExpertise = tutorData['area_of_expertise'];
+    await _signUpProgressBox.put(HiveKeys.name, _name);
+    await _signUpProgressBox.put(HiveKeys.phoneNumber, _phoneNumber);
+    await _signUpProgressBox.put(HiveKeys.university, _university);
+    await _signUpProgressBox.put(HiveKeys.areaOfExpertise, _areaOfExpertise);
+    notifyListeners();
   }
 
-  void setLearningStyles(String styles) {
+  Future<void> setLearningStyles(String styles) async {
     _learningStyles = styles;
+    await _signUpProgressBox.put(HiveKeys.learningStyles, styles);
+    notifyListeners();
   }
 
-  void setProfilePicturePath(String? path) {
+  Future<void> setProfilePicturePath(String? path) async {
     _profilePicturePath = path;
+    if (path != null) {
+      await _signUpProgressBox.put(HiveKeys.profilePicturePath, path);
+    } else {
+      await _signUpProgressBox.delete(HiveKeys.profilePicturePath);
+    }
     notifyListeners();
   }
 
   void setIdPicturePath(String? path) {
     _idPicturePath = path;
+    notifyListeners();
+  }
+
+  Future<void> loadSignUpProgress() async {
+    if (!_signUpProgressBox.isOpen) {
+      _signUpProgressBox = await Hive.openBox(HiveKeys.signUpProgressBox);
+    }
+    _email = _signUpProgressBox.get(HiveKeys.email, defaultValue: _email);
+    _password =
+        _signUpProgressBox.get(HiveKeys.password, defaultValue: _password);
+    _role = _signUpProgressBox.get(HiveKeys.role, defaultValue: _role);
+    _name = _signUpProgressBox.get(HiveKeys.name, defaultValue: _name);
+    _phoneNumber = _signUpProgressBox.get(HiveKeys.phoneNumber,
+        defaultValue: _phoneNumber);
+    _university =
+        _signUpProgressBox.get(HiveKeys.university, defaultValue: _university);
+    _major = _signUpProgressBox.get(HiveKeys.major, defaultValue: _major);
+    _areaOfExpertise = _signUpProgressBox.get(HiveKeys.areaOfExpertise,
+        defaultValue: _areaOfExpertise);
+    _learningStyles = _signUpProgressBox.get(HiveKeys.learningStyles,
+        defaultValue: _learningStyles);
+    _profilePicturePath = _signUpProgressBox.get(HiveKeys.profilePicturePath,
+        defaultValue: _profilePicturePath);
+  }
+
+  Future<void> clearSignUpProgress() async {
+    await _signUpProgressBox.clear();
+    _email = null;
+    _password = null;
+    _role = null;
+    _name = null;
+    _profilePicturePath = null;
+    _idPicturePath = null;
+    debugPrint("Cleared sign-up progress from Hive.");
     notifyListeners();
   }
 
@@ -118,6 +204,7 @@ class SignInProcessProvider with ChangeNotifier {
 
       if (success) {
         _submissionState = RegistrationSubmissionState.success;
+        await clearSignUpProgress();
       } else {
         _submissionError =
             "Registration failed. The server rejected the request.";
@@ -163,6 +250,7 @@ class SignInProcessProvider with ChangeNotifier {
           "SignInProcessProvider: Background sync successful. Updating state.");
       _submissionState = RegistrationSubmissionState.success;
       _submissionError = null;
+      clearSignUpProgress();
       notifyListeners();
     } else {
       debugPrint(
@@ -193,4 +281,6 @@ class SignInProcessProvider with ChangeNotifier {
     _submissionError = null;
     notifyListeners();
   }
+
+  bool get hasSavedProgress => _signUpProgressBox.isNotEmpty;
 }

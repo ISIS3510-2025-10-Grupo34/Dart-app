@@ -64,6 +64,11 @@ class TutorSignInController with ChangeNotifier {
   String? _generalError;
   String? get generalError => _generalError;
 
+  String? get initialName => _signInProcessProvider.savedName;
+  String? get initialPhoneNumber => _signInProcessProvider.savedPhoneNumber;
+  String? get initialUniversity => _signInProcessProvider.savedUniversity;
+  String? get initialAOE => _signInProcessProvider.savedAreaOfExpertise;
+
   Future<void> _loadUniversities() async {
     _isLoadingUniversities = true;
     _universityApiError = null;
@@ -153,7 +158,7 @@ class TutorSignInController with ChangeNotifier {
         'university': _selectedUniversity!,
         'area_of_expertise': _selectedAOE!,
       };
-      _signInProcessProvider.setTutorDetails(tutorData);
+      await _signInProcessProvider.setTutorDetails(tutorData);
 
       _state = TutorSignInState.success;
       notifyListeners();
