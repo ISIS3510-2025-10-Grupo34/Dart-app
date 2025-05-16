@@ -62,6 +62,9 @@ class TutorProfileController with ChangeNotifier {
   SessionCreationState _creationState = SessionCreationState.initial;
   SessionCreationState get creationState => _creationState;
 
+  String? _mostSubscribedCourse;
+  String? get mostSubscribedCourse => _mostSubscribedCourse;
+
   String? _universityValidationError;
   String? _courseValidationError;
   String? _costValidationError;
@@ -327,5 +330,14 @@ class TutorProfileController with ChangeNotifier {
   void dispose() {
     _authProvider.removeListener(_updateStateFromAuthProvider);
     super.dispose();
+  }
+
+  Future<void> fetchMostSubscribedCourse() async {
+    try {
+      _mostSubscribedCourse = await _courseService.fetchMostSubscribedCourseName();
+      notifyListeners();
+    } catch (e) {
+      debugPrint("Error fetching most subscribed course: $e");
+    }
   }
 }

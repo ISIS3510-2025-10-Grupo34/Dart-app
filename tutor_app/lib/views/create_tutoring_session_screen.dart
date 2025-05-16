@@ -32,6 +32,7 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
       final hiveProvider = Provider.of<CreateTutoringSessionProcessProvider>(context, listen: false);
       final controller = Provider.of<TutorProfileController>(context, listen: false);
       await _restoreSessionProgress(hiveProvider, controller);
+      await controller.fetchMostSubscribedCourse();
     });
   }
 
@@ -127,6 +128,22 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
               const SizedBox(height: 16),
               _buildCourseDropdown(courseNames),
               const SizedBox(height: 16),
+              if (controller.mostSubscribedCourse != null) ...[
+                const SizedBox(height: 8),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.blue.shade50,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'We recommend that you create a tutoring session for "${controller.mostSubscribedCourse}" '
+                    'since it is the course with the most subscribed students.',
+                    style: const TextStyle(fontSize: 14),
+                  ),
+                ),
+              ],
+
               _buildPriceField(controller),
               const SizedBox(height: 8),
               const Text(
@@ -255,7 +272,6 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
 
   Widget _buildCourseDropdown(List<String> options) {
     final isUniversitySelected = _universityController.text.trim().isNotEmpty;
-
     final focusNode = FocusNode();
 
     return Column(

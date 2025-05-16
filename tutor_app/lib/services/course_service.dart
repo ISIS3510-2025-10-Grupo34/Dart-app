@@ -74,4 +74,25 @@ class CourseService {
     }
   }
 
+  Future<String> fetchMostSubscribedCourseName() async {
+    final url = Uri.parse('${EnvConfig.apiUrl}/api/most-subscribed-course/');
+
+    try {
+      final response = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (response.statusCode == 200) {
+        final decoded = jsonDecode(response.body);
+        final mostSubscribedCourse = decoded["most_subscribed_course"];
+        return mostSubscribedCourse["course_name"] as String;
+      } else {
+        throw Exception('Error fetching most subscribed course name (status ${response.statusCode})');
+      }
+    } catch (e) {
+      throw Exception('Error fetching most subscribed course name: $e');
+    }
+  }
+
 }
