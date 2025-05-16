@@ -110,7 +110,7 @@ class AuthProvider with ChangeNotifier {
 
       _profileError = null;
     } catch (e) {
-      _profileError = "Please check your connection";
+      _profileError = "Failed to load profile details: ${e.toString()}";
     } finally {
       _profileIsLoading = false;
       notifyListeners();

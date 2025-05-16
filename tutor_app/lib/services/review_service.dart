@@ -6,29 +6,51 @@ import '../utils/env_config.dart';
 
 class ReviewService {
   Future<bool> submitReview(Review review) async {
-  try {
-    final response = await http.post(
-      Uri.parse('${EnvConfig.apiUrl}/api/submit-review/'),
-      headers: {"Content-Type": "application/json"},
-      body: jsonEncode(review.toJson()),
-    );
+    try {
+      final response = await http.post(
+        Uri.parse('${EnvConfig.apiUrl}/api/submit-review/'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(review.toJson()),
+      );
 
-    // Aceptar múltiples códigos de éxito
-    if (response.statusCode == 201 || response.statusCode == 200 || response.statusCode == 202) {
-      return true;
-    }
+      // Aceptar múltiples códigos de éxito
+      if (response.statusCode == 201 || response.statusCode == 200 || response.statusCode == 202) {
+        return true;
+      }
 
-    // Manejo de reseñas duplicadas si el backend retorna 409
-    if (response.statusCode == 409) {
-      debugPrint("⚠️ La reseña ya existe en el servidor (409 - conflicto).");
-      return true; // Considerar como enviada
+      // Manejo de reseñas duplicadas si el backend retorna 409
+      if (response.statusCode == 409) {
+        debugPrint("⚠️ La reseña ya existe en el servidor (409 - conflicto).");
+        return true; // Considerar como enviada
+      }
+
+      return false;
+    } catch (e) {
+      debugPrint("❌ Error al enviar reseña: $e");
+      return false;
     }
-    return false;
-  } catch (e) {
-    return false;
   }
-}
 
+  Future<bool> checkIfReviewExists(Review review) async {
+    try {
+      final response = await http.post(
+        Uri.parse('${EnvConfig.apiUrl}/api/check-review/'),
+        headers: {"Content-Type": "application/json"},
+        body: jsonEncode(review.toJson()),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return data['exists'] == true;
+      } else {
+        debugPrint("⚠️ Error al verificar reseña existente: ${response.statusCode}");
+        return false;
+      }
+    } catch (e) {
+      debugPrint("❌ Excepción al verificar reseña: $e");
+      return false;
+    }
+  }
 
   Future<double> fetchReviewPercentage(String studentId) async {
     final apiUrl = '${EnvConfig.apiUrl}/api/review-percentage/';
@@ -59,8 +81,7 @@ class ReviewService {
           }
         }
 
-        throw Exception(
-            'Percentage key not found or invalid format in API response');
+        throw Exception('Percentage key not found or invalid format in API response');
       } else {
         String errorMessage =
             'Failed to load review percentage (Status code: ${response.statusCode})';
@@ -72,6 +93,27 @@ class ReviewService {
       }
     } catch (e) {
       throw Exception('Error fetching review percentage: ${e.toString()}');
+    }
+  }
+
+  Future<Map<String, String>> fetchTutorProfile(int tutorId) async {
+    try {
+      final response = await http.get(
+        Uri.parse('${EnvConfig.apiUrl}/api/tutors/$tutorId/profile/'),
+        headers: {"Accept": "application/json"},
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        return {
+          'name': data['name'] ?? 'Sin nombre',
+          'photoUrl': data['photoUrl'] ?? '',
+        };
+      } else {
+        return {'name': 'Review your tutor', 'photoUrl': ''};
+      }
+    } catch (e) {
+      return {'name': 'Review your tutor', 'photoUrl': ''};
     }
   }
 }

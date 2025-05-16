@@ -1,33 +1,19 @@
-import 'package:flutter/material.dart';
-import '../models/review_model.dart';
-import '../services/user_service.dart';
+import 'package:flutter/foundation.dart'; // Import ChangeNotifier
 import '../services/review_service.dart';
-import '../services/local_cache_service.dart';
+import '../services/local_database_service.dart';
+import '../models/review_model.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
-class WriteReviewController extends ChangeNotifier {
-  final UserService _userService;
+class WriteReviewController extends ChangeNotifier { // Extend ChangeNotifier
   final ReviewService _reviewService;
-  final LocalCacheService _cacheService;
+  final LocalDatabaseService _localDb;
 
   WriteReviewController({
-    required UserService userService,
-    required ReviewService reviewService,
-    required LocalCacheService cacheService,
-  })  : _userService = userService,
-        _reviewService = reviewService,
-        _cacheService = cacheService;
+    ReviewService? reviewService,
+    LocalDatabaseService? localDatabaseService,
+  })  : _reviewService = reviewService ?? ReviewService(),
+        _localDb = localDatabaseService ?? LocalDatabaseService();
 
-  /// Fetches the tutor profile by ID.
-  Future<Map<String, dynamic>> getTutorProfile(int tutorId) async {
-    try {
-      final profile = await _userService.fetchTutorProfile(tutorId.toString());
-      return profile ?? {};
-    } catch (e) {
-      return {};
-    }
-  }
-
-  /// Submits a review. If it fails (even without exception), caches it for later sync.
   Future<bool> submitReview({
     required int tutoringSessionId,
     required int tutorId,
@@ -43,15 +29,34 @@ class WriteReviewController extends ChangeNotifier {
       comment: comment,
     );
 
-    try {
+    final connectivity = await Connectivity().checkConnectivity();
+    final hasInternet = connectivity != ConnectivityResult.none;
+
+    if (hasInternet) {
       final success = await _reviewService.submitReview(review);
-      if (!success) {
-        await _cacheService.cachePendingReview(review);
-      }
-      return success;
-    } catch (e) {
-      await _cacheService.cachePendingReview(review);
-      return false;
+      if (success) return true;
     }
+
+    await _localDb.cachePendingReview(review);
+    return false;
+  }
+
+  Future<bool> hasPendingReviewForSession(int sessionId) async {
+    return await _localDb.hasReviewForSession(sessionId);
+  }
+
+  Future<bool> reviewAlreadySent(Review review) async {
+    final connectivity = await Connectivity().checkConnectivity();
+    final hasInternet = connectivity != ConnectivityResult.none;
+
+    if (hasInternet) {
+      return await _reviewService.checkIfReviewExists(review);
+    } else {
+      return await _localDb.hasReviewForSession(review.tutoringSessionId ?? 0);
+    }
+  }
+
+  Future<Map<String, String>> getTutorProfile(int tutorId) async {
+    return await _reviewService.fetchTutorProfile(tutorId);
   }
 }
