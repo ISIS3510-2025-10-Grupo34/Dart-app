@@ -10,42 +10,28 @@ import 'local_database_service.dart';
 class TutorService {
   final LocalDatabaseService _dbService = LocalDatabaseService();
 
-  Future<List<TutorListItemModel>> fetchTutors() async {
+  Future<List<Map<String, dynamic>>> fetchTutors() async {
+    final localTutors = await _dbService.getTutors();
+    if (localTutors.isNotEmpty) {
+      return localTutors;
+    }
+
+    final apiUrl = '${EnvConfig.apiUrl}/info/tutors/';
     try {
-      final apiUrl = '${EnvConfig.apiUrl}/api/info/tutors/';
-      final response = await http.get(Uri.parse(apiUrl));
+      final response = await http.get(
+        Uri.parse(apiUrl),
+        headers: {"Content-Type": "application/json"},
+      );
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> decodedBody = jsonDecode(response.body);
-        final List<dynamic> tutorDataList = decodedBody['tutors'] ?? [];
+        Map<String, dynamic> data = jsonDecode(response.body);
+        List<dynamic> tutorList = data['tutors'] as List<dynamic>? ?? [];
+        List<Map<String, dynamic>> tutors =
+            List<Map<String, dynamic>>.from(tutorList);
 
-        List<TutorListItemModel> tutors = tutorDataList
-            .map((tutorJson) {
-              try {
-                return TutorListItemModel.fromJson(tutorJson);
-              } catch (e) {
-                return null;
-              }
-            })
-            .whereType<TutorListItemModel>()
-            .toList();
-
-        List<Map<String, dynamic>> tutorsToInsert = tutorDataList.map((tutor) {
-          return {
-            'id': tutor['id'],
-            'name': tutor['name'],
-            'phone_number': tutor['phone_number'],
-            'role': tutor['role'],
-            'profile_picture': tutor['profile_picture_url'],
-            'id_profile_picture': tutor['id_picture_url'],
-            'average_rating': tutor['avg_rating'],
-            'university_id': tutor['university_id'],
-            'major_id': tutor['major_id'],
-            'area_of_expertise_id': tutor['area_of_expertise_id'],
-          };
-        }).toList();
-
-        await _dbService.bulkInsertTutors(tutorsToInsert);
+        if (tutors.isNotEmpty) {
+          await _dbService.bulkInsertTutors(tutors);
+        }
 
         return tutors;
       } else {
@@ -53,7 +39,7 @@ class TutorService {
             'Failed to load tutors (Status code: ${response.statusCode})');
       }
     } catch (e) {
-      throw Exception('Failed to fetch tutors: ${e.toString()}');
+      throw Exception('Error fetching tutors: ${e.toString()}');
     }
   }
 

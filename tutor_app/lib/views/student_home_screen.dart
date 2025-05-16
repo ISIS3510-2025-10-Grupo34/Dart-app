@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tutor_app/controllers/notification_controller.dart';
+import 'package:tutor_app/utils/network_utils.dart';
 import 'package:tutor_app/views/error_view.dart';
 import 'package:tutor_app/views/notifications_view.dart';
 import 'student_profile_screen.dart';
@@ -115,9 +116,13 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                           ),
                         ),
                         onPressed: () async {
-                          final filterController =
-                              Provider.of<FilterController>(context,
-                                  listen: false);
+                          final hasInternet = await NetworkUtils.hasInternetConnection();
+                          if (!hasInternet) {
+                            NetworkUtils.showNoInternetDialog(context);
+                            return;
+                          }
+
+                          final filterController = Provider.of<FilterController>(context, listen: false);
                           await filterController.loadFilterOptions();
 
                           showModalBottomSheet(
@@ -128,20 +133,16 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                               return FilterModal(
                                 onFilter: (university, course, professor) async {
                                   if (university.isNotEmpty) {
-                                    await filterController
-                                        .registerFilterUsed(university);
+                                    await filterController.registerFilterUsed(university);
                                   }
                                   if (course.isNotEmpty) {
-                                    await filterController
-                                        .registerFilterUsed(course);
+                                    await filterController.registerFilterUsed(course);
                                   }
                                   if (professor.isNotEmpty) {
-                                    await filterController
-                                        .registerFilterUsed(professor);
+                                    await filterController.registerFilterUsed(professor);
                                   }
 
-                                  controller.applyFiltersAndUpdate(
-                                      university, course, professor);
+                                  controller.applyFiltersAndUpdate(university, course, professor);
                                 },
                               );
                             },
@@ -158,7 +159,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                   child: ElevatedButton.icon(
                     icon: const Icon(Icons.refresh),
                     label: const Text("Reload"),
-                    onPressed: () {
+                    onPressed: () async {
+                      final hasInternet = await NetworkUtils.hasInternetConnection();
+                      if (!hasInternet) {
+                        NetworkUtils.showNoInternetDialog(context);
+                        return;
+                      }
                       controller.loadOrderedSessions();
                     },
                     style: ElevatedButton.styleFrom(
@@ -304,9 +310,13 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               alignment: Alignment.centerRight,
               child: ElevatedButton(
                 onPressed: () async {
-                  final timeToBook = DateTime.now()
-                      .difference(_screenLoadTime!)
-                      .inMilliseconds;
+                  final hasInternet = await NetworkUtils.hasInternetConnection();
+                  if (!hasInternet) {
+                    NetworkUtils.showNoInternetDialog(context);
+                    return;
+                  }
+
+                  final timeToBook = DateTime.now().difference(_screenLoadTime!).inMilliseconds;
                   await controller.sendTimeToBookMetric(timeToBook);
                 },
                 style: ElevatedButton.styleFrom(

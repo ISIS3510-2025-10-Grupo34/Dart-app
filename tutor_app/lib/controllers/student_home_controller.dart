@@ -6,6 +6,8 @@ import '../models/tutor_list_item_model.dart';
 import '../models/tutoring_session_model.dart';
 import '../services/tutor_service.dart';
 import '../services/tutoring_session_service.dart';
+import '../services/universities_service.dart';
+import '../services/course_service.dart';
 
 enum StudentHomeState { initial, loading, loaded, error }
 
@@ -16,6 +18,8 @@ class StudentHomeController with ChangeNotifier {
   final AuthProvider _authProvider;
   final TutoringSessionService _sessionService;
   final MetricsService _metricsService;
+  final UniversitiesService _universitiesService = UniversitiesService();
+  final CourseService _coursesService = CourseService();
 
   StudentHomeController({
     required TutorService tutorService,
@@ -53,23 +57,35 @@ class StudentHomeController with ChangeNotifier {
       _activeCourseFilter.isNotEmpty ||
       _activeTutorFilter.isNotEmpty;
 
+  List<String> _universities = [];
+  List<String> get universities => _universities;
+
+  List<String> _courses = [];
+  List<String> get courses => _courses;
+
   void _applyFilters() {
     List<TutoringSession> filtered = List.from(_sessions);
 
     if (_activeUniversityFilter.isNotEmpty) {
-      filtered = filtered.where((session) =>
-          session.university.toLowerCase().contains(_activeUniversityFilter.toLowerCase())
-      ).toList();
+      filtered = filtered
+          .where((session) => session.university
+              .toLowerCase()
+              .contains(_activeUniversityFilter.toLowerCase()))
+          .toList();
     }
     if (_activeCourseFilter.isNotEmpty) {
-      filtered = filtered.where((session) =>
-          session.course.toLowerCase().contains(_activeCourseFilter.toLowerCase())
-      ).toList();
+      filtered = filtered
+          .where((session) => session.course
+              .toLowerCase()
+              .contains(_activeCourseFilter.toLowerCase()))
+          .toList();
     }
     if (_activeTutorFilter.isNotEmpty) {
-      filtered = filtered.where((session) =>
-          session.tutorName.toLowerCase().contains(_activeTutorFilter.toLowerCase())
-      ).toList();
+      filtered = filtered
+          .where((session) => session.tutorName
+              .toLowerCase()
+              .contains(_activeTutorFilter.toLowerCase()))
+          .toList();
     }
 
     _sessions = filtered;
@@ -87,9 +103,39 @@ class StudentHomeController with ChangeNotifier {
       }
 
       final fetchedSessions = await _sessionService.fetchTutoringSessionsInOrder();
-
       _sessions = fetchedSessions;
       _applyFilters();
+      _state = StudentHomeState.loaded;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _state = StudentHomeState.error;
+    } finally {
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadUniversitiesAndCourses(String universityName) async {
+    try {
+      _universities = await _universitiesService.fetchUniversities();
+      _courses = await _coursesService.fetchCourses(universityName);
+      notifyListeners();
+    } catch (e) {
+      _errorMessage = e.toString();
+      _state = StudentHomeState.error;
+      notifyListeners();
+    }
+  }
+
+  Future<void> loadTutors() async {
+    _state = StudentHomeState.loading;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final rawTutors = await _tutorService.fetchTutors(); 
+      _tutors = rawTutors
+          .map((json) => TutorListItemModel.fromJson(json))
+          .toList();
 
       _state = StudentHomeState.loaded;
     } catch (e) {
@@ -100,21 +146,12 @@ class StudentHomeController with ChangeNotifier {
     }
   }
 
-
-  Future<void> loadTutors() async {
-    _state = StudentHomeState.loading;
-    _errorMessage = null;
-    notifyListeners();
-
+  Future<void> loadCoursesForUniversity(String universityName) async {
     try {
-      _tutors = await _tutorService.fetchTutors();
-      _tutors.sort((a, b) => b.averageRating.compareTo(a.averageRating));
-      _state = StudentHomeState.loaded;
-    } catch (e) {
-      _errorMessage = e.toString();
-      _state = StudentHomeState.error;
-    } finally {
+      _courses = (await _coursesService.fetchCoursesByUniversity(universityName)).cast<String>();
       notifyListeners();
+    } catch (e) {
+      debugPrint("Failed to load courses: $e");
     }
   }
 

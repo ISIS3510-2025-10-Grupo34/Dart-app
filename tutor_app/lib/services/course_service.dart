@@ -8,36 +8,47 @@ class CourseService {
   final String baseUrl = '${EnvConfig.apiUrl}/api/info/courses/';
   final LocalDatabaseService _dbService = LocalDatabaseService();
 
-  Future<List<Course>> fetchCourses() async {
-    final url = Uri.parse(baseUrl);
+    Future<List<String>> fetchCourses(String university) async {
+    List<String> localCourses =
+        await _dbService.getCoursesByUniversityName(university);
+    if (localCourses.isNotEmpty) {
+      return localCourses;
+    }
+
+    final apiUrl =
+        '${EnvConfig.apiUrl}/api/courses-by-university/?university=$university';
+
     try {
-      final response = await http.get(
-        url,
-        headers: {'Content-Type': 'application/json'},
-      );
+      final response = await http.get(Uri.parse(apiUrl));
 
       if (response.statusCode == 200) {
-        final decoded = jsonDecode(response.body);
-        final List<dynamic> courseList = decoded["courses"];
+        Map<String, dynamic> data = jsonDecode(response.body);
+        List<dynamic> courseList = data['courses'] as List<dynamic>? ?? [];
+        List<String> fetchedCourses = List<String>.from(courseList);
 
-        // Preparar lista de mapas para insertar en la base local
-        List<Map<String, dynamic>> coursesToInsert = courseList.map((courseJson) {
-          return {
-            'course_name': courseJson['course_name'],
-            'university_id': courseJson['university_id']
-          };
-        }).toList();
+        int? uniId = await _dbService.getUniversityIdByName(university);
+        if (uniId == null) {
+          await _dbService.insertUniversity(university);
+          uniId = await _dbService.getUniversityIdByName(university);
+        }
 
-        // Guardar en local en batch
-        await _dbService.bulkInsertCourses(coursesToInsert);
+        if (uniId != null && fetchedCourses.isNotEmpty) {
+          await _dbService.bulkInsertCoursesForUniversity(
+              university, fetchedCourses);
+        }
 
-        // Retornar lista de objetos Course
-        return courseList.map((courseJson) => Course.fromJson(courseJson)).toList();
+        return fetchedCourses;
       } else {
-        throw Exception('Error fetching courses (status ${response.statusCode})');
+        throw Exception(
+            'Failed to load courses (Status code: ${response.statusCode})');
       }
     } catch (e) {
-      throw Exception('Error fetching courses: $e');
+      final String error = e.toString();
+      if (error == "Connection failed") {
+        throw "Please check your connection";
+      } else {
+        throw e.toString();
+      }
     }
   }
 

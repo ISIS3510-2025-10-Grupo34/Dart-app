@@ -78,6 +78,7 @@ void main() async {
   final localCacheService = LocalCacheService();
   final locationService = LocationService();
   final profileCreationTimeService = ProfileCreationTimeService();
+  final filterService = FilterService(); 
 
   final authProvider = AuthProvider(userService: userService);
   final signInProcessProvider = SignInProcessProvider(
@@ -89,6 +90,7 @@ void main() async {
   runApp(
     MultiProvider(
       providers: [
+        Provider<FilterService>.value(value: filterService),
         Provider<AuthService>.value(value: authService),
         Provider<TutorService>.value(value: tutorService),
         Provider<CourseService>.value(value: courseService),
@@ -176,7 +178,12 @@ void main() async {
               ),
             ),
             ChangeNotifierProvider(
-              create: (_) => FilterController(filterService: FilterService()),
+              create: (_) => FilterController(
+                universitiesService: context.read<UniversitiesService>(),
+                coursesService: context.read<CourseService>(),
+                tutorService: context.read<TutorService>(),
+                filterService: context.read<FilterService>(),
+                ),
             ),
             ChangeNotifierProvider(
               create: (context) => StudentProfileController(
