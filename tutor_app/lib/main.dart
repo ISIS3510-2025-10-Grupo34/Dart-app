@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'package:tutor_app/controllers/booked_sessions_controller.dart';
 import 'misc/constants.dart';
 import 'package:lru/lru.dart';
 // Services
@@ -56,6 +57,7 @@ final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
     GlobalKey<ScaffoldMessengerState>();
 
 typedef SimilarTutorReviewsCache = LruCache<int, SimilarTutorReviewsResponse>;
+typedef TimeToCreateProfile = LruCache<String, DateTime>;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -138,6 +140,13 @@ void main() async {
               create: (context) => LoginController(
                 authService: context.read<AuthService>(),
                 authProvider: context.read<AuthProvider>(),
+              ),
+            ),
+            ChangeNotifierProvider(
+              create: (context) => BookedSessionsController(
+                sessionService: context.read<TutoringSessionService>(),
+                authProvider: context.read<AuthProvider>(), 
+                cacheService: context.read<LocalCacheService>(),
               ),
             ),
             ChangeNotifierProvider(

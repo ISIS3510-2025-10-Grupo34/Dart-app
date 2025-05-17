@@ -80,7 +80,13 @@ class UserService {
 
       if (response.statusCode == 200) {
         final Map<String, dynamic> responseData = jsonDecode(response.body);
-        return responseData["data"];
+        final rawData = responseData["data"];
+          if (rawData is Map) {
+            return rawData.map((key, value) => MapEntry(key.toString(), value));
+          } else {
+            return {};
+          }
+
       } else {
         String errorMessage =
             'Failed to load student profile (Status code: ${response.statusCode})';

@@ -29,7 +29,7 @@ class TutoringSession {
       university: json['university'] ?? '',
       cost: _parseDouble(json['cost']),
       dateTime: json['date_time'] ?? '',
-      student: json['student'],
+      student: json['student']?.toString(), 
     );
   }
 
