@@ -73,8 +73,7 @@ class BookedSessionsScreen extends StatelessWidget {
                       itemCount: sessions.length,
                       itemBuilder: (context, index) {
                         final session = sessions[index];
-                        final style = controller.getLearningStyle(session.student?.toString());
-                        return _buildSessionCard(session, style);
+                        return _buildSessionCard(session);
                       },
                     ),
                   ),
@@ -87,7 +86,7 @@ class BookedSessionsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildSessionCard(session, String learningStyle) {
+  Widget _buildSessionCard(session) {
     return Card(
       color: const Color(0xFFFFFFFF),
       elevation: 2,
@@ -143,10 +142,7 @@ class BookedSessionsScreen extends StatelessWidget {
               style: const TextStyle(fontSize: 14, color: Colors.black),
             ),
             const SizedBox(height: 4),
-            Text(
-              "Learning Style: $learningStyle",
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
-            ),
+            
           ],
         ),
       ),

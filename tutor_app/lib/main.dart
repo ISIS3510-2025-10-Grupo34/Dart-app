@@ -145,8 +145,8 @@ void main() async {
             ChangeNotifierProvider(
               create: (context) => BookedSessionsController(
                 sessionService: context.read<TutoringSessionService>(),
-                userService: context.read<UserService>(),
-                authProvider: context.read<AuthProvider>(),
+                authProvider: context.read<AuthProvider>(), 
+                cacheService: context.read<LocalCacheService>(),
               ),
             ),
             ChangeNotifierProvider(

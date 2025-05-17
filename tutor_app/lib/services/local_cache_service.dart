@@ -1,8 +1,7 @@
-// lib/services/local_cache_service.dart
-
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:flutter/foundation.dart';
+import 'package:tutor_app/models/tutoring_session_model.dart';
 import '../models/review_model.dart';
 import 'location_service.dart';
 
@@ -10,6 +9,9 @@ class LocalCacheService {
   static const String _pendingReviewsKey = 'pending_reviews';
   static const String _pendingNotificationsKey = 'pending_notifications';
   static const String _pendingRegistrationsKey = 'pending_registrations';
+  static const String _cachedSessionsKey = 'cached_sessions';
+  static const String _cachedStylesKey = 'cached_styles';
+
 
   /// ---------------- Reviews ----------------
   Future<void> cachePendingReview(Review review) async {
@@ -198,4 +200,34 @@ class LocalCacheService {
           "Could not remove registration: missing timestamp identifier.");
     }
   }
+  /// ---------------- Sessions ----------------
+      Future<void> cacheTutoringSessions(List<TutoringSession> sessions) async {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonList = sessions.map((s) => jsonEncode(s.toJsonSTS())).toList();
+      await prefs.setStringList(_cachedSessionsKey, jsonList);
+    }
+
+    Future<List<TutoringSession>> getCachedTutoringSessions() async {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonList = prefs.getStringList(_cachedSessionsKey);
+      if (jsonList == null) return [];
+      return jsonList
+          .map((s) => TutoringSession.fromJsonSTS(jsonDecode(s)))
+          .toList();
+    }
+  /// ---------------- Learning Styles ----------------
+    Future<void> cacheLearningStyles(Map<String, String> styles) async {
+    final prefs = await SharedPreferences.getInstance();
+    final encoded = jsonEncode(styles);
+    await prefs.setString(_cachedStylesKey, encoded);
+  }
+
+  Future<Map<String, String>> getCachedLearningStyles() async {
+    final prefs = await SharedPreferences.getInstance();
+    final encoded = prefs.getString(_cachedStylesKey);
+    if (encoded == null) return {};
+    final decoded = jsonDecode(encoded);
+    return Map<String, String>.from(decoded);
+  }
+
 }
