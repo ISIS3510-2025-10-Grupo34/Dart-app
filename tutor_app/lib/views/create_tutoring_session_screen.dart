@@ -68,7 +68,7 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
   } catch (e) {
     setState(() => _loadingTopPostingTimes = false);
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('Failed to load data: $e')),
+      SnackBar(content: Text('No internet connection. Please try again later.')),
     );
   }
 }
