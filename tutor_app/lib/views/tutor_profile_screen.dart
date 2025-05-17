@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'create_tutoring_session_screen.dart';
 import 'connect_students_screen.dart';
 import 'package:provider/provider.dart';
+import 'booked_sessions_screen.dart';
 
 class TutorProfileScreen extends StatefulWidget {
   const TutorProfileScreen({super.key});
@@ -210,43 +211,63 @@ class _TutorProfileScreenState extends State<TutorProfileScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: Colors.white,
-        title: const Text('Tutor App',
-            style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w500,
-            )),
-        automaticallyImplyLeading: false,
-        actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: IconButton(
-              icon: const Icon(Icons.notifications, color: Color(0xFF192650)),
-              tooltip: 'Connect Students',
-              onPressed: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                      builder: (_) => const ConnectStudentsScreen()),
-                );
-              },
-            ),
-          ),
-          Padding(
-            padding: const EdgeInsets.only(right: 8.0),
-            child: Material(
-              color: const Color(0xFF192650),
-              shape: const CircleBorder(),
-              clipBehavior: Clip.antiAlias,
-              child: IconButton(
-                icon: const Icon(Icons.logout, color: Colors.white),
-                tooltip: 'Logout',
-                onPressed: () => _logout(context),
-              ),
-            ),
-          ),
-        ],
+      backgroundColor: Colors.white,
+      title: const Text(
+        'Tutor App',
+        style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500),
       ),
+      automaticallyImplyLeading: false,
+      actions: [
+        Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: IconButton(
+            icon: const Icon(Icons.calendar_today, color: Color(0xFF192650)),
+            tooltip: 'Booked Sessions',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const BookedSessionsScreen()),
+              );
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: IconButton(
+            icon: const Icon(Icons.notifications, color: Color(0xFF192650)),
+            tooltip: 'Connect Students',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const ConnectStudentsScreen()),
+              );
+            },
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: IconButton(
+            icon: const Icon(FontAwesomeIcons.starHalfStroke, color: Color(0xFF192650)),
+            tooltip: 'Highly-rated reviews',
+            onPressed: _fetchAndDisplaySimilarReviews,
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.only(right: 8.0),
+          child: Material(
+            color: const Color(0xFF192650),
+            shape: const CircleBorder(),
+            clipBehavior: Clip.antiAlias,
+            child: IconButton(
+              icon: const Icon(Icons.logout, color: Colors.white),
+              tooltip: 'Logout',
+              onPressed: () => _logout(context),
+            ),
+          ),
+        ),
+      ],
+    ),
+
       body: buildProfileContent(context, profileController),
     );
   }
