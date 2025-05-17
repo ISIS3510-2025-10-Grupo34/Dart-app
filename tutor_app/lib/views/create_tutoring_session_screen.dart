@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:tutor_app/services/top_times_service.dart';
 import 'package:tutor_app/utils/network_utils.dart';
 import '../controllers/tutor_profile_controller.dart';
 import '../providers/create_tutoring_session_process_provider.dart';
@@ -36,6 +37,41 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
     });
   }
 
+  Future<void> _showTopPostingTimes() async {
+  bool _loadingTopPostingTimes;
+  setState(() => _loadingTopPostingTimes = true);
+  try {
+    final service = TopPostingTimesService();
+    final data = await service.fetchTopPostingTimes();
+    bool _loadingTopPostingTimes;
+    setState(() => _loadingTopPostingTimes = false);
+
+    final formattedText = data.map((entry) {
+      final hour = entry['hour'].toString().padLeft(2, '0');
+      final count = entry['count'];
+      return '$hour:00 - $count posts';
+    }).join('\n');
+
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Top Posting Times'),
+        content: Text(formattedText),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('Close'),
+          ),
+        ],
+      ),
+    );
+  } catch (e) {
+    setState(() => _loadingTopPostingTimes = false);
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text('Failed to load data: $e')),
+    );
+  }
+}
 
   Future<void> _restoreSessionProgress(
     CreateTutoringSessionProcessProvider hiveProvider,
@@ -108,6 +144,11 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
               const Text("TutorApp", style: TextStyle(fontSize: 24, fontWeight: FontWeight.w500)),
               const SizedBox(height: 24),
               const Text("Create a tutoring session", style: TextStyle(fontSize: 30, fontWeight: FontWeight.w700)),
+              IconButton(
+                  icon: const Icon(Icons.info_outline, color: Colors.blue),
+                  onPressed: () => _showTopPostingTimes(),
+                  tooltip: 'View top posting times',
+        ),
               if (_restoredFromCache)
                 Container(
                   width: double.infinity,
@@ -373,7 +414,6 @@ class _CreateTutoringSessionScreenState extends State<CreateTutoringSessionScree
       ],
     );
   }
-
 
   Widget _buildDateTimeField(TutorProfileController controller) {
     return Column(
