@@ -37,23 +37,17 @@ class BookedSessionsController extends ChangeNotifier {
           _sessions = [];
         } else {
           final allSessions = await sessionService.fetchTutoringSessions();
-          debugPrint("[BookedSessionsController] Sesiones obtenidas: ${allSessions.length}");
-
           _sessions = allSessions
               .where((s) => s.tutorId == tutorId && s.student != null)
               .toList();
 
-          debugPrint("[BookedSessionsController] Sesiones filtradas: ${_sessions.length}");
 
           // Cachearlas localmente
           await cacheService.cacheTutoringSessions(_sessions);
         }
       }
     } catch (e) {
-      debugPrint("[BookedSessionsController] Error cargando sesiones desde API: $e");
-
       _sessions = await cacheService.getCachedTutoringSessions();
-      debugPrint("[BookedSessionsController] Sesiones desde caché: ${_sessions.length}");
     }
 
     _isLoading = false;

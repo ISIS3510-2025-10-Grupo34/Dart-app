@@ -4,8 +4,26 @@ import '../controllers/booked_sessions_controller.dart';
 import '../utils/network_utils.dart';
 import 'error_view.dart';
 
-class BookedSessionsScreen extends StatelessWidget {
+class BookedSessionsScreen extends StatefulWidget {
   const BookedSessionsScreen({super.key});
+
+  @override
+  State<BookedSessionsScreen> createState() => _BookedSessionsScreenState();
+}
+
+class _BookedSessionsScreenState extends State<BookedSessionsScreen> {
+  bool _hasInitialized = false;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+
+    if (!_hasInitialized) {
+      final controller = Provider.of<BookedSessionsController>(context, listen: false);
+      controller.loadSessions(); // ✅ Carga automática
+      _hasInitialized = true;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -16,11 +34,12 @@ class BookedSessionsScreen extends StatelessWidget {
           icon: const Icon(Icons.arrow_back),
           onPressed: () => Navigator.of(context).pop(),
           tooltip: 'Back',
-        ),),
+        ),
+      ),
       body: SafeArea(
         child: Consumer<BookedSessionsController>(
           builder: (context, controller, child) {
-            if (controller.isLoading) {
+            if (controller.isLoading && controller.sessions.isEmpty) {
               return const Center(child: CircularProgressIndicator());
             }
 
@@ -41,26 +60,19 @@ class BookedSessionsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Padding(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                      Text(
-                        "Booked Sessions",
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: const Text(
+                    "Booked Sessions",
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                 ),
                 Expanded(
                   child: RefreshIndicator(
                     onRefresh: () async {
-                      final hasInternet =
-                          await NetworkUtils.hasInternetConnection();
+                      final hasInternet = await NetworkUtils.hasInternetConnection();
                       if (!hasInternet) {
                         NetworkUtils.showNoInternetDialog(context);
                         return;
@@ -68,8 +80,7 @@ class BookedSessionsScreen extends StatelessWidget {
                       await controller.loadSessions();
                     },
                     child: ListView.builder(
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 10),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                       itemCount: sessions.length,
                       itemBuilder: (context, index) {
                         final session = sessions[index];
@@ -102,9 +113,7 @@ class BookedSessionsScreen extends StatelessWidget {
                 CircleAvatar(
                   backgroundColor: const Color(0xFF171F45),
                   child: Text(
-                    session.student.isNotEmpty
-                        ? session.student[0]
-                        : "?",
+                    session.student.isNotEmpty ? session.student[0] : "?",
                     style: const TextStyle(color: Colors.white),
                   ),
                 ),
@@ -141,11 +150,11 @@ class BookedSessionsScreen extends StatelessWidget {
               "Date: ${session.dateTime}",
               style: const TextStyle(fontSize: 14, color: Colors.black),
             ),
-            const SizedBox(height: 4),
-            
           ],
         ),
       ),
     );
   }
 }
+
+
