@@ -26,6 +26,7 @@ import 'package:tutor_app/services/student_tutoring_sessions_service.dart';
 import 'package:tutor_app/services/profile_creation_time_service.dart';
 import 'package:tutor_app/services/area_of_expertise_service.dart';
 import 'package:tutor_app/services/local_database_service.dart';
+import 'package:tutor_app/services/subscription_service.dart';
 
 // Controllers & Providers
 import 'package:tutor_app/providers/auth_provider.dart';
@@ -44,6 +45,7 @@ import 'package:tutor_app/controllers/student_profile_controller.dart';
 import 'package:tutor_app/controllers/filter_controller.dart';
 import 'package:tutor_app/controllers/student_tutoring_sessions_controller.dart';
 import 'package:tutor_app/controllers/write_review_controller.dart';
+import 'package:tutor_app/controllers/subscribe_controller.dart';
 import 'package:tutor_app/models/similar_tutor_review_model.dart';
 
 // UI
@@ -86,6 +88,7 @@ void main() async {
   final locationService = LocationService();
   final profileCreationTimeService = ProfileCreationTimeService();
   final filterService = FilterService(); 
+  final subscriptionService = SubscriptionService();
 
   final authProvider = AuthProvider(userService: userService);
   final signInProcessProvider = SignInProcessProvider(
@@ -121,6 +124,7 @@ void main() async {
         Provider<LocalDatabaseService>(
           create: (_) => LocalDatabaseService(),
         ),
+        Provider<SubscriptionService>.value(value: subscriptionService),
         // Base providers
         ChangeNotifierProvider<AuthProvider>.value(
           value: authProvider,
@@ -227,7 +231,14 @@ void main() async {
                 localDatabaseService: context.read<LocalDatabaseService>(),
               ),
             ),
-
+            ChangeNotifierProvider(
+              create: (context) => SubscribeCourseController(
+                context.read<AuthProvider>(),
+                context.read<UniversitiesService>(),
+                context.read<CourseService>(),
+                context.read<SubscriptionService>(),
+              ),
+            ),
             // SyncService (notifier-less, but has dependencies)
             Provider<SyncService>(
               create: (context) => SyncService(
