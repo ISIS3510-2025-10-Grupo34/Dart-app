@@ -2,7 +2,9 @@ import 'package:flutter/foundation.dart';
 import '../services/universities_service.dart'; 
 import '../services/course_service.dart';       
 import '../services/subscription_service.dart'; 
-import '../providers/auth_provider.dart';      
+import '../providers/auth_provider.dart'; 
+import '../providers/subscribe_process_provider.dart';   
+
 enum SubscribeCourseState {
   initial,
   subscribing,
@@ -15,14 +17,30 @@ class SubscribeCourseController with ChangeNotifier {
   final UniversitiesService _universitiesService;
   final CourseService _courseService;
   final SubscriptionService _subscriptionService;
+  final SubscribeProgressProvider _subscribeProgressProvider;
 
   SubscribeCourseController(
     this._authProvider,
     this._universitiesService,
     this._courseService,
     this._subscriptionService,
+    this._subscribeProgressProvider,
   ) {
-    loadUniversities();
+    _initController();
+  }
+
+  Future<void> _initController() async {
+    await _subscribeProgressProvider.init();
+    await loadUniversities();
+
+    _selectedUniversity = _subscribeProgressProvider.savedUniversity;
+    _selectedCourse = _subscribeProgressProvider.savedCourse;
+
+    if (_selectedUniversity != null) {
+      _loadCourses(_selectedUniversity!);
+    }
+
+    notifyListeners();
   }
 
   SubscribeCourseState _state = SubscribeCourseState.initial;
@@ -116,6 +134,7 @@ class SubscribeCourseController with ChangeNotifier {
       _isLoadingCourses = false;
       notifyListeners();
       if (value != null && value.isNotEmpty) {
+        _subscribeProgressProvider.saveUniversity(value);
         _loadCourses(value);
       }
     }
@@ -125,6 +144,9 @@ class SubscribeCourseController with ChangeNotifier {
     if (_selectedCourse != value) {
       _selectedCourse = value;
       _courseSelectionError = null;
+      if (value != null && value.isNotEmpty) {
+        _subscribeProgressProvider.saveCourse(value); 
+      }
       notifyListeners();
     }
   }
@@ -194,6 +216,9 @@ class SubscribeCourseController with ChangeNotifier {
       debugPrint("Unexpected subscription error: $e");
     } finally {
       _isSubscribing = false;
+      if (SubscribeCourseState.success == _state) {
+        await _subscribeProgressProvider.clearSubscriptionProgress(); 
+      }
       notifyListeners();
     }
   }

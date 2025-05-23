@@ -31,6 +31,7 @@ import 'package:tutor_app/services/subscription_service.dart';
 // Controllers & Providers
 import 'package:tutor_app/providers/auth_provider.dart';
 import 'package:tutor_app/providers/sign_in_process_provider.dart';
+import 'package:tutor_app/providers/subscribe_process_provider.dart';
 import 'package:tutor_app/providers/create_tutoring_session_process_provider.dart';
 import 'package:tutor_app/controllers/login_controller.dart';
 import 'package:tutor_app/controllers/sign_in_controller.dart';
@@ -100,6 +101,8 @@ void main() async {
     sessionService: tutoringSessionService, 
     localCacheService: localCacheService,
   );
+  final subscribeProgressProvider = SubscribeProgressProvider();
+  await subscribeProgressProvider.init();
 
   runApp(
     MultiProvider(
@@ -135,6 +138,7 @@ void main() async {
             value: similarTutorReviewsCache),
         ChangeNotifierProvider<CreateTutoringSessionProcessProvider>.value(
             value: createTutoringSessionProcessProvider),
+        ChangeNotifierProvider(create: (_) => subscribeProgressProvider),
       ],
       child: Builder(
         builder: (context) => MultiProvider(
@@ -237,6 +241,7 @@ void main() async {
                 context.read<UniversitiesService>(),
                 context.read<CourseService>(),
                 context.read<SubscriptionService>(),
+                context.read<SubscribeProgressProvider>(),
               ),
             ),
             // SyncService (notifier-less, but has dependencies)
