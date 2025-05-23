@@ -313,6 +313,20 @@ class _SubscribeCourseScreenState extends State<SubscribeCourseScreen> {
                   padding: const EdgeInsets.only(top: 8.0),
                   child: Text("Please select a university first to see courses.", style: TextStyle(color: Colors.grey[600])),
                 ),
+              if (controller.courseRatingMessage != null)
+                Padding(
+                  padding: const EdgeInsets.only(top: 12.0),
+                  child: Text(
+                    controller.selectedCourse == null || controller.selectedCourse!.isEmpty
+                        ? "Please select a course to see its average score"
+                        : controller.courseRatingMessage ?? "",
+                    style: TextStyle(
+                      color: Colors.blueGrey[700],
+                      fontSize: 14,
+                      fontStyle: FontStyle.italic,
+                    ),
+                  ),
+                ),
               const SizedBox(height: 30),
 
               // Subscribe Button

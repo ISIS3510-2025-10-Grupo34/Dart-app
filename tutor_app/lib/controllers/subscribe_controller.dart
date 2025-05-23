@@ -88,6 +88,8 @@ class SubscribeCourseController with ChangeNotifier {
   String? _successMessage;
   String? get successMessage => _successMessage;
 
+  String? _courseRatingMessage;
+  String? get courseRatingMessage => _courseRatingMessage;
 
   Future<void> loadUniversities() async {
     _isLoadingUniversities = true;
@@ -140,16 +142,29 @@ class SubscribeCourseController with ChangeNotifier {
     }
   }
 
-  void selectCourse(String? value) {
+  void selectCourse(String? value) async {
     if (_selectedCourse != value) {
       _selectedCourse = value;
       _courseSelectionError = null;
-      if (value != null && value.isNotEmpty) {
-        _subscribeProgressProvider.saveCourse(value); 
+      if (value != null && value.isNotEmpty && _selectedUniversity != null) {
+        _subscribeProgressProvider.saveCourse(value);
+
+        // Obtener el promedio del curso
+        _courseRatingMessage = "Loading rating...";
+        notifyListeners();
+
+        final rating = await _subscriptionService.fetchCourseAverageRating(
+          course: value,
+          university: _selectedUniversity!,
+        );
+        _courseRatingMessage = rating;
+      } else {
+        _courseRatingMessage = null;
       }
       notifyListeners();
     }
   }
+
 
   bool _validateSelections() {
     bool isValid = true;
