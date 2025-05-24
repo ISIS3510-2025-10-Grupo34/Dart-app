@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class CalendarAppointment {
   final int id;
 
@@ -50,5 +52,23 @@ List<CalendarAppointment> appointmentsFromJson(List<dynamic> json, int oId) {
   for (var item in json) {
     appointments.add(CalendarAppointment.fromJson(item, oId));
   }
+  return appointments;
+}
+
+List<CalendarAppointment> parseAppointmentsInIsolate(String jsonString, id) {
+  final List<dynamic> decodedJson = jsonDecode(jsonString) as List<dynamic>;
+  List<CalendarAppointment> appointments = decodedJson.map((dynamic item) {
+    if (item is Map<String, dynamic>) {
+      try {
+        return CalendarAppointment.fromJson(item, id);
+      } catch (e) {
+        rethrow;
+      }
+    } else {
+      throw FormatException(
+          'Invalid item format in JSON list (in isolate): $item');
+    }
+  }).toList();
+
   return appointments;
 }
