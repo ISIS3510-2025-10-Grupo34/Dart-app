@@ -302,78 +302,96 @@ class LocalDatabaseService {
   }
 
   // Funciones para manejar cursos
-  Future<List<String>> getCoursesByUniversityName(String universityName) async {
-    final universityId = await getUniversityIdByName(universityName);
-    if (universityId == null) return [];
-
+  Future<int> insertCourse(String courseName, int universityId) async {
     final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'courses',
-      columns: ['name'],
-      where: 'university_id = ?',
-      whereArgs: [universityId],
-      orderBy: 'name',
-    );
-    return List.generate(maps.length, (i) => maps[i]['name'] as String);
+    try {
+      final existing = await db.query(
+        'courses',
+        columns: ['id'], 
+        where: 'course_name = ? AND university_id = ?',
+        whereArgs: [courseName, universityId],
+        limit: 1,
+      );
+
+      if (existing.isNotEmpty) {
+        return existing.first['id'] as int; 
+      }
+
+      return await db.insert(
+        'courses',
+        {'course_name': courseName, 'university_id': universityId},
+      );
+    } catch (e) {
+      print('Error inserting course "$courseName" for university ID $universityId: $e');
+      return -1; 
+    }
   }
 
   Future<void> bulkInsertCoursesForUniversity(
       String universityName, List<String> courseNames) async {
     final universityId = await getUniversityIdByName(universityName);
-    if (universityId == null) return;
+    if (universityId == null) {
+      print('Cannot insert courses: University "$universityName" not found.');
+      return; 
+    }
 
     final db = await database;
     Batch batch = db.batch();
     for (String name in courseNames) {
       batch.insert(
         'courses',
-        {'name': name, 'university_id': universityId},
+        {'course_name': name, 'university_id': universityId},
         conflictAlgorithm: ConflictAlgorithm.ignore,
       );
     }
-    await batch.commit(noResult: true);
+    try {
+      await batch.commit(noResult: true);
+    } catch (e) {
+      print('Error during bulk insert of courses for "$universityName": $e');
+    }
   }
 
-  Future<int> insertCourse(String name) async {
+  Future<List<String>> getCoursesByUniversityName(String universityName) async {
+    final universityId = await getUniversityIdByName(universityName);
+    if (universityId == null) {
+      print('Cannot get courses: University "$universityName" not found.');
+      return []; 
+    }
+
     final db = await database;
     try {
-      return await db.insert('courses', {'name': name},
-          conflictAlgorithm: ConflictAlgorithm.ignore);
+      final List<Map<String, dynamic>> maps = await db.query(
+        'courses',
+        columns: ['course_name'], 
+        where: 'university_id = ?',
+        whereArgs: [universityId],
+        orderBy: 'course_name',
+      );
+      return List.generate(maps.length, (i) => maps[i]['course_name'] as String);
     } catch (e) {
-      return -1;
+      print('Error fetching courses for "$universityName": $e');
+      return []; 
     }
   }
 
-  Future<void> bulkInsertCourses(List<String> courseNames) async {
+  Future<int?> getCourseId(String courseName, int universityId) async {
     final db = await database;
-    Batch batch = db.batch();
-    for (String name in courseNames) {
-      batch.insert('courses', {'name': name},
-          conflictAlgorithm: ConflictAlgorithm.ignore);
+    try {
+      final List<Map<String, dynamic>> maps = await db.query(
+        'courses',
+        columns: ['id'],
+        where: 'course_name = ? AND university_id = ?',
+        whereArgs: [courseName, universityId],
+        limit: 1,
+      );
+      if (maps.isNotEmpty) {
+        return maps.first['id'] as int?;
+      }
+      return null;
+    } catch (e) {
+      print('Error fetching course ID for "$courseName" at university ID $universityId: $e');
+      return null;
     }
-    await batch.commit(noResult: true);
-  }
-
-  Future<List<String>> getCourses() async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps =
-        await db.query('courses', orderBy: 'name');
-    return List.generate(maps.length, (i) => maps[i]['name'] as String);
-  }
-
-  Future<int?> getCourseIdByName(String name) async {
-    final db = await database;
-    final List<Map<String, dynamic>> maps = await db.query(
-      'courses',
-      columns: ['id'],
-      where: 'name = ?',
-      whereArgs: [name],
-      limit: 1,
-    );
-    if (maps.isNotEmpty) {
-      return maps.first['id'] as int?;
-    }
-    return null;
   }
 
   Future<List<CalendarAppointment>> getAppointments(int id) async {

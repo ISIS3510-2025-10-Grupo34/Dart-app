@@ -8,6 +8,7 @@ import 'write_review_screen.dart';
 import '../providers/auth_provider.dart';
 import 'student_home_screen.dart';
 import 'welcome_screen.dart';
+import 'subscribe_course_screen.dart';
 
 class StudentProfileScreen extends StatefulWidget {
   const StudentProfileScreen({super.key});
@@ -280,6 +281,27 @@ class _StudentProfileScreenState extends State<StudentProfileScreen> {
                 children: _buildLearningStyleChips(user.learningStyles),
               ),
             ],
+          ),
+        ),
+        // "Subscribe to a course" Button
+        Padding(
+          padding: const EdgeInsets.symmetric(vertical: 16.0),
+          child: ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF171F45),
+              foregroundColor: Colors.white,
+              minimumSize: const Size(double.infinity, 48),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(8),
+              ),
+            ),
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const SubscribeCourseScreen()),
+              );
+            },
+            child: const Text('Subscribe to a Course', style: TextStyle(fontSize: 16)),
           ),
         ),
         const Text(

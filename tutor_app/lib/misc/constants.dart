@@ -17,4 +17,7 @@ class HiveKeys {
   static const String tsDateTime = 'ts_date_time';
   static const String tsUniversity = 'ts_university';
   static const String tsCourseName = 'ts_course_name';
+  static const String subscribeProgressBox = 'subscribe_progress_box';
+  static const String selectedUniversity = 'selected_university';
+  static const String selectedCourse = 'selected_course';
 }
