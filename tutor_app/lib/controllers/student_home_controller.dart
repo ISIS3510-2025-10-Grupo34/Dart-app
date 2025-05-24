@@ -134,8 +134,14 @@ class StudentHomeController with ChangeNotifier {
         tutorNameFilter: _tutorNameFilter,
       );
 
-      _sessions = fetchedSessions;
-      _hasNextPage = fetchedSessions.isNotEmpty;
+      // Si la página está vacía y no es la primera, revertir el incremento
+      if (fetchedSessions.isEmpty && _currentPage > 1) {
+        _currentPage--; // Volver a la última página válida
+        _hasNextPage = false;
+      } else {
+        _sessions = fetchedSessions;
+        _hasNextPage = fetchedSessions.isNotEmpty;
+      }
     } catch (e) {
       _errorMessage = e.toString();
       _sessions = [];
