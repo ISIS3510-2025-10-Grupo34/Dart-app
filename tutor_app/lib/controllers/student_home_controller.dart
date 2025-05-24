@@ -31,6 +31,7 @@ class StudentHomeController with ChangeNotifier {
         _authProvider = authProvider,
         _sessionService = sessionService,
         _metricsService = metricsService {
+    checkInternetStatus();
     loadInitialSessions();
   }
 
@@ -95,6 +96,16 @@ class StudentHomeController with ChangeNotifier {
   String? _tutorApiError;
   String? get tutorApiError => _tutorApiError;
 
+  bool _hasInternet = true;
+  bool get hasInternet => _hasInternet;
+
+  bool hasPageInCache(int page) => _pageCache.containsKey(page);
+
+  Future<void> checkInternetStatus() async {
+    _hasInternet = await NetworkUtils.hasInternetConnection();
+    notifyListeners();
+  }
+
   /// Inicializa o recarga la página 1
   Future<void> loadInitialSessions({
     String? university,
@@ -116,6 +127,10 @@ class StudentHomeController with ChangeNotifier {
     }
   }
 
+  Future<void> reloadCurrentPage() async {
+    await _loadSessions();
+  }
+
   /// Carga la página anterior (manteniendo filtros actuales)
   Future<void> loadPreviousPage() async {
     if (_currentPage > 1) {
@@ -127,6 +142,7 @@ class StudentHomeController with ChangeNotifier {
   Future<void> _loadSessions() async {
     _isLoading = true;
     _errorMessage = null;
+    await checkInternetStatus();
     notifyListeners();
 
     // Verificar si ya tenemos la página cacheada

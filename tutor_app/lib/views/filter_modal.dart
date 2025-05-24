@@ -18,6 +18,8 @@ class _FilterModalState extends State<FilterModal> {
   late TextEditingController _courseController;
   late TextEditingController _professorController;
 
+  bool _hasInternet = true;
+
   @override
   void initState() {
     super.initState();
@@ -25,6 +27,17 @@ class _FilterModalState extends State<FilterModal> {
     _universityController = TextEditingController(text: filterCtrl.universityInput);
     _courseController = TextEditingController(text: filterCtrl.courseInput);
     _professorController = TextEditingController(text: filterCtrl.professorInput);
+
+    _checkConnectivity();
+  }
+
+  Future<void> _checkConnectivity() async {
+    final status = await NetworkUtils.hasInternetConnection();
+    if (mounted) {
+      setState(() {
+        _hasInternet = status;
+      });
+    }
   }
 
   @override
@@ -65,6 +78,33 @@ class _FilterModalState extends State<FilterModal> {
                 ),
               ),
 
+              if (!_hasInternet)
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.red[50],
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(color: Colors.red.shade300),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.wifi_off, color: Colors.red),
+                      const SizedBox(width: 10),
+                      const Expanded(
+                        child: Text(
+                          "No internet connection. Tutor filter is disabled and cannot be updated.",
+                          style: TextStyle(color: Colors.red, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: _checkConnectivity,
+                        child: const Text("Retry"),
+                      )
+                    ],
+                  ),
+                ),
+
               const Text("Select University", style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500)),
               const SizedBox(height: 8),
               _buildDropdown(
@@ -77,6 +117,7 @@ class _FilterModalState extends State<FilterModal> {
                   filterCtrl.universityInput = value ?? '';
                   _courseController.clear();
                   filterCtrl.courseInput = '';
+                  await _checkConnectivity();
                   await filterCtrl.reloadCoursesForSelectedUniversity();
                 },
                 enabled: !filterCtrl.isLoading,
@@ -109,10 +150,18 @@ class _FilterModalState extends State<FilterModal> {
                 onSelected: (value) {
                   filterCtrl.professorInput = value ?? '';
                 },
-                enabled: filterCtrl.professors.isNotEmpty,
+                enabled: _hasInternet && filterCtrl.professors.isNotEmpty,
               ),
 
-              const SizedBox(height: 30),
+              if (!_hasInternet)
+                const Padding(
+                  padding: EdgeInsets.only(top: 6.0, bottom: 20.0),
+                  child: Text(
+                    "Professor data could not be loaded because there is no internet connection.",
+                    style: TextStyle(fontSize: 13, color: Colors.red),
+                  ),
+                ),
+
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                 children: [
@@ -184,6 +233,7 @@ class _FilterModalState extends State<FilterModal> {
       },
     );
   }
+
 
   Widget _buildDropdown({
     required BuildContext context,
