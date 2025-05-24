@@ -269,22 +269,28 @@ class LocalDatabaseService {
     }
   }
 
-  Future<void> bulkInsertTutors(List<Map<String, dynamic>> tutors) async {
+  Future<void> bulkInsertTutors(List<String> tutorNames) async {
     final db = await database;
-    Batch batch = db.batch();
-    for (var tutor in tutors) {
+    final batch = db.batch();
+    for (final name in tutorNames) {
       batch.insert(
         'tutors',
-        tutor,
+        {'name': name},
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     }
     await batch.commit(noResult: true);
   }
 
-  Future<List<Map<String, dynamic>>> getTutors() async {
+
+  Future<List<String>> getTutors() async {
     final db = await database;
-    return await db.query('tutors', orderBy: 'average_rating DESC');
+    final List<Map<String, dynamic>> maps = await db.query(
+      'tutors',
+      orderBy: 'name COLLATE NOCASE ASC', 
+      columns: ['name'], 
+    );
+    return List.generate(maps.length, (i) => maps[i]['name'] as String);
   }
 
   Future<Map<String, dynamic>?> getTutorById(int id) async {

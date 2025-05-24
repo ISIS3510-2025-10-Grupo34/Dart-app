@@ -30,14 +30,11 @@ class StudentHomeController with ChangeNotifier {
         _authProvider = authProvider,
         _sessionService = sessionService,
         _metricsService = metricsService {
-    loadOrderedSessions();
+    loadInitialSessions();
   }
 
   StudentHomeState _state = StudentHomeState.initial;
   StudentHomeState get state => _state;
-
-  List<TutorListItemModel> _tutors = [];
-  List<TutorListItemModel> get tutors => _tutors;
 
   List<TutoringSession> _sessions = [];
   List<TutoringSession> get sessions => _sessions;
@@ -48,126 +45,179 @@ class StudentHomeController with ChangeNotifier {
   StudentHomeNavigationTarget _navigationTarget = StudentHomeNavigationTarget.none;
   StudentHomeNavigationTarget get navigationTarget => _navigationTarget;
 
-  String _activeUniversityFilter = '';
-  String _activeCourseFilter = '';
-  String _activeTutorFilter = '';
+  int _currentPage = 1;
+  int get currentPage => _currentPage;
 
-  bool get isFilterActive =>
-      _activeUniversityFilter.isNotEmpty ||
-      _activeCourseFilter.isNotEmpty ||
-      _activeTutorFilter.isNotEmpty;
+  bool _isLoading = false;
+  bool get isLoading => _isLoading;
 
+  String? _universityFilter;
+  String? _courseFilter;
+  String? _tutorNameFilter;
+
+  String? get universityFilter => _universityFilter;
+  String? get courseFilter => _courseFilter;
+  String? get tutorNameFilter => _tutorNameFilter;
+
+  bool _hasNextPage = true;
+  bool get hasNextPage => _hasNextPage;
+
+  // --- Universities ---
   List<String> _universities = [];
   List<String> get universities => _universities;
+  bool _isLoadingUniversities = false;
+  bool get isLoadingUniversities => _isLoadingUniversities;
 
+  String? _universityApiError;
+  String? get universityApiError => _universityApiError;
+
+  // --- Courses ---
   List<String> _courses = [];
   List<String> get courses => _courses;
 
-  void _applyFilters() {
-    List<TutoringSession> filtered = List.from(_sessions);
+  bool _isLoadingCourses = false;
+  bool get isLoadingCourses => _isLoadingCourses;
 
-    if (_activeUniversityFilter.isNotEmpty) {
-      filtered = filtered
-          .where((session) => session.university
-              .toLowerCase()
-              .contains(_activeUniversityFilter.toLowerCase()))
-          .toList();
-    }
-    if (_activeCourseFilter.isNotEmpty) {
-      filtered = filtered
-          .where((session) => session.course
-              .toLowerCase()
-              .contains(_activeCourseFilter.toLowerCase()))
-          .toList();
-    }
-    if (_activeTutorFilter.isNotEmpty) {
-      filtered = filtered
-          .where((session) => session.tutorName
-              .toLowerCase()
-              .contains(_activeTutorFilter.toLowerCase()))
-          .toList();
-    }
+  String? _courseApiError;
+  String? get courseApiError => _courseApiError;
 
-    _sessions = filtered;
+  // --- Tutors ---
+  List<String> _tutors = [];
+  List<String> get tutors => _tutors;
+
+  bool _isLoadingTutors = false;
+  bool get isLoadingTutors => _isLoadingTutors;
+
+  String? _tutorApiError;
+  String? get tutorApiError => _tutorApiError;
+
+  /// Inicializa o recarga la página 1
+  Future<void> loadInitialSessions({
+    String? university,
+    String? course,
+    String? tutorName,
+  }) async {
+    _currentPage = 1;
+    _universityFilter = university;
+    _courseFilter = course;
+    _tutorNameFilter = tutorName;
+    await _loadSessions();
   }
 
-  Future<void> loadOrderedSessions() async {
-    _state = StudentHomeState.loading;
+  /// Carga la siguiente página (si hay más)
+  Future<void> loadNextPage() async {
+    if (_hasNextPage) {
+      _currentPage += 1;
+      await _loadSessions();
+    }
+  }
+
+  /// Carga la página anterior (manteniendo filtros actuales)
+  Future<void> loadPreviousPage() async {
+    if (_currentPage > 1) {
+      _currentPage -= 1;
+      await _loadSessions();
+    }
+  }
+
+  /// Lógica central de carga de sesiones
+  Future<void> _loadSessions() async {
+    _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final hasInternet = await NetworkUtils.hasInternetConnection();
-      if (!hasInternet) {
-        throw Exception("Unable to load tutoring sessions. No internet connection.");
-      }
+      final fetchedSessions = await _sessionService.fetchPaginatedSessions(
+        page: _currentPage,
+        universityFilter: _universityFilter,
+        courseFilter: _courseFilter,
+        tutorNameFilter: _tutorNameFilter,
+      );
 
-      final fetchedSessions = await _sessionService.fetchTutoringSessionsInOrder();
       _sessions = fetchedSessions;
-      _applyFilters();
-      _state = StudentHomeState.loaded;
+      _hasNextPage = fetchedSessions.isNotEmpty;
     } catch (e) {
       _errorMessage = e.toString();
-      _state = StudentHomeState.error;
+      _sessions = [];
+      _hasNextPage = false;
     } finally {
+      _isLoading = false;
       notifyListeners();
     }
   }
 
-  Future<void> loadUniversitiesAndCourses(String universityName) async {
+  Future<void> clearFiltersAndReload() async {
+    _universityFilter = null;
+    _courseFilter = null;
+    _tutorNameFilter = null;
+    await loadInitialSessions(); // también debe ser Future
+  }
+
+
+  Future<void> loadUniversities() async {
+    _isLoadingUniversities = true;
+    _universityApiError = null;
+    notifyListeners();
+
     try {
       _universities = await _universitiesService.fetchUniversities();
-      _courses = await _coursesService.fetchCourses(universityName);
-      notifyListeners();
+      if (_universities.isEmpty) {
+        _universityApiError = "No universities found.";
+      }
     } catch (e) {
-      _errorMessage = e.toString();
-      _state = StudentHomeState.error;
+      _universityApiError = "Failed to load universities: ${e.toString()}";
+      debugPrint(_universityApiError);
+    } finally {
+      _isLoadingUniversities = false;
       notifyListeners();
     }
   }
 
   Future<void> loadTutors() async {
-    _state = StudentHomeState.loading;
-    _errorMessage = null;
+    _isLoadingTutors = true;
+    _tutorApiError = null;
     notifyListeners();
 
     try {
-      final rawTutors = await _tutorService.fetchTutors(); 
-      _tutors = rawTutors
-          .map((json) => TutorListItemModel.fromJson(json))
-          .toList();
-
-      _state = StudentHomeState.loaded;
+      _tutors = await _tutorService.fetchTutorNames();
+      if (_tutors.isEmpty) {
+        _tutorApiError = "No tutors found.";
+      }
     } catch (e) {
-      _errorMessage = e.toString();
-      _state = StudentHomeState.error;
+      _tutorApiError = "Failed to load tutors: ${e.toString()}";
+      debugPrint(_tutorApiError);
     } finally {
+      _isLoadingTutors = false;
       notifyListeners();
     }
   }
 
   Future<void> loadCoursesForUniversity(String universityName) async {
+    _isLoadingCourses = true;
+    _courseApiError = null;
+    notifyListeners();
+
     try {
-      _courses = (await _coursesService.fetchCoursesByUniversity(universityName)).cast<String>();
-      notifyListeners();
+      _courses = await _coursesService.fetchCourses(universityName);
     } catch (e) {
-      debugPrint("Failed to load courses: $e");
+      _courseApiError = "Failed to load courses: ${e.toString()}";
+      debugPrint(_courseApiError);
+    } finally {
+      _isLoadingCourses = false;
+      notifyListeners();
     }
   }
 
-  void applyFiltersAndUpdate(String university, String course, String tutor) {
-    _activeUniversityFilter = university;
-    _activeCourseFilter = course;
-    _activeTutorFilter = tutor;
-    _applyFilters();
-    notifyListeners();
-  }
-
-  Future<void> clearFiltersAndUpdate() async {
-    _activeUniversityFilter = '';
-    _activeCourseFilter = '';
-    _activeTutorFilter = '';
-    await loadOrderedSessions();
+  Future<void> applyFilters({
+    required String university,
+    required String course,
+    required String tutorName,
+  }) async {
+    _universityFilter = university;
+    _courseFilter = course;
+    _tutorNameFilter = tutorName;
+    _currentPage = 1; 
+    await _loadSessions();
   }
 
   Future<void> sendTimeToBookMetric(int milliseconds) async {

@@ -324,4 +324,37 @@ class TutoringSessionService {
     }
   }
 
+  Future<List<TutoringSession>> fetchPaginatedSessions({
+    required int page,
+    String? universityFilter,
+    String? courseFilter,
+    String? tutorNameFilter,
+  }) async {
+    final url = Uri.parse('${EnvConfig.apiUrl}/api/tutoring-sessions-ordered/');
+
+    final Map<String, dynamic> body = {
+      'page': page,
+      if (universityFilter != null && universityFilter.isNotEmpty)
+        'university_filter': universityFilter,
+      if (courseFilter != null && courseFilter.isNotEmpty)
+        'course_filter': courseFilter,
+      if (tutorNameFilter != null && tutorNameFilter.isNotEmpty)
+        'tutor_name_filter': tutorNameFilter,
+    };
+
+    final response = await http.post(
+      url,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode(body),
+    );
+
+    if (response.statusCode == 200) {
+      final decoded = jsonDecode(response.body);
+      final List<dynamic> data = decoded['tutoring_sessions'];
+      return data.map((json) => TutoringSession.fromJson(json)).toList();
+    } else {
+      throw Exception("Failed to fetch sessions: ${response.statusCode} - ${response.body}");
+    }
+  }
+  
 }

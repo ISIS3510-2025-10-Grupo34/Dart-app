@@ -162,8 +162,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                                         .registerFilterUsed(professor);
                                   }
 
-                                  controller.applyFiltersAndUpdate(
-                                      university, course, professor);
+                                  //controller.applyFiltersAndUpdate(
+                                      //university, course, professor);
                                 },
                               );
                             },
@@ -187,7 +187,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                         NetworkUtils.showNoInternetDialog(context);
                         return;
                       }
-                      controller.loadOrderedSessions();
+                      //controller._loadSessions();
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF171F45),
@@ -213,7 +213,7 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                               "No internet connection.\nPlease check your network and try again.",
                           icon: Icons.wifi_off,
                           onRetry: () {
-                            controller.loadOrderedSessions();
+                            //controller._loadSessions();
                           },
                         );
                       } else if (controller.sessions.isEmpty) {
@@ -221,14 +221,60 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                             child: Text("No available sessions found."));
                       }
 
-                      return ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 10),
-                        itemCount: controller.sessions.length,
-                        itemBuilder: (context, index) {
-                          final session = controller.sessions[index];
-                          return buildSessionCard(session, controller);
-                        },
+                      return Column(
+                        children: [
+                          Expanded(
+                            child: ListView.builder(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              itemCount: controller.sessions.length,
+                              itemBuilder: (context, index) {
+                                final session = controller.sessions[index];
+                                return buildSessionCard(session, controller);
+                              },
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                ElevatedButton.icon(
+                                  icon: const Icon(Icons.chevron_left),
+                                  label: const Text("Previous"),
+                                  onPressed: controller.currentPage > 1 && !controller.isLoading
+                                      ? () => controller.loadPreviousPage()
+                                      : null,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF171F45),
+                                    foregroundColor: Colors.white,
+                                    disabledBackgroundColor: Colors.grey[300],
+                                    disabledForegroundColor: Colors.grey[700],
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                  ),
+                                ),
+                                Text("Page ${controller.currentPage}"),
+                                ElevatedButton.icon(
+                                  icon: const Icon(Icons.chevron_right),
+                                  label: const Text("Next"),
+                                  onPressed: controller.hasNextPage && !controller.isLoading
+                                      ? () => controller.loadNextPage()
+                                      : null,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF171F45),
+                                    foregroundColor: Colors.white,
+                                    disabledBackgroundColor: Colors.grey[300],
+                                    disabledForegroundColor: Colors.grey[700],
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(20),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       );
                     },
                   ),
