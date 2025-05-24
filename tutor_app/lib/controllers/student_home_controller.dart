@@ -8,6 +8,7 @@ import '../services/tutor_service.dart';
 import '../services/tutoring_session_service.dart';
 import '../services/universities_service.dart';
 import '../services/course_service.dart';
+import 'package:lru/lru.dart';
 
 enum StudentHomeState { initial, loading, loaded, error }
 
@@ -61,6 +62,9 @@ class StudentHomeController with ChangeNotifier {
 
   bool _hasNextPage = true;
   bool get hasNextPage => _hasNextPage;
+
+  final LruCache<int, List<TutoringSession>> _pageCache = LruCache(2);
+  int? _lastPageCached;
 
   // --- Universities ---
   List<String> _universities = [];
@@ -120,11 +124,20 @@ class StudentHomeController with ChangeNotifier {
     }
   }
 
-  /// Lógica central de carga de sesiones
   Future<void> _loadSessions() async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
+
+    // Verificar si ya tenemos la página cacheada
+    final cachedSessions = _pageCache[_currentPage];
+    if (cachedSessions != null) {
+      _sessions = cachedSessions;
+      _hasNextPage = cachedSessions.isNotEmpty;
+      _isLoading = false;
+      notifyListeners();
+      return;
+    }
 
     try {
       final fetchedSessions = await _sessionService.fetchPaginatedSessions(
@@ -134,14 +147,13 @@ class StudentHomeController with ChangeNotifier {
         tutorNameFilter: _tutorNameFilter,
       );
 
-      // Si la página está vacía y no es la primera, revertir el incremento
-      if (fetchedSessions.isEmpty && _currentPage > 1) {
-        _currentPage--; // Volver a la última página válida
-        _hasNextPage = false;
-      } else {
-        _sessions = fetchedSessions;
-        _hasNextPage = fetchedSessions.isNotEmpty;
-      }
+      _sessions = fetchedSessions;
+      _hasNextPage = fetchedSessions.isNotEmpty;
+
+      // Guardar en cache
+      _pageCache[_currentPage] = fetchedSessions;
+      _lastPageCached = _currentPage;
+
     } catch (e) {
       _errorMessage = e.toString();
       _sessions = [];
@@ -152,10 +164,15 @@ class StudentHomeController with ChangeNotifier {
     }
   }
 
+  void clearPageCache() {
+    _pageCache.clear();
+  }
+
   Future<void> clearFiltersAndReload() async {
     _universityFilter = null;
     _courseFilter = null;
     _tutorNameFilter = null;
+    clearPageCache();
     await loadInitialSessions(); // también debe ser Future
   }
 
@@ -223,6 +240,7 @@ class StudentHomeController with ChangeNotifier {
     _courseFilter = course;
     _tutorNameFilter = tutorName;
     _currentPage = 1; 
+    clearPageCache();
     await _loadSessions();
   }
 
