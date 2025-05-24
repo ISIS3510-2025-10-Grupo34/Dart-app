@@ -9,6 +9,8 @@ import '../controllers/student_home_controller.dart';
 import '../controllers/filter_controller.dart';
 import '../controllers/student_tutoring_sessions_controller.dart';
 import '../views/filter_modal.dart';
+import '../views/student_calendar_screen.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -16,6 +18,9 @@ class StudentHomeScreen extends StatefulWidget {
   @override
   _StudentHomeScreenState createState() => _StudentHomeScreenState();
 }
+
+bool _hasInternet = true;
+bool _showErrorView = false;
 
 class _StudentHomeScreenState extends State<StudentHomeScreen> {
   DateTime? _screenLoadTime;
@@ -26,6 +31,25 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
     _screenLoadTime = DateTime.now();
     preloadNotifications();
     preloadStudentSessions();
+
+    // Escuchar cambios en la conectividad
+    Connectivity().onConnectivityChanged.listen((result) async {
+      final isOnline = result != ConnectivityResult.none;
+      setState(() {
+        _hasInternet = isOnline;
+        _showErrorView = !isOnline;
+      });
+    });
+
+    _checkInitialInternet();
+  }
+
+  Future<void> _checkInitialInternet() async {
+    final isOnline = await NetworkUtils.hasInternetConnection();
+    setState(() {
+      _hasInternet = isOnline;
+      _showErrorView = !isOnline;
+    });
   }
 
   void preloadNotifications() {
@@ -72,6 +96,18 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                       Row(
                         children: [
                           buildIconButton(
+                            icon: Icons.calendar_month,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const StudentCalendarScreen()),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                          buildIconButton(
                             icon: Icons.notifications,
                             onPressed: () {
                               Navigator.push(
@@ -99,81 +135,120 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     ],
                   ),
                 ),
-                // --- Filter Controls Row ---
+                // --- Filter Controls Row + Internet warning ---
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 16.0, vertical: 5.0),
-                  child: Row(
+                  padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 5.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      ElevatedButton.icon(
-                        icon: const Icon(Icons.filter_list),
-                        label: const Text("Filter"),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color(0xFF171F45),
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(20),
+                      Row(
+                        children: [
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.filter_list),
+                            label: const Text("Filter"),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF171F45),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                            onPressed: _showErrorView
+                                ? null
+                                : () async {
+                                    final hasInternet = await NetworkUtils.hasInternetConnection();
+                                    if (!hasInternet) {
+                                      setState(() => _showErrorView = true);
+                                      return;
+                                    }
+
+                                    final filterController = Provider.of<FilterController>(context, listen: false);
+                                    await filterController.loadFilterOptions();
+
+                                    showModalBottomSheet(
+                                      context: context,
+                                      isScrollControlled: true,
+                                      backgroundColor: Colors.transparent,
+                                      builder: (_) {
+                                        return FilterModal(
+                                          onFilter: (university, course, professor) async {
+                                            if (university.isNotEmpty) {
+                                              await filterController.registerFilterUsed(university);
+                                            }
+                                            if (course.isNotEmpty) {
+                                              await filterController.registerFilterUsed(course);
+                                            }
+                                            if (professor.isNotEmpty) {
+                                              await filterController.registerFilterUsed(professor);
+                                            }
+                                          },
+                                        );
+                                      },
+                                    );
+                                  },
+                          ),
+                          const SizedBox(width: 10),
+                          ElevatedButton.icon(
+                            icon: const Icon(Icons.refresh),
+                            label: const Text("Reload"),
+                            onPressed: _showErrorView
+                                ? null
+                                : () async {
+                                    final hasInternet = await NetworkUtils.hasInternetConnection();
+                                    if (!hasInternet) {
+                                      setState(() => _showErrorView = true);
+                                      return;
+                                    }
+                                    final controller = Provider.of<StudentHomeController>(context, listen: false);
+                                    await controller.reloadCurrentPage();
+                                  },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: const Color(0xFF171F45),
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(20),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      if (_showErrorView)
+                        Container(
+                          width: double.infinity,
+                          padding: const EdgeInsets.all(12),
+                          margin: const EdgeInsets.only(top: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.red[50],
+                            border: Border.all(color: Colors.red[300]!),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Row(
+                            children: [
+                              const Icon(Icons.wifi_off, color: Colors.red, size: 20),
+                              const SizedBox(width: 8),
+                              const Expanded(
+                                child: Text(
+                                  "No internet connection detected. Filter, Reload, Book, Next and Previous buttons are disabled.",
+                                  style: TextStyle(
+                                    color: Colors.red,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                              TextButton(
+                                onPressed: () async {
+                                  final hasInternet = await NetworkUtils.hasInternetConnection();
+                                  setState(() {
+                                    _showErrorView = !hasInternet;
+                                  });
+                                },
+                                child: const Text("Retry"),
+                              )
+                            ],
                           ),
                         ),
-                        onPressed: () async {
-                          final hasInternet = await NetworkUtils.hasInternetConnection();
-                          if (!hasInternet) {
-                            NetworkUtils.showNoInternetDialog(context);
-                            return;
-                          }
-
-                          final filterController = Provider.of<FilterController>(context, listen: false);
-                          await filterController.loadFilterOptions();
-
-                          showModalBottomSheet(
-                            context: context,
-                            isScrollControlled: true,
-                            backgroundColor: Colors.transparent,
-                            builder: (_) {
-                              return FilterModal(
-                                onFilter: (university, course, professor) async {
-                                  if (university.isNotEmpty) {
-                                    await filterController.registerFilterUsed(university);
-                                  }
-                                  if (course.isNotEmpty) {
-                                    await filterController.registerFilterUsed(course);
-                                  }
-                                  if (professor.isNotEmpty) {
-                                    await filterController.registerFilterUsed(professor);
-                                  }
-
-                                  controller.applyFiltersAndUpdate(university, course, professor);
-                                },
-                              );
-                            },
-                          );
-                        },
-                      ),
-                      const SizedBox(width: 10),
                     ],
-                  ),
-                ),
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.only(left: 16),
-                  child: ElevatedButton.icon(
-                    icon: const Icon(Icons.refresh),
-                    label: const Text("Reload"),
-                    onPressed: () async {
-                      final hasInternet = await NetworkUtils.hasInternetConnection();
-                      if (!hasInternet) {
-                        NetworkUtils.showNoInternetDialog(context);
-                        return;
-                      }
-                      controller.loadOrderedSessions();
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF171F45),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                    ),
                   ),
                 ),
                 const SizedBox(height: 10),
@@ -183,28 +258,72 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     builder: (_) {
                       if (controller.state == StudentHomeState.loading) {
                         return const Center(child: CircularProgressIndicator());
-                      } else if (controller.state == StudentHomeState.error && controller.sessions.isEmpty) {
+                      } else if (controller.state == StudentHomeState.error &&
+                          controller.sessions.isEmpty) {
                         return ErrorView(
                           title: "Unable to load tutoring sessions",
-                          message: "No internet connection.\nPlease check your network and try again.",
+                          message:
+                              "No internet connection.\nPlease check your network and try again.",
                           icon: Icons.wifi_off,
                           onRetry: () {
-                            controller.loadOrderedSessions();
+                            //controller._loadSessions();
                           },
                         );
-                      }else if (controller.sessions.isEmpty) {
+                      } else if (controller.sessions.isEmpty) {
                         return const Center(
                             child: Text("No available sessions found."));
                       }
 
-                      return ListView.builder(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 16, vertical: 10),
-                        itemCount: controller.sessions.length,
-                        itemBuilder: (context, index) {
-                          final session = controller.sessions[index];
-                          return buildSessionCard(session, controller);
-                        },
+                      return Column(
+                        children: [
+                          Expanded(
+                            child: ListView.builder(
+                              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              itemCount: controller.sessions.length,
+                              itemBuilder: (context, index) {
+                                final session = controller.sessions[index];
+                                return buildSessionCard(session, controller);
+                              },
+                            ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                ElevatedButton.icon(
+                                  icon: const Icon(Icons.chevron_left),
+                                  label: const Text("Previous"),
+                                  onPressed: controller.currentPage > 1 && !controller.isLoading && _hasInternet
+                                      ? () => controller.loadPreviousPage()
+                                      : null,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF171F45),
+                                    foregroundColor: Colors.white,
+                                    disabledBackgroundColor: Colors.grey[300],
+                                    disabledForegroundColor: Colors.grey[700],
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  ),
+                                ),
+                                Text("Page ${controller.currentPage}"),
+                                ElevatedButton.icon(
+                                  icon: const Icon(Icons.chevron_right),
+                                  label: const Text("Next"),
+                                  onPressed: controller.hasNextPage && !controller.isLoading && _hasInternet
+                                      ? () => controller.loadNextPage()
+                                      : null,
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF171F45),
+                                    foregroundColor: Colors.white,
+                                    disabledBackgroundColor: Colors.grey[300],
+                                    disabledForegroundColor: Colors.grey[700],
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       );
                     },
                   ),
@@ -309,16 +428,12 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
             Align(
               alignment: Alignment.centerRight,
               child: ElevatedButton(
-                onPressed: () async {
-                  final hasInternet = await NetworkUtils.hasInternetConnection();
-                  if (!hasInternet) {
-                    NetworkUtils.showNoInternetDialog(context);
-                    return;
-                  }
-
-                  final timeToBook = DateTime.now().difference(_screenLoadTime!).inMilliseconds;
-                  await controller.sendTimeToBookMetric(timeToBook);
-                },
+                onPressed: _hasInternet
+                    ? () async {
+                        final timeToBook = DateTime.now().difference(_screenLoadTime!).inMilliseconds;
+                        await controller.sendTimeToBookMetric(timeToBook);
+                      }
+                    : null,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF171F45),
                   shape: RoundedRectangleBorder(

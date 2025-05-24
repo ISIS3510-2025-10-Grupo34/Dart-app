@@ -13,13 +13,13 @@ class TutorService {
       LruCache(10);
   final LocalDatabaseService _dbService = LocalDatabaseService();
 
-  Future<List<Map<String, dynamic>>> fetchTutors() async {
-    final localTutors = await _dbService.getTutors();
+  Future<List<String>> fetchTutors() async {
+    List<String> localTutors = await _dbService.getTutors(); // ← debe retornar List<String>
     if (localTutors.isNotEmpty) {
       return localTutors;
     }
 
-    final apiUrl = '${EnvConfig.apiUrl}/info/tutors/';
+    final apiUrl = '${EnvConfig.apiUrl}/api/info/tutors/';
     try {
       final response = await http.get(
         Uri.parse(apiUrl),
@@ -29,20 +29,19 @@ class TutorService {
       if (response.statusCode == 200) {
         Map<String, dynamic> data = jsonDecode(response.body);
         List<dynamic> tutorList = data['tutors'] as List<dynamic>? ?? [];
-        List<Map<String, dynamic>> tutors =
-            List<Map<String, dynamic>>.from(tutorList);
+        List<String> fetchedTutors = List<String>.from(tutorList);
 
-        if (tutors.isNotEmpty) {
-          await _dbService.bulkInsertTutors(tutors);
+        if (fetchedTutors.isNotEmpty) {
+          await _dbService.bulkInsertTutors(fetchedTutors); // ← inserta en cache local
         }
-
-        return tutors;
+        print("Fetched tutors: $fetchedTutors");
+        return List<String>.from(tutorList);
       } else {
         throw Exception(
             'Failed to load tutors (Status code: ${response.statusCode})');
       }
     } catch (e) {
-      throw Exception('Error fetching tutors: ${e.toString()}');
+      throw "Please check your connection";
     }
   }
 
@@ -116,6 +115,27 @@ class TutorService {
       }
     } catch (e) {
       throw "Please check your connection";
+    }
+  }
+  
+  Future<List<String>> fetchTutorNames() async {
+    final url = Uri.parse('${EnvConfig.apiUrl}/api/info/tutors/');
+    try {
+      final response = await http.get(
+        url,
+        headers: {"Content-Type": "application/json"},
+      );
+
+      if (response.statusCode == 200) {
+        final Map<String, dynamic> data = jsonDecode(response.body);
+        final List<dynamic> tutorList = data['tutors'] ?? [];
+
+        return List<String>.from(tutorList);
+      } else {
+        throw Exception('Failed to load tutors: ${response.statusCode}');
+      }
+    } catch (e) {
+      throw Exception("Error fetching tutor names: $e");
     }
   }
 }

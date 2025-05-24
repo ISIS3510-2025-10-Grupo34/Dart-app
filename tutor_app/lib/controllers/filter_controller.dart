@@ -39,18 +39,15 @@ class FilterController with ChangeNotifier {
       // Cargar universidades
       universities = await _universitiesService.fetchUniversities();
 
-      // Si hay universidad seleccionada, cargar cursos
+      // Cargar cursos según la universidad seleccionada
       if (universityInput.isNotEmpty) {
-        final fetchedCourses = await _coursesService.fetchCoursesByUniversity(universityInput);
-        courses = fetchedCourses.map((course) => course.course_name).toList();
-
+        courses = await _coursesService.fetchCourses(universityInput);
       } else {
         courses = [];
       }
 
-      // Cargar nombres de profesores
-      final tutorList = await _tutorService.fetchTutors();
-      professors = tutorList.map((tutor) => tutor['name'] as String).toSet().toList();
+      // Cargar tutores (ya es List<String>)
+      professors = await _tutorService.fetchTutorNames();
     } catch (e) {
       debugPrint("Error loading filter options: $e");
     }
@@ -62,10 +59,9 @@ class FilterController with ChangeNotifier {
   /// Recargar cursos si cambia la universidad
   Future<void> reloadCoursesForSelectedUniversity() async {
     if (universityInput.isEmpty) return;
-    try {
-      final fetchedCourses = await _coursesService.fetchCoursesByUniversity(universityInput);
-      courses = fetchedCourses.map((course) => course.course_name).toList();
 
+    try {
+      courses = await _coursesService.fetchCourses(universityInput);
       notifyListeners();
     } catch (e) {
       debugPrint("Error loading courses: $e");
