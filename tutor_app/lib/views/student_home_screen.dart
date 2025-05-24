@@ -9,6 +9,7 @@ import '../controllers/student_home_controller.dart';
 import '../controllers/filter_controller.dart';
 import '../controllers/student_tutoring_sessions_controller.dart';
 import '../views/filter_modal.dart';
+import '../views/student_calendar_screen.dart';
 
 class StudentHomeScreen extends StatefulWidget {
   const StudentHomeScreen({super.key});
@@ -72,6 +73,18 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                       Row(
                         children: [
                           buildIconButton(
+                            icon: Icons.calendar_month,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const StudentCalendarScreen()),
+                              );
+                            },
+                          ),
+                          const SizedBox(width: 12),
+                          buildIconButton(
                             icon: Icons.notifications,
                             onPressed: () {
                               Navigator.push(
@@ -116,13 +129,16 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                           ),
                         ),
                         onPressed: () async {
-                          final hasInternet = await NetworkUtils.hasInternetConnection();
+                          final hasInternet =
+                              await NetworkUtils.hasInternetConnection();
                           if (!hasInternet) {
                             NetworkUtils.showNoInternetDialog(context);
                             return;
                           }
 
-                          final filterController = Provider.of<FilterController>(context, listen: false);
+                          final filterController =
+                              Provider.of<FilterController>(context,
+                                  listen: false);
                           await filterController.loadFilterOptions();
 
                           showModalBottomSheet(
@@ -131,18 +147,23 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                             backgroundColor: Colors.transparent,
                             builder: (_) {
                               return FilterModal(
-                                onFilter: (university, course, professor) async {
+                                onFilter:
+                                    (university, course, professor) async {
                                   if (university.isNotEmpty) {
-                                    await filterController.registerFilterUsed(university);
+                                    await filterController
+                                        .registerFilterUsed(university);
                                   }
                                   if (course.isNotEmpty) {
-                                    await filterController.registerFilterUsed(course);
+                                    await filterController
+                                        .registerFilterUsed(course);
                                   }
                                   if (professor.isNotEmpty) {
-                                    await filterController.registerFilterUsed(professor);
+                                    await filterController
+                                        .registerFilterUsed(professor);
                                   }
 
-                                  controller.applyFiltersAndUpdate(university, course, professor);
+                                  controller.applyFiltersAndUpdate(
+                                      university, course, professor);
                                 },
                               );
                             },
@@ -160,7 +181,8 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     icon: const Icon(Icons.refresh),
                     label: const Text("Reload"),
                     onPressed: () async {
-                      final hasInternet = await NetworkUtils.hasInternetConnection();
+                      final hasInternet =
+                          await NetworkUtils.hasInternetConnection();
                       if (!hasInternet) {
                         NetworkUtils.showNoInternetDialog(context);
                         return;
@@ -183,16 +205,18 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
                     builder: (_) {
                       if (controller.state == StudentHomeState.loading) {
                         return const Center(child: CircularProgressIndicator());
-                      } else if (controller.state == StudentHomeState.error && controller.sessions.isEmpty) {
+                      } else if (controller.state == StudentHomeState.error &&
+                          controller.sessions.isEmpty) {
                         return ErrorView(
                           title: "Unable to load tutoring sessions",
-                          message: "No internet connection.\nPlease check your network and try again.",
+                          message:
+                              "No internet connection.\nPlease check your network and try again.",
                           icon: Icons.wifi_off,
                           onRetry: () {
                             controller.loadOrderedSessions();
                           },
                         );
-                      }else if (controller.sessions.isEmpty) {
+                      } else if (controller.sessions.isEmpty) {
                         return const Center(
                             child: Text("No available sessions found."));
                       }
@@ -310,13 +334,16 @@ class _StudentHomeScreenState extends State<StudentHomeScreen> {
               alignment: Alignment.centerRight,
               child: ElevatedButton(
                 onPressed: () async {
-                  final hasInternet = await NetworkUtils.hasInternetConnection();
+                  final hasInternet =
+                      await NetworkUtils.hasInternetConnection();
                   if (!hasInternet) {
                     NetworkUtils.showNoInternetDialog(context);
                     return;
                   }
 
-                  final timeToBook = DateTime.now().difference(_screenLoadTime!).inMilliseconds;
+                  final timeToBook = DateTime.now()
+                      .difference(_screenLoadTime!)
+                      .inMilliseconds;
                   await controller.sendTimeToBookMetric(timeToBook);
                 },
                 style: ElevatedButton.styleFrom(

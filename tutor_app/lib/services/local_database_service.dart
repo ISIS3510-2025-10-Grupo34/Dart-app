@@ -1,6 +1,7 @@
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 import '../models/review_model.dart';
+import '../models/calendar_appointment_model.dart';
 
 class LocalDatabaseService {
   static final LocalDatabaseService _instance =
@@ -100,6 +101,17 @@ class LocalDatabaseService {
       FOREIGN KEY (university_id) REFERENCES universities (id) ON DELETE CASCADE
     )
   ''');
+    await db.execute('''
+      CREATE TABLE calendar_appointments (
+        id INTEGER PRIMARY KEY,
+        course TEXT NOT NULL,
+        tutor TEXT NOT NULL,
+        student TEXT NOT NULL,
+        date TEXT NOT NULL,
+        cost REAL NOT NULL,
+        ownerId INTEGER NOT NULL
+      )
+    ''');
   }
 
   Future<void> cachePendingReview(Review review) async {
@@ -380,5 +392,35 @@ class LocalDatabaseService {
       print('Error fetching course ID for "$courseName" at university ID $universityId: $e');
       return null;
     }
+  }
+
+  Future<List<CalendarAppointment>> getAppointments(int id) async {
+    final db = await database;
+    final List<Map<String, dynamic>> maps = await db.query(
+      'calendar_appointments',
+      where: 'ownerId = ?',
+      whereArgs: [id.toString()],
+      orderBy: 'date DESC',
+    );
+    if (maps.isEmpty) {
+      return [];
+    }
+    return List.generate(maps.length, (i) {
+      return CalendarAppointment.fromJson(maps[i], id);
+    });
+  }
+
+  Future<void> bulkInsertCalendarAppointments(
+      List<CalendarAppointment> appointments) async {
+    final db = await database;
+    Batch batch = db.batch();
+    for (var appointment in appointments) {
+      batch.insert(
+        'calendar_appointments',
+        appointment.toJson(),
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    }
+    await batch.commit(noResult: true);
   }
 }
