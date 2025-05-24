@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:table_calendar/table_calendar.dart';
 import 'package:intl/intl.dart';
-
+import 'package:flutter/foundation.dart';
 import '../models/calendar_appointment_model.dart';
 import '../services/calendar_appointment_service.dart';
 import '../providers/auth_provider.dart';
@@ -16,7 +16,6 @@ class StudentCalendarScreen extends StatefulWidget {
 }
 
 class _StudentCalendarScreenState extends State<StudentCalendarScreen> {
-  late CalendarAppointmentService _calendarAppointmentService;
   late AuthProvider _authProvider;
 
   CalendarFormat _calendarFormat = CalendarFormat.month;
@@ -25,11 +24,11 @@ class _StudentCalendarScreenState extends State<StudentCalendarScreen> {
   Map<DateTime, List<CalendarAppointment>> _appointments = {};
   bool _isLoading = true;
   String? _errorMessage;
+  String? _error;
 
   @override
   void initState() {
     super.initState();
-    _calendarAppointmentService = CalendarAppointmentService();
     _authProvider = Provider.of<AuthProvider>(context, listen: false);
     _selectedDay = _focusedDay;
     _fetchAppointments();
@@ -39,6 +38,7 @@ class _StudentCalendarScreenState extends State<StudentCalendarScreen> {
     setState(() {
       _isLoading = true;
       _errorMessage = null;
+      _error = null;
     });
     try {
       final studentId = _authProvider.currentUser?.id;
@@ -46,25 +46,37 @@ class _StudentCalendarScreenState extends State<StudentCalendarScreen> {
         throw Exception("Student ID not found. Please log in again.");
       }
       final int ownerId = int.parse(studentId);
-      final fetchedAppointments =
-          await _calendarAppointmentService.fetchCalendarAppointments(ownerId);
-
-      final Map<DateTime, List<CalendarAppointment>> events = {};
-      for (var appointment in fetchedAppointments) {
-        final day = DateTime.utc(appointment.date.year, appointment.date.month,
-            appointment.date.day);
-        if (events[day] == null) {
-          events[day] = [];
+      try {
+        final List<CalendarAppointment> fetchedAppointments = await compute(
+          CalendarAppointmentService
+              .fetchAndParseAppointmentsForOwner, // Static method reference
+          ownerId.toString(),
+        );
+        final Map<DateTime, List<CalendarAppointment>> events = {};
+        for (var appointment in fetchedAppointments) {
+          final day = DateTime.utc(appointment.date.year,
+              appointment.date.month, appointment.date.day);
+          if (events[day] == null) {
+            events[day] = [];
+          }
+          events[day]!.add(appointment);
         }
-        events[day]!.add(appointment);
+        setState(() {
+          _appointments = events;
+          _isLoading = false;
+        });
+      } catch (e) {
+        setState(() {
+          _error = "Error fetching appointments: ${e.toString()}";
+          _isLoading = false;
+        });
       }
-      setState(() {
-        _appointments = events;
-        _isLoading = false;
-      });
     } catch (e) {
       setState(() {
-        _errorMessage = "Error fetching appointments: ${e.toString()}";
+        _error = e.toString();
+      });
+    } finally {
+      setState(() {
         _isLoading = false;
       });
     }
