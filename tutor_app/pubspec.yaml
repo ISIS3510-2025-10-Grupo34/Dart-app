@@ -33,7 +33,6 @@ dependencies:
     sdk: flutter
   flutter_rating_bar: ^4.0.1
   url_launcher: ^6.0.0
-  url_launcher: ^6.0.0
   font_awesome_flutter: ^10.5.0
   image_picker: ^0.8.6
   flutter_dotenv: ^5.0.2
@@ -75,10 +74,7 @@ flutter:
   assets:
     - assets/profile-placeholder.png
     - .env
-  
-  assets:
-    - assets/profile-placeholder.png
-    - .env
+
   
 
   # To add assets to your application, add an assets section, like this:
