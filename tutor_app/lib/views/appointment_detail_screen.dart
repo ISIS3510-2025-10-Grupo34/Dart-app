@@ -47,7 +47,7 @@ class AppointmentDetailScreen extends StatelessWidget {
                       ),
                     ),
                     title: Text(
-                      appointment.course,
+                      appointment.courseName,
                       style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,
@@ -57,9 +57,9 @@ class AppointmentDetailScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const SizedBox(height: 4),
-                        Text('Tutor: ${appointment.tutor}'),
+                        Text('Tutor: ${appointment.tutorName}'),
                         Text(
-                            'Time: ${DateFormat.jm().format(appointment.date)}'), // Display time
+                            'Time: ${DateFormat.jm().format(appointment.dateTime)}'), // Display time
                         Text('Cost: \$${appointment.cost.toStringAsFixed(0)}'),
                       ],
                     ),

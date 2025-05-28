@@ -101,13 +101,14 @@ class LocalDatabaseService {
       FOREIGN KEY (university_id) REFERENCES universities (id) ON DELETE CASCADE
     )
   ''');
+
     await db.execute('''
-      CREATE TABLE calendar_appointments (
+      CREATE TABLE IF NOT EXISTS calendar_appointments (
         id INTEGER PRIMARY KEY,
-        course TEXT NOT NULL,
-        tutor TEXT NOT NULL,
+        courseName TEXT NOT NULL,
+        tutorName TEXT NOT NULL,
         student TEXT NOT NULL,
-        date TEXT NOT NULL,
+        dateTime TEXT NOT NULL,
         cost REAL NOT NULL,
         ownerId INTEGER NOT NULL
       )
@@ -282,13 +283,12 @@ class LocalDatabaseService {
     await batch.commit(noResult: true);
   }
 
-
   Future<List<String>> getTutors() async {
     final db = await database;
     final List<Map<String, dynamic>> maps = await db.query(
       'tutors',
-      orderBy: 'name COLLATE NOCASE ASC', 
-      columns: ['name'], 
+      orderBy: 'name COLLATE NOCASE ASC',
+      columns: ['name'],
     );
     return List.generate(maps.length, (i) => maps[i]['name'] as String);
   }
@@ -313,14 +313,14 @@ class LocalDatabaseService {
     try {
       final existing = await db.query(
         'courses',
-        columns: ['id'], 
+        columns: ['id'],
         where: 'course_name = ? AND university_id = ?',
         whereArgs: [courseName, universityId],
         limit: 1,
       );
 
       if (existing.isNotEmpty) {
-        return existing.first['id'] as int; 
+        return existing.first['id'] as int;
       }
 
       return await db.insert(
@@ -328,8 +328,9 @@ class LocalDatabaseService {
         {'course_name': courseName, 'university_id': universityId},
       );
     } catch (e) {
-      print('Error inserting course "$courseName" for university ID $universityId: $e');
-      return -1; 
+      print(
+          'Error inserting course "$courseName" for university ID $universityId: $e');
+      return -1;
     }
   }
 
@@ -338,7 +339,7 @@ class LocalDatabaseService {
     final universityId = await getUniversityIdByName(universityName);
     if (universityId == null) {
       print('Cannot insert courses: University "$universityName" not found.');
-      return; 
+      return;
     }
 
     final db = await database;
@@ -361,22 +362,23 @@ class LocalDatabaseService {
     final universityId = await getUniversityIdByName(universityName);
     if (universityId == null) {
       print('Cannot get courses: University "$universityName" not found.');
-      return []; 
+      return [];
     }
 
     final db = await database;
     try {
       final List<Map<String, dynamic>> maps = await db.query(
         'courses',
-        columns: ['course_name'], 
+        columns: ['course_name'],
         where: 'university_id = ?',
         whereArgs: [universityId],
         orderBy: 'course_name',
       );
-      return List.generate(maps.length, (i) => maps[i]['course_name'] as String);
+      return List.generate(
+          maps.length, (i) => maps[i]['course_name'] as String);
     } catch (e) {
       print('Error fetching courses for "$universityName": $e');
-      return []; 
+      return [];
     }
   }
 
@@ -395,7 +397,8 @@ class LocalDatabaseService {
       }
       return null;
     } catch (e) {
-      print('Error fetching course ID for "$courseName" at university ID $universityId: $e');
+      print(
+          'Error fetching course ID for "$courseName" at university ID $universityId: $e');
       return null;
     }
   }
@@ -406,7 +409,7 @@ class LocalDatabaseService {
       'calendar_appointments',
       where: 'ownerId = ?',
       whereArgs: [id.toString()],
-      orderBy: 'date DESC',
+      orderBy: 'dateTime DESC',
     );
     if (maps.isEmpty) {
       return [];

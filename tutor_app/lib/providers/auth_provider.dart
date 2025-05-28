@@ -6,6 +6,7 @@ import 'dart:convert';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
 import 'package:shared_preferences/shared_preferences.dart';
+import '../services/auth_service.dart';
 
 enum AuthState { unknown, authenticated, unauthenticated }
 
@@ -14,13 +15,17 @@ const String _sessionUserRoleKey = 'session_user_role';
 
 class AuthProvider with ChangeNotifier {
   final UserService _userService;
+  final AuthService _authService;
 
   User? _currentUser;
   AuthState _authState = AuthState.unknown;
   bool _profileIsLoading = false;
   String? _profileError;
 
-  AuthProvider({required UserService userService}) : _userService = userService;
+  AuthProvider(
+      {required UserService userService, required AuthService authService})
+      : _userService = userService,
+        _authService = authService;
 
   User? get currentUser => _currentUser;
   AuthState get authState => _authState;
@@ -32,7 +37,7 @@ class AuthProvider with ChangeNotifier {
     _authState = AuthState.authenticated;
     _profileIsLoading = false;
     _profileError = null;
-
+    await _authService.recordLoginActivity(userId: currentUser?.id! ?? "");
     if (_currentUser?.id != null && _currentUser?.role != null) {
       await _fetchFullProfile(_currentUser!.id!, _currentUser!.role!);
     } else {
@@ -177,6 +182,7 @@ class AuthProvider with ChangeNotifier {
         _profileIsLoading = false;
 
         notifyListeners();
+        await _authService.recordLoginActivity(userId: currentUser?.id! ?? "");
 
         _fetchFullProfile(userId, userRole);
 
