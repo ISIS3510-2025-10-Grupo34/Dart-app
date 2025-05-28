@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:tutor_app/controllers/booked_sessions_controller.dart';
+import 'package:tutor_app/models/calendar_appointment_model.dart';
 import 'misc/constants.dart';
 import 'package:lru/lru.dart';
 // Services
@@ -61,6 +62,7 @@ final GlobalKey<ScaffoldMessengerState> scaffoldMessengerKey =
 
 typedef SimilarTutorReviewsCache = LruCache<int, SimilarTutorReviewsResponse>;
 typedef TimeToCreateProfile = LruCache<String, DateTime>;
+typedef AppointmentsCache = LruCache<int, List<CalendarAppointment>>;
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
@@ -69,6 +71,7 @@ void main() async {
   await Hive.openBox(HiveKeys.signUpProgressBox);
   await Hive.openBox(HiveKeys.sessionProgressBox);
   final similarTutorReviewsCache = SimilarTutorReviewsCache(10);
+  final appointmentsCache = AppointmentsCache(20);
   //sqfliteFfiInit();
   //databaseFactory = databaseFactoryFfi;
 
@@ -138,6 +141,7 @@ void main() async {
             value: signInProcessProvider),
         Provider<SimilarTutorReviewsCache>.value(
             value: similarTutorReviewsCache),
+        Provider<AppointmentsCache>.value(value: appointmentsCache),
         ChangeNotifierProvider<CreateTutoringSessionProcessProvider>.value(
             value: createTutoringSessionProcessProvider),
         ChangeNotifierProvider(create: (_) => subscribeProgressProvider),

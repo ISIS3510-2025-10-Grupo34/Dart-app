@@ -8,6 +8,9 @@ import '../services/calendar_appointment_service.dart';
 import '../providers/auth_provider.dart';
 import 'appointment_detail_screen.dart';
 import 'package:flutter/services.dart';
+import 'package:tutor_app/main.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'dart:async';
 
 class StudentCalendarScreen extends StatefulWidget {
   const StudentCalendarScreen({super.key});
@@ -18,6 +21,7 @@ class StudentCalendarScreen extends StatefulWidget {
 
 class _StudentCalendarScreenState extends State<StudentCalendarScreen> {
   late AuthProvider _authProvider;
+  late AppointmentsCache _appointmentsCache;
 
   CalendarFormat _calendarFormat = CalendarFormat.month;
   DateTime _focusedDay = DateTime.now();
@@ -26,12 +30,37 @@ class _StudentCalendarScreenState extends State<StudentCalendarScreen> {
   bool _isLoading = true;
   String? _errorMessage;
   String? _error;
+  bool _isOffline = false;
+  StreamSubscription<ConnectivityResult>? _connectivitySubscription;
 
   @override
   void initState() {
     super.initState();
     _authProvider = Provider.of<AuthProvider>(context, listen: false);
     _selectedDay = _focusedDay;
+    _appointmentsCache = Provider.of<AppointmentsCache>(context, listen: false);
+    _checkInitialConnectivity();
+    _connectivitySubscription =
+        Connectivity().onConnectivityChanged.listen(_updateConnectionStatus);
+    _fetchAppointments();
+  }
+
+  @override
+  void dispose() {
+    _connectivitySubscription?.cancel(); // Cancel subscription on dispose
+    super.dispose();
+  }
+
+  Future<void> _checkInitialConnectivity() async {
+    ConnectivityResult result = await Connectivity().checkConnectivity();
+    _updateConnectionStatus(result);
+  }
+
+  void _updateConnectionStatus(ConnectivityResult result) {
+    if (!mounted) return;
+    setState(() {
+      _isOffline = result == ConnectivityResult.none;
+    });
     _fetchAppointments();
   }
 
@@ -43,39 +72,48 @@ class _StudentCalendarScreenState extends State<StudentCalendarScreen> {
     });
     try {
       final studentId = _authProvider.currentUser?.id;
-      final RootIsolateToken? token = RootIsolateToken.instance;
+      List<CalendarAppointment> fetchedAppointments = [];
       if (studentId == null) {
         throw Exception("Student ID not found. Please log in again.");
       }
       final int ownerId = int.parse(studentId);
-      try {
-        final Map<String, dynamic> computeMessage = {
-          'ownerId': ownerId.toString(),
-          'token': token,
-        };
-        final List<CalendarAppointment> fetchedAppointments = await compute(
-          CalendarAppointmentService.fetchAndParseAppointmentsForOwner,
-          computeMessage,
-        );
-        final Map<DateTime, List<CalendarAppointment>> events = {};
-        for (var appointment in fetchedAppointments) {
-          final day = DateTime.utc(appointment.dateTime.year,
-              appointment.dateTime.month, appointment.dateTime.day);
-          if (events[day] == null) {
-            events[day] = [];
-          }
-          events[day]!.add(appointment);
+      final cachedData = _appointmentsCache[ownerId];
+      if (cachedData != null) {
+        print("cache used");
+        fetchedAppointments = cachedData;
+      } else {
+        final RootIsolateToken? token = RootIsolateToken.instance;
+
+        try {
+          final Map<String, dynamic> computeMessage = {
+            'ownerId': ownerId.toString(),
+            'token': token,
+          };
+          fetchedAppointments = await compute(
+            CalendarAppointmentService.fetchAndParseAppointmentsForOwner,
+            computeMessage,
+          );
+          _appointmentsCache[ownerId] = fetchedAppointments;
+        } catch (e) {
+          setState(() {
+            _error = "Error fetching appointments: ${e.toString()}";
+            _isLoading = false;
+          });
         }
-        setState(() {
-          _appointments = events;
-          _isLoading = false;
-        });
-      } catch (e) {
-        setState(() {
-          _error = "Error fetching appointments: ${e.toString()}";
-          _isLoading = false;
-        });
       }
+      final Map<DateTime, List<CalendarAppointment>> events = {};
+      for (var appointment in fetchedAppointments) {
+        final day = DateTime.utc(appointment.dateTime.year,
+            appointment.dateTime.month, appointment.dateTime.day);
+        if (events[day] == null) {
+          events[day] = [];
+        }
+        events[day]!.add(appointment);
+      }
+      setState(() {
+        _appointments = events;
+        _isLoading = false;
+      });
     } catch (e) {
       setState(() {
         _error = e.toString();
@@ -118,6 +156,23 @@ class _StudentCalendarScreenState extends State<StudentCalendarScreen> {
     }
   }
 
+  Widget _buildOfflineBanner() {
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 300),
+      height: _isOffline ? 30.0 : 0.0, // Animate height
+      color: Colors.red,
+      child: _isOffline
+          ? const Center(
+              child: Text(
+                "No Internet Connection",
+                style:
+                    TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
+            )
+          : null, // No child when hidden
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -132,6 +187,7 @@ class _StudentCalendarScreenState extends State<StudentCalendarScreen> {
       ),
       body: Column(
         children: [
+          _buildOfflineBanner(),
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: _buildLegend(),
