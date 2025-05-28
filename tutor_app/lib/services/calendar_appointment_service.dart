@@ -36,7 +36,7 @@ class CalendarAppointmentService {
       print(
           '[CalendarAppointmentService] Internet connection available. Fetching from network for ownerId: $id');
     }
-    final apiUrl = '${EnvConfig.apiUrl}/api/booked-sessions/?id=$id';
+    final apiUrl = 'http://10.0.2.2:8000/api/booked-sessions/?id=$id';
     try {
       final response = await http.get(
         Uri.parse(apiUrl),
