@@ -3,13 +3,13 @@ import 'dart:convert';
 class CalendarAppointment {
   final int id;
 
-  final String course;
+  final String courseName;
 
-  final String tutor;
+  final String tutorName;
 
   final String student;
 
-  final DateTime date;
+  final DateTime dateTime;
 
   final double cost;
 
@@ -17,30 +17,38 @@ class CalendarAppointment {
 
   CalendarAppointment({
     required this.id,
-    required this.course,
-    required this.tutor,
+    required this.courseName,
+    required this.tutorName,
     required this.student,
-    required this.date,
+    required this.dateTime,
     required this.cost,
     required this.ownerId,
   });
   factory CalendarAppointment.fromJson(Map<String, dynamic> json, int oId) {
+    double parsedCost;
+    if (json['cost'] is String) {
+      parsedCost = double.tryParse(json['cost'] as String) ?? 0.0;
+    } else if (json['cost'] is num) {
+      parsedCost = (json['cost'] as num).toDouble();
+    } else {
+      parsedCost = 0.0;
+    }
     return CalendarAppointment(
         id: json['id'] as int,
-        course: json['courseName'] as String,
-        tutor: json['tutorName'] as String,
+        courseName: json['courseName'] as String,
+        tutorName: json['tutorName'] as String,
         student: json['student'] as String,
-        date: DateTime.parse(json['dateTime'] as String),
-        cost: double.parse(json['cost']),
+        dateTime: DateTime.parse(json['dateTime'] as String),
+        cost: parsedCost,
         ownerId: oId);
   }
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'course': course,
-      'tutor': tutor,
+      'courseName': courseName,
+      'tutorName': tutorName,
       'student': student,
-      'date': date.toIso8601String(),
+      'dateTime': dateTime.toIso8601String(),
       'cost': cost,
       'ownerId': ownerId
     };

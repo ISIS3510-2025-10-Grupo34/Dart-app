@@ -77,4 +77,20 @@ class AuthService {
       throw 'Could not check email. Please check your connection.';
     }
   }
+
+  Future<void> recordLoginActivity({required String userId}) async {
+    try {
+      final url = Uri.parse('${EnvConfig.apiUrl}/api/record-login/?id=$userId');
+      final response = await http.post(
+        url,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      );
+      if (response.statusCode >= 200 && response.statusCode < 300) {
+      } else {}
+    } catch (e) {
+      throw (e);
+    }
+  }
 }
