@@ -88,17 +88,19 @@ void main() async {
   final localCacheService = LocalCacheService();
   final locationService = LocationService();
   final profileCreationTimeService = ProfileCreationTimeService();
-  final filterService = FilterService(); 
+  final filterService = FilterService();
   final subscriptionService = SubscriptionService();
 
-  final authProvider = AuthProvider(userService: userService);
+  final authProvider =
+      AuthProvider(userService: userService, authService: authService);
   final signInProcessProvider = SignInProcessProvider(
     userService: userService,
     localCacheService: localCacheService,
   );
   await authProvider.tryRestoreSession();
-  final createTutoringSessionProcessProvider = CreateTutoringSessionProcessProvider(
-    sessionService: tutoringSessionService, 
+  final createTutoringSessionProcessProvider =
+      CreateTutoringSessionProcessProvider(
+    sessionService: tutoringSessionService,
     localCacheService: localCacheService,
   );
   final subscribeProgressProvider = SubscribeProgressProvider();
@@ -153,7 +155,7 @@ void main() async {
             ChangeNotifierProvider(
               create: (context) => BookedSessionsController(
                 sessionService: context.read<TutoringSessionService>(),
-                authProvider: context.read<AuthProvider>(), 
+                authProvider: context.read<AuthProvider>(),
                 cacheService: context.read<LocalCacheService>(),
               ),
             ),
@@ -215,7 +217,7 @@ void main() async {
                 coursesService: context.read<CourseService>(),
                 tutorService: context.read<TutorService>(),
                 filterService: context.read<FilterService>(),
-                ),
+              ),
             ),
             ChangeNotifierProvider(
               create: (context) => StudentProfileController(

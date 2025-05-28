@@ -7,6 +7,7 @@ import '../models/calendar_appointment_model.dart';
 import '../services/calendar_appointment_service.dart';
 import '../providers/auth_provider.dart';
 import 'appointment_detail_screen.dart';
+import 'package:flutter/services.dart';
 
 class StudentCalendarScreen extends StatefulWidget {
   const StudentCalendarScreen({super.key});
@@ -42,20 +43,24 @@ class _StudentCalendarScreenState extends State<StudentCalendarScreen> {
     });
     try {
       final studentId = _authProvider.currentUser?.id;
+      final RootIsolateToken? token = RootIsolateToken.instance;
       if (studentId == null) {
         throw Exception("Student ID not found. Please log in again.");
       }
       final int ownerId = int.parse(studentId);
       try {
+        final Map<String, dynamic> computeMessage = {
+          'ownerId': ownerId.toString(),
+          'token': token,
+        };
         final List<CalendarAppointment> fetchedAppointments = await compute(
-          CalendarAppointmentService
-              .fetchAndParseAppointmentsForOwner, // Static method reference
-          ownerId.toString(),
+          CalendarAppointmentService.fetchAndParseAppointmentsForOwner,
+          computeMessage,
         );
         final Map<DateTime, List<CalendarAppointment>> events = {};
         for (var appointment in fetchedAppointments) {
-          final day = DateTime.utc(appointment.date.year,
-              appointment.date.month, appointment.date.day);
+          final day = DateTime.utc(appointment.dateTime.year,
+              appointment.dateTime.month, appointment.dateTime.day);
           if (events[day] == null) {
             events[day] = [];
           }
