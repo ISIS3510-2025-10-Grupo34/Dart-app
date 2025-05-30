@@ -36,7 +36,8 @@ class CalendarAppointmentService {
       print(
           '[CalendarAppointmentService] Internet connection available. Fetching from network for ownerId: $id');
     }
-    final apiUrl = 'http://10.0.2.2:8000/api/booked-sessions/?id=$id';
+    final apiUrl =
+        'http://tutorapp-env-1.eba-3gbpmybu.us-east-1.elasticbeanstalk.com/api/booked-sessions/?id=$id';
     try {
       final response = await http.get(
         Uri.parse(apiUrl),
